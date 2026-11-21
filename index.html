@@ -43,7 +43,7 @@ textarea{min-height:82px;resize:vertical}
 .tabs button{white-space:nowrap}
 .tabs button.active{background:var(--gold);color:#111}
 .hidden{display:none!important}
-.notice{padding:12px;border:1px solid var(--line);border-radius:10px;background:#101618;color:var(--muted);font-size:13px;margin-top:10px}
+.notice{padding:12px;border:1px solid var(--line);border-radius:10px;background:#101618;color:var(--muted);font-size:13px;margin-top:10px;overflow-wrap:anywhere}
 .stat{font-size:28px;color:var(--gold2);font-weight:800}
 .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}
 table{width:100%;border-collapse:collapse;min-width:700px}
@@ -60,8 +60,9 @@ tr:last-child td{border:0}
 .qrbox{background:#fff;padding:14px;border-radius:14px;display:inline-block;margin:12px auto}
 .qrbox img,.qrbox canvas{max-width:100%;height:auto}
 .qrmodal{text-align:center}
-#qrReader{width:100%;max-width:500px;margin:15px auto;overflow:hidden;border-radius:12px}
-#qrReader video{border-radius:12px}
+#qrReader{width:100%;max-width:500px;margin:15px auto;overflow:hidden;border-radius:12px;min-height:10px}
+#qrReader video{border-radius:12px;object-fit:cover}
+#qrReader__dashboard_section_csr button{margin:5px}
 @media(max-width:600px){
 header{padding:14px}
 .brand h1{font-size:15px}
@@ -296,6 +297,7 @@ const SUPABASE_PUBLISHABLE_KEY="sb_publishable_QgNtkC4EwtJAg2rcRdeuVg_yCdHI64y";
 
 let db=null,user=null,branches=[],groups=[],players=[],activeSession=null,attendanceMarked=new Set();
 let html5QrCode=null,cameraRunning=false,processingQr=false,scannedTokens=new Set();
+let lastQrFailureMessage='';
 
 const $=id=>document.getElementById(id);
 const today=()=>new Date().toLocaleDateString('en-CA');
@@ -546,21 +548,43 @@ $('attendanceRoster').innerHTML=roster.map(p=>`
 function togglePresent(id,on){
 if(on)attendanceMarked.add(id);else attendanceMarked.delete(id);
 }
+
+/* حفظ الحضور دون حذف سجلات QR التي تم تسجيلها */
 async function saveAttendance(){
 if(!activeSession)return;
 const roster=currentRoster();
 const ids=[...attendanceMarked].filter(id=>roster.some(p=>p.id===id));
-const {error:delError}=await db.from('attendance_records').delete().eq('session_id',activeSession.id);
-if(delError){$('attendanceResult').textContent='تعذر تحديث الكشف: '+delError.message;return}
+const absentIds=roster.filter(p=>!attendanceMarked.has(p.id)).map(p=>p.id);
+
 if(ids.length){
-const {error}=await db.from('attendance_records').insert(ids.map(player_id=>({session_id:activeSession.id,player_id})));
-if(error){$('attendanceResult').textContent='تعذر حفظ الحضور: '+error.message;return}
+const {error}=await db.from('attendance_records')
+.upsert(ids.map(player_id=>({
+session_id:activeSession.id,
+player_id
+})),{onConflict:'session_id,player_id'});
+if(error){
+$('attendanceResult').textContent='تعذر حفظ الحضور: '+error.message;
+return;
 }
+}
+
+if(absentIds.length){
+const {error}=await db.from('attendance_records')
+.delete()
+.eq('session_id',activeSession.id)
+.in('player_id',absentIds);
+if(error){
+$('attendanceResult').textContent='تعذر تحديث الغياب: '+error.message;
+return;
+}
+}
+
 showAttendanceResult(roster);
 msg('sessionMsg','تم حفظ كشف الحضور والغياب بنجاح.');
 $('saveAttendance').disabled=false;
 $('saveAttendance').textContent='تحديث كشف الحضور';
 }
+
 function showAttendanceResult(roster){
 const present=roster.filter(p=>attendanceMarked.has(p.id));
 const absent=roster.filter(p=>!attendanceMarked.has(p.id));
@@ -572,15 +596,20 @@ $('attendanceResult').innerHTML=`
 </div>`;
 }
 
+/* تسجيل رمز اللاعب والتحقق منه */
 async function registerQrToken(token){
-if(!token||!activeSession){msg('qrMsg','أنشئي حصة أولًا قبل تسجيل الحضور.');return}
+token=String(token||'').trim();
+if(!token||!activeSession){
+msg('qrMsg','أنشئي حصة أولًا قبل تسجيل الحضور.');
+return;
+}
 if(processingQr)return;
 if(scannedTokens.has(token)){
-msg('qrMsg','تم مسح هذا الكود بالفعل في الحصة الحالية.');
+msg('qrMsg','تم تسجيل هذا اللاعب بالفعل في الحصة الحالية.');
 return;
 }
 processingQr=true;
-msg('qrMsg','جاري التحقق من رمز اللاعب...');
+msg('qrMsg','تمت قراءة QR، جاري التحقق من اللاعب وتسجيل الحضور...');
 try{
 const {data,error}=await db.rpc('scan_player_qr',{
 p_session_id:activeSession.id,
@@ -602,50 +631,118 @@ if(cb)cb.checked=true;
 showAttendanceResult(currentRoster());
 }
 scannedTokens.add(token);
-msg('qrMsg',(data.message||'تم تسجيل الحضور')+(found?' — '+found.full_name:''));
+const playerName=found?.full_name||data.player_name||'اللاعب';
+if(data.already_registered){
+msg('qrMsg','اللاعب '+playerName+' مسجل حضوره بالفعل.');
+}else{
+msg('qrMsg','تم تسجيل حضور اللاعب '+playerName+' بنجاح ❤️');
+}
 $('qrToken').value='';
 }catch(err){
-msg('qrMsg','حدث خطأ أثناء قراءة الرمز: '+err.message);
+msg('qrMsg','حدث خطأ أثناء تسجيل الحضور: '+(err?.message||err));
 }finally{
 processingQr=false;
 }
 }
 
+/* فتح الكاميرا الخلفية مع دعم Safari على iPhone */
 async function startCamera(){
 if(!activeSession){
-msg('qrMsg','أنشئي الحصة أولًا قبل فتح الكاميرا.');
+msg('qrMsg','أنشئي حصة أولًا قبل فتح الكاميرا.');
 return;
 }
 if(!window.Html5Qrcode){
-msg('qrMsg','تعذر تحميل مكتبة الكاميرا. حدّثي الصفحة وجربي مرة أخرى.');
+msg('qrMsg','تعذر تحميل مكتبة قراءة QR. تأكدي من الإنترنت ثم حدّثي الصفحة.');
 return;
 }
 if(cameraRunning)return;
+
 try{
+msg('qrMsg','جاري تجهيز الكاميرا الخلفية...');
 html5QrCode=new Html5Qrcode('qrReader');
-await html5QrCode.start(
-{facingMode:'environment'},
-{fps:10,qrbox:{width:230,height:230},aspectRatio:1.0},
-async decodedText=>{
-await registerQrToken(decodedText.trim());
+
+const config={
+fps:12,
+qrbox:(viewfinderWidth,viewfinderHeight)=>{
+const side=Math.floor(Math.min(viewfinderWidth,viewfinderHeight)*0.72);
+return {width:side,height:side};
 },
-()=>{}
+aspectRatio:1,
+disableFlip:false,
+formatsToSupport:[Html5QrcodeSupportedFormats.QR_CODE]
+};
+
+let cameras=[];
+try{
+cameras=await Html5Qrcode.getCameras();
+}catch(cameraError){
+cameras=[];
+}
+
+let selectedCamera=null;
+if(cameras.length){
+selectedCamera=
+cameras.find(c=>/back|rear|environment|خلف/i.test(c.label))||
+cameras[cameras.length-1];
+}
+
+const onSuccess=async(decodedText)=>{
+if(!decodedText)return;
+await registerQrToken(decodedText);
+};
+
+const onFailure=(errorMessage)=>{
+if(!cameraRunning)return;
+if(errorMessage&&
+!String(errorMessage).toLowerCase().includes('notfound')&&
+!String(errorMessage).toLowerCase().includes('no qr code found')){
+const shortError=String(errorMessage).slice(0,140);
+if(shortError!==lastQrFailureMessage){
+lastQrFailureMessage=shortError;
+}
+}
+};
+
+if(selectedCamera){
+await html5QrCode.start(selectedCamera.id,config,onSuccess,onFailure);
+}else{
+await html5QrCode.start(
+{facingMode:{ideal:'environment'}},
+config,
+onSuccess,
+onFailure
 );
+}
+
 cameraRunning=true;
-msg('qrMsg','الكاميرا تعمل الآن. وجهيها إلى QR اللاعب.');
+lastQrFailureMessage='';
+msg('qrMsg','الكاميرا الخلفية تعمل الآن. وجهيها إلى QR اللاعب وانتظري القراءة.');
 }catch(err){
-html5QrCode=null;
 cameraRunning=false;
-msg('qrMsg','لم نتمكن من فتح الكاميرا. اسمحي للمتصفح باستخدام الكاميرا وتأكدي من فتح الموقع عبر HTTPS. '+err);
+const errorText=err?.message||String(err);
+msg('qrMsg','تعذر تشغيل أو قراءة الكاميرا: '+errorText+' — تأكدي من السماح باستخدام الكاميرا وفتح الموقع عبر HTTPS.');
+try{
+if(html5QrCode){
+await html5QrCode.stop();
+await html5QrCode.clear();
+}
+}catch(e){}
+html5QrCode=null;
 }
 }
+
 async function stopCamera(){
-if(html5QrCode&&cameraRunning){
-try{await html5QrCode.stop();await html5QrCode.clear()}catch(e){}
-}
+const scanner=html5QrCode;
 html5QrCode=null;
 cameraRunning=false;
+if(scanner){
+try{
+if(scanner.isScanning)await scanner.stop();
+}catch(e){}
+try{await scanner.clear()}catch(e){}
+}
 if($('qrReader'))$('qrReader').innerHTML='';
+msg('qrMsg','تم إيقاف الكاميرا.');
 }
 
 async function scanQr(){
