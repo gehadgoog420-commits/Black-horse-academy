@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090b0d"><title>BLACK HORSE | بوابة ولي الأمر</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;--gold:#d7b45a;--panel:#15191d}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#202329,#090b0d 60%);color:#f6f4ee;font-family:Arial,Tahoma,sans-serif;min-height:100vh;padding:24px 14px}
+main{max-width:760px;margin:auto}.brand{text-align:center;margin:18px 0 28px}.horse{font-size:38px;color:var(--gold)}h1{font-size:25px;letter-spacing:2px;margin:6px 0;color:var(--gold)}.sub,.note{color:#aab0b5;font-size:13px;line-height:1.7}
+.card{background:var(--panel);border:1px solid #4c4128;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 12px 35px #0006}
+h2{font-size:18px;color:var(--gold);margin:0 0 15px}label{display:block;color:#d9d9d5;font-size:13px;margin:12px 0 6px}
+input,textarea,select{width:100%;background:#090c0f;color:#fff;border:1px solid #45494c;border-radius:10px;padding:13px;font:inherit}textarea{min-height:90px;resize:vertical}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}button{background:var(--gold);color:#151515;border:0;border-radius:10px;padding:12px 17px;font-weight:bold;font-size:14px;cursor:pointer}button.secondary{background:#2b3035;color:#fff;border:1px solid #555}button:disabled{opacity:.5;cursor:wait}
+.msg{color:#f3d98d;font-size:13px;line-height:1.7;min-height:20px}.hidden{display:none!important}.player{border:1px solid #41464a;border-radius:13px;padding:15px;margin:12px 0;background:#101418}
+.player h3{margin:0 0 8px;color:var(--gold)}.chips{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.chip{background:#252b30;padding:6px 9px;border-radius:20px;font-size:12px}.score{font-size:14px;line-height:1.9}.topline{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+</style></head><body><main>
+<header class="brand"><div class="horse">♞</div><h1>BLACK HORSE</h1><div class="sub">FOOTBALL ACADEMY · PARENT PORTAL</div></header>
+<section id="authBox" class="card"><h2>دخول ولي الأمر</h2>
+<form id="authForm"><label>البريد الإلكتروني</label><input id="email" type="email" autocomplete="email" required>
+<label>كلمة المرور</label><input id="password" type="password" minlength="6" autocomplete="current-password" required>
+<div class="actions"><button type="submit">تسجيل الدخول</button><button class="secondary" id="signup" type="button">إنشاء حساب جديد</button></div></form>
+<p id="authMsg" class="msg"></p><p class="note">لو أنشأت حسابًا جديدًا وطلب منك تأكيد البريد، أكّدي البريد أولًا ثم سجّلي الدخول.</p></section>
+<section id="portal" class="hidden">
+<div class="card topline"><div><h2 style="margin:0">بوابة ولي الأمر</h2><div id="signedEmail" class="note"></div></div><button class="secondary" id="logout">تسجيل خروج</button></div>
+<div class="card"><h2>ربط حسابك باللاعب</h2><label>اسم اللاعب كما هو مسجل بالأكاديمية</label><input id="playerName" placeholder="اكتبي الاسم بالكامل">
+<p class="note">يُستخدم كود ربط الأكاديمية الموحد لإتمام الربط.</p><button id="linkBtn">ربط اللاعب</button><p id="linkMsg" class="msg"></p></div>
+<div class="card"><h2>أبنائي وتقييم الأكاديمية</h2><div id="players"><p class="note">سجّلي الدخول ثم اربطي اللاعب لعرض بياناته.</p></div></div>
+<div class="card hidden" id="feedbackBox"><h2>رأيك يهمنا</h2><label>اللاعب</label><select id="feedbackPlayer"></select>
+<label>تقييم مستوى ابنك (من 1 إلى 5)</label><select id="level"><option value="5">5 - ممتاز</option><option value="4">4 - جيد جدًا</option><option value="3">3 - جيد</option><option value="2">2 - يحتاج لتحسين</option><option value="1">1 - يحتاج لمتابعة</option></select>
+<label>تقييم الأكاديمية (من 1 إلى 5)</label><select id="academyRating"><option value="5">5 - ممتاز</option><option value="4">4 - جيد جدًا</option><option value="3">3 - جيد</option><option value="2">2 - يحتاج لتحسين</option><option value="1">1 - غير راضٍ</option></select>
+<label>ملاحظات أو اقتراحات</label><textarea id="comments" placeholder="اكتبي ملاحظاتك هنا (اختياري)"></textarea><button id="sendFeedback">إرسال التقييم</button><p id="feedbackMsg" class="msg"></p></div>
+</section><footer class="sub" style="text-align:center;margin:25px 0">MORE THAN FOOTBALL</footer></main>
+<script>
+const SUPABASE_URL="https://rjkdgjncxkszleorcave.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_QgNtkC4EwtJAg2rcRdeuVg_yCdHI64y";
+const FAMILY_TOKEN="BH-2026-FAMILY";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+const $=id=>document.getElementById(id);
+let currentUser=null,linkedPlayers=[];
+function message(id,text){$(id).textContent=text}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function showPortal(user){currentUser=user;$("authBox").classList.add("hidden");$("portal").classList.remove("hidden");$("signedEmail").textContent=user.email||"";loadPortal()}
+async function loadPortal(){
+const {data,error}=await db.rpc("get_my_linked_players");
+if(error){message("linkMsg","تعذر تحميل اللاعبين: "+error.message);return}
+linkedPlayers=data||[];
+$("players").innerHTML=linkedPlayers.length?linkedPlayers.map(p=>`<div class="player"><h3>${esc(p.full_name)}</h3><div class="chips"><span class="chip">سنة الميلاد: ${esc(p.birth_year??"—")}</span><span class="chip">المجموعة: ${esc(p.group_note||"—")}</span></div><div class="score">آخر تقييم أكاديمي: ${esc(p.evaluation_date||"لا يوجد")}<br>المستوى الفني: ${esc(p.technical_score??"—")} / 5<br>السلوك: ${esc(p.behavior_score??"—")} / 5<br>اللياقة: ${esc(p.fitness_score??"—")} / 5<br>ملاحظات المدرب: ${esc(p.evaluation_notes||"لا توجد ملاحظات")}</div></div>`).join(""):'<p class="note">لسه مفيش لاعب مربوط بالحساب. استخدمي خانة ربط اللاعب بالأعلى.</p>';
+$("feedbackBox").classList.add("hidden");
+const enabled=await db.rpc("parent_feedback_is_enabled");
+if(enabled.error){message("feedbackMsg","تعذر التحقق من إتاحة التقييم: "+enabled.error.message);return}
+if(enabled.data===true&&linkedPlayers.length){$("feedbackPlayer").innerHTML=linkedPlayers.map(p=>'<option value="'+esc(p.player_id)+'">'+esc(p.full_name)+'</option>').join("");$("feedbackBox").classList.remove("hidden")}
+}
+$("authForm").addEventListener("submit",async e=>{e.preventDefault();message("authMsg","جاري تسجيل الدخول...");
+const {data,error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+if(error){message("authMsg","تعذر الدخول: "+error.message);return}showPortal(data.user)});
+$("signup").addEventListener("click",async()=>{const email=$("email").value.trim(),password=$("password").value;
+if(!email||password.length<6){message("authMsg","اكتبي البريد وكلمة مرور 6 أحرف على الأقل.");return}
+message("authMsg","جاري إنشاء الحساب...");
+const {data,error}=await db.auth.signUp({email,password});
+if(error){message("authMsg","تعذر إنشاء الحساب: "+error.message);return}
+if(data.session)showPortal(data.user);else message("authMsg","تم إنشاء الحساب. راجعي بريدك لتأكيده، ثم سجّلي الدخول.")});
+$("linkBtn").addEventListener("click",async()=>{const name=$("playerName").value.trim();if(!name){message("linkMsg","اكتبي اسم اللاعب أولًا.");return}
+$("linkBtn").disabled=true;message("linkMsg","جاري ربط اللاعب...");
+const {data,error}=await db.rpc("link_parent_by_name",{p_player_name:name,p_token:FAMILY_TOKEN});
+$("linkBtn").disabled=false;if(error){message("linkMsg","تعذر الربط: "+error.message);return}
+message("linkMsg","تم إرسال طلب الربط. جاري تحميل بيانات اللاعب...");await loadPortal()});
+$("sendFeedback").addEventListener("click",async()=>{const playerId=$("feedbackPlayer").value;if(!playerId){message("feedbackMsg","اختاري اللاعب.");return}
+$("sendFeedback").disabled=true;message("feedbackMsg","جاري إرسال التقييم...");
+const {error}=await db.from("parent_feedback").insert({player_id:playerId,parent_player_level:Number($("level").value),academy_rating:Number($("academyRating").value),comments:$("comments").value.trim()||null,submitted_by:currentUser.id});
+$("sendFeedback").disabled=false;message("feedbackMsg",error?"تعذر إرسال التقييم: "+error.message:"شكرًا ليكي، تم إرسال تقييمك بنجاح.");if(!error)$("comments").value=""});
+$("logout").addEventListener("click",async()=>{await db.auth.signOut();currentUser=null;linkedPlayers=[];$("portal").classList.add("hidden");$("authBox").classList.remove("hidden");message("authMsg","تم تسجيل الخروج.")});
+(async()=>{const {data}=await db.auth.getSession();if(data.session)showPortal(data.session.user)})();
+</script></body></html>
