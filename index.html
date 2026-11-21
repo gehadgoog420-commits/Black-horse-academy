@@ -1,19 +1,30 @@
+
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BLACK HORSE | Football Academy</title>
 <meta name="theme-color" content="#090b0d">
 <style>
 :root{--bg:#090b0d;--panel:#111519;--panel2:#171d21;--gold:#d5ad55;--gold2:#f0d58d;--text:#f7f4ec;--muted:#aeb5b7;--line:#30383b;--green:#7ca88a;--red:#d77c75}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#1b2224 0,#090b0d 58%);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;min-height:100vh}
-header{padding:22px 18px;border-bottom:1px solid #34302a;background:#080a0cdd;position:sticky;top:0;z-index:5;backdrop-filter:blur(12px)}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#1b2224 0,#090b0d 58%);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;min-height:100vh}
+header{padding:20px 16px;border-bottom:1px solid #34302a;background:#080a0cdd;position:sticky;top:0;z-index:5;backdrop-filter:blur(12px)}
 .wrap{max-width:1120px;margin:auto}.brand{display:flex;align-items:center;gap:14px}.mark{width:52px;height:52px;border:1px solid var(--gold);border-radius:14px;display:grid;place-items:center;color:var(--gold);font-size:27px}.brand h1{font-size:19px;letter-spacing:2px;margin:0;color:var(--gold2)}.brand p{margin:4px 0 0;color:var(--muted);font-size:12px;letter-spacing:1px}
-main{max-width:1120px;margin:26px auto;padding:0 16px 60px}.hero{padding:34px 22px;border:1px solid #5b4927;border-radius:22px;background:linear-gradient(135deg,#171b1c,#0c0f10 65%);text-align:center}.hero .eyebrow{color:var(--gold);letter-spacing:3px;font-size:12px}.hero h2{font-size:clamp(27px,5vw,46px);margin:12px 0;color:var(--gold2)}.hero p{color:var(--muted);margin:8px 0}.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:22px}
-button,.btn{border:1px solid var(--gold);background:var(--gold);color:#111;padding:11px 17px;border-radius:11px;font-weight:750;cursor:pointer;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+main{max-width:1120px;margin:26px auto;padding:0 16px 60px}.hero{padding:34px 22px;border:1px solid #5b4927;border-radius:22px;background:linear-gradient(135deg,#171b1c,#0c0f10 65%);text-align:center}.eyebrow{color:var(--gold);letter-spacing:3px;font-size:12px}.hero h2{font-size:clamp(27px,5vw,46px);margin:12px 0;color:var(--gold2)}.hero p{color:var(--muted);margin:8px 0}
+.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:22px}
+button,.btn{border:1px solid var(--gold);background:var(--gold);color:#111;padding:11px 16px;border-radius:11px;font-weight:750;cursor:pointer;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}
 button.secondary,.btn.secondary{background:transparent;color:var(--gold2)}button.danger{background:#542a28;border-color:#8b4944;color:#fff}button:disabled{opacity:.5;cursor:not-allowed}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:18px}.card{background:linear-gradient(160deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:17px;padding:19px}.card h3{margin:0 0 10px;color:var(--gold2)}.muted{color:var(--muted)}.small{font-size:12px}.section{margin-top:28px}.section>h2{color:var(--gold2);font-size:21px}
-form{display:grid;gap:12px}label{display:grid;gap:6px;color:#d9d6cd;font-size:13px}input,select,textarea{width:100%;background:#090d0f;border:1px solid #394347;border-radius:10px;padding:11px;color:white;font:inherit;min-width:0}textarea{min-height:82px;resize:vertical}.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.tabs{display:flex;gap:8px;overflow:auto;padding:3px 0 12px}.tabs button{white-space:nowrap}.tabs button.active{background:var(--gold);color:#111}.hidden{display:none!important}.notice{padding:12px;border:1px solid var(--line);border-radius:10px;background:#101618;color:var(--muted);font-size:13px}.stat{font-size:28px;color:var(--gold2);font-weight:800}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}table{width:100%;border-collapse:collapse;min-width:560px}th,td{padding:11px;border-bottom:1px solid var(--line);text-align:right;font-size:13px}th{color:var(--gold2);background:#151a1c}tr:last-child td{border:0}.pill{display:inline-block;padding:4px 9px;border-radius:20px;background:#203328;color:#b7dfc4;font-size:11px}.pill.red{background:#3d2423;color:#f2b4ae}.footer{text-align:center;color:#777;font-size:12px;margin-top:40px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:18px}.card{background:linear-gradient(160deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:17px;padding:18px}.card h3{margin:0 0 10px;color:var(--gold2)}.muted{color:var(--muted)}.small{font-size:12px}.section{margin-top:28px}.section>h2{color:var(--gold2);font-size:21px}
+form{display:grid;gap:12px}label{display:grid;gap:6px;color:#d9d6cd;font-size:13px}
+input,select,textarea{width:100%;background:#090d0f;border:1px solid #394347;border-radius:10px;padding:11px;color:white;font:inherit;min-width:0}input[type=checkbox]{width:auto;accent-color:var(--gold)}textarea{min-height:82px;resize:vertical}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.tabs{display:flex;gap:8px;overflow:auto;padding:3px 0 12px}.tabs button{white-space:nowrap}.tabs button.active{background:var(--gold);color:#111}
+.hidden{display:none!important}.notice{padding:12px;border:1px solid var(--line);border-radius:10px;background:#101618;color:var(--muted);font-size:13px;margin-top:10px}
+.stat{font-size:28px;color:var(--gold2);font-weight:800}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;min-width:620px}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:right;font-size:13px}th{color:var(--gold2);background:#151a1c}tr:last-child td{border:0}
+.pill{display:inline-block;padding:4px 9px;border-radius:20px;background:#203328;color:#b7dfc4;font-size:11px}.pill.red{background:#3d2423;color:#f2b4ae}
+.footer{text-align:center;color:#777;font-size:12px;margin-top:40px}.player-row{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center;padding:11px;border-bottom:1px solid var(--line)}.player-row:last-child{border:0}.attendance-name{font-weight:700}.attendance-meta{font-size:12px;color:var(--muted);margin-top:3px}
 @media(max-width:600px){header{padding:14px}.brand h1{font-size:15px}.hero{padding:27px 15px}main{margin-top:16px}}
 </style>
 </head>
@@ -24,15 +35,23 @@ form{display:grid;gap:12px}label{display:grid;gap:6px;color:#d9d6cd;font-size:13
 <div class="eyebrow">SMALL STEPS, BIG DREAMS</div>
 <h2>أكاديمية بلاك هورس لكرة القدم</h2>
 <p>نبني لاعبين أقوى… وشخصيات أفضل.</p>
-<div class="actions"><button onclick="showPublic('enroll')">طلب التحاق لاعب</button><button class="secondary" onclick="showPublic('branches')">الفروع والمواعيد</button><button class="secondary" onclick="showLogin()">دخول الإدارة</button></div>
+<div class="actions">
+<button onclick="showPublic('enroll')">طلب التحاق لاعب</button>
+<button class="secondary" onclick="showPublic('branches')">الفروع والمواعيد</button>
+<button class="secondary" onclick="showLogin()">دخول الإدارة</button>
+</div>
 </section>
-<section id="publicBranches" class="grid section">
-<div class="card"><h3>فرع العرب</h3><p class="muted">حديقة البستان – خلف مكتبة سوزان مبارك</p><p>الأحد 8 مساءً · الثلاثاء والخميس 7 مساءً</p><a class="btn secondary" target="_blank" href="https://maps.app.goo.gl/9PfDo5GPUwYLzgtM8">الموقع على الخريطة</a></div>
-<div class="card"><h3>فرع الزهراء</h3><p class="muted">مدرسة القدس – بيتشو أمريكان – زهراء المعادي</p><p>السبت والأربعاء 7 مساءً · الاثنين 5:45 مساءً</p><a class="btn secondary" target="_blank" href="https://maps.app.goo.gl/PjnK98vCVkvR1p6t8">الموقع على الخريطة</a></div>
-<div class="card"><h3>تواصل معنا</h3><p>01115099181</p><p>01147009393</p><p class="muted small">اتصال وواتساب</p></div></section>
 
-<section id="enrollPanel" class="card section hidden"><h2>طلب التحاق لاعب</h2><p class="muted small">املأ البيانات الأساسية وسيتواصل معكم فريق الأكاديمية.</p>
-<form id="enrollForm"><div class="row">
+<section id="publicBranches" class="grid section">
+<div class="card"><h3>فرع العرب</h3><p class="muted">حديقة البستان – خلف مكتبة سوزان مبارك</p><p>الأحد 8 مساءً · الثلاثاء والخميس 7 مساءً</p><a class="btn secondary" target="_blank" rel="noopener" href="https://maps.app.goo.gl/9PfDo5GPUwYLzgtM8">الموقع على الخريطة</a></div>
+<div class="card"><h3>فرع الزهراء</h3><p class="muted">مدرسة القدس – بيتشو أمريكان – زهراء المعادي</p><p>السبت والأربعاء 7 مساءً · الاثنين 5:45 مساءً</p><a class="btn secondary" target="_blank" rel="noopener" href="https://maps.app.goo.gl/PjnK98vCVkvR1p6t8">الموقع على الخريطة</a></div>
+<div class="card"><h3>تواصل معنا</h3><p>01115099181</p><p>01147009393</p><p class="muted small">اتصال وواتساب</p></div>
+</section>
+
+<section id="enrollPanel" class="card section hidden">
+<h2>طلب التحاق لاعب</h2><p class="muted small">املأ البيانات الأساسية وسيتواصل معكم فريق الأكاديمية.</p>
+<form id="enrollForm">
+<div class="row">
 <label>اسم اللاعب *<input name="player_name" required maxlength="120"></label>
 <label>تاريخ الميلاد<input name="birth_date" type="date"></label>
 <label>الفرع<select name="branch_id" id="enrollBranch"><option value="">اختار الفرع</option></select></label>
@@ -41,79 +60,419 @@ form{display:grid;gap:12px}label{display:grid;gap:6px;color:#d9d6cd;font-size:13
 <label>وظيفة الأب<input name="father_occupation"></label>
 <label>وظيفة الأم<input name="mother_occupation"></label>
 <label>العنوان<input name="address"></label>
-</div><label>ملاحظات إضافية<textarea id="enrollNotes" placeholder="أي معلومات تحب تضيفها"></textarea></label>
-<button type="submit">إرسال طلب الالتحاق</button><div id="enrollMsg" class="notice">سيتم إرسال الطلب بعد تفعيل ربط قاعدة البيانات.</div></form></section>
+</div>
+<button type="submit">إرسال طلب الالتحاق</button><div id="enrollMsg" class="notice">جاري تجهيز الاتصال بقاعدة البيانات.</div>
+</form></section>
 
-<section id="loginPanel" class="card section hidden"><h2>دخول الإدارة</h2><form id="loginForm"><label>البريد الإلكتروني<input id="email" type="email" required autocomplete="username"></label><label>كلمة المرور<input id="password" type="password" required autocomplete="current-password"></label><button>دخول</button><div id="loginMsg" class="notice">الدخول مخصص لحسابات إدارة الأكاديمية المعتمدة.</div></form></section>
+<section id="loginPanel" class="card section hidden">
+<h2>دخول الإدارة</h2>
+<form id="loginForm">
+<label>البريد الإلكتروني<input id="email" type="email" required autocomplete="username"></label>
+<label>كلمة المرور<input id="password" type="password" required autocomplete="current-password"></label>
+<button>دخول</button><div id="loginMsg" class="notice">الدخول مخصص لحسابات إدارة الأكاديمية المعتمدة.</div>
+</form></section>
 
 <section id="adminPanel" class="section hidden">
-<div class="row" style="align-items:center"><div><h2 style="color:var(--gold2)">لوحة إدارة الأكاديمية</h2><p class="muted small" id="adminWelcome">BLACK HORSE ADMIN</p></div><div style="display:flex;gap:8px;justify-content:flex-end"><button class="secondary" onclick="loadDashboard()">تحديث</button><button class="danger" onclick="logout()">خروج</button></div></div>
-<div class="tabs" id="adminTabs">
-<button class="active" data-tab="overview">الرئيسية</button><button data-tab="players">اللاعبون</button><button data-tab="attendance">الحضور والغياب</button><button data-tab="evaluations">التقييمات</button><button data-tab="events">الفعاليات</button><button data-tab="requests">طلبات الالتحاق</button>
+<div class="row" style="align-items:center">
+<div><h2 style="color:var(--gold2)">لوحة إدارة الأكاديمية</h2><p class="muted small" id="adminWelcome">BLACK HORSE ADMIN</p></div>
+<div style="display:flex;gap:8px;justify-content:flex-end"><button class="secondary" onclick="loadDashboard()">تحديث</button><button class="danger" onclick="logout()">خروج</button></div>
 </div>
-<div id="tab-overview" class="adminTab"><div class="grid">
+<div class="tabs" id="adminTabs">
+<button class="active" data-tab="overview">الرئيسية</button>
+<button data-tab="players">اللاعبون</button>
+<button data-tab="attendance">الحضور والغياب</button>
+<button data-tab="evaluations">التقييمات</button>
+<button data-tab="events">الفعاليات</button>
+<button data-tab="requests">طلبات الالتحاق</button>
+</div>
+
+<div id="tab-overview" class="adminTab">
+<div class="grid">
 <div class="card"><div class="muted small">إجمالي اللاعبين النشطين</div><div class="stat" id="statPlayers">—</div></div>
 <div class="card"><div class="muted small">طلبات الالتحاق</div><div class="stat" id="statRequests">—</div></div>
-<div class="card"><div class="muted small">الفعاليات المنشورة</div><div class="stat" id="statEvents">—</div></div></div>
-<div class="notice" style="margin-top:14px">لوحة الإدارة مرتبطة بصلاحيات Supabase. لن تظهر بيانات اللاعبين إلا بعد تسجيل الدخول بحساب إداري معتمد.</div></div>
+<div class="card"><div class="muted small">الفعاليات المنشورة</div><div class="stat" id="statEvents">—</div></div>
+</div>
+<div class="notice">البيانات تظهر بعد تسجيل الدخول بحساب إداري معتمد.</div>
+</div>
 
 <div id="tab-players" class="adminTab hidden">
-<div class="card"><h3>إضافة لاعب</h3><form id="playerForm"><div class="row"><label>اسم اللاعب *<input name="full_name" required></label><label>سنة الميلاد<input name="birth_year" type="number" min="2000" max="2030"></label><label>الفرع<select name="branch_id" id="playerBranch"></select></label><label>المجموعة<select name="group_id" id="playerGroup"></select></label><label>ملاحظة المجموعة<input name="group_note" placeholder="مثلاً: المجموعة غير محددة"></label></div><button>حفظ اللاعب</button><div id="playerMsg" class="small muted"></div></form></div>
-<div class="card" style="margin-top:14px"><h3>قائمة اللاعبين</h3><div class="row"><label>تصفية الفرع<select id="filterBranch"><option value="">كل الفروع</option></select></label><label>بحث بالاسم<input id="playerSearch" placeholder="اكتب اسم اللاعب"></label></div><div id="playersTable" class="tablewrap" style="margin-top:12px"></div></div>
+<div class="card">
+<h3 id="playerFormTitle">إضافة لاعب</h3>
+<form id="playerForm">
+<input type="hidden" id="editPlayerId">
+<div class="row">
+<label>اسم اللاعب *<input id="playerName" required></label>
+<label>سنة الميلاد<input id="birthYear" type="number" min="2000" max="2030"></label>
+<label>الفرع<select id="playerBranch" required></select></label>
+<label>المجموعة<select id="playerGroup"></select></label>
+<label>ملاحظة المجموعة<input id="groupNote" placeholder="مثلاً: المجموعة غير محددة"></label>
 </div>
+<div class="actions" style="justify-content:flex-start"><button id="playerSubmit">حفظ اللاعب</button><button type="button" class="secondary hidden" id="cancelEdit" onclick="cancelPlayerEdit()">إلغاء التعديل</button></div>
+<div id="playerMsg" class="small muted"></div>
+</form></div>
+<div class="card" style="margin-top:14px">
+<h3>قائمة اللاعبين</h3>
+<div class="row">
+<label>تصفية الفرع<select id="filterBranch"><option value="">كل الفروع</option></select></label>
+<label>بحث بالاسم<input id="playerSearch" placeholder="اكتب اسم اللاعب"></label>
+</div>
+<div id="playersTable" class="tablewrap" style="margin-top:12px"></div>
+</div></div>
 
 <div id="tab-attendance" class="adminTab hidden">
-<div class="card"><h3>إنشاء حصة وتسجيل الحضور</h3><form id="sessionForm"><div class="row"><label>الفرع<select id="sessionBranch" required></select></label><label>المجموعة<select id="sessionGroup"><option value="">كل المجموعات / غير محدد</option></select></label><label>التاريخ<input id="sessionDate" type="date" required></label><label>الوقت<input id="sessionTime" type="time"></label></div><button>إنشاء الحصة وعرض كشف الحضور</button></form><div id="sessionMsg" class="notice" style="margin-top:10px">اختاري الفرع والمجموعة والتاريخ لبدء كشف الحضور.</div></div>
-<div class="card" style="margin-top:14px"><h3>كشف الحضور والغياب</h3><p class="muted small">علّمي اللاعبين الحاضرين ثم احفظي الكشف؛ وسيتم عرض قائمتين منفصلتين.</p><div id="attendanceRoster"></div><button id="saveAttendance" class="hidden" onclick="saveAttendance()">حفظ كشف الحضور</button><div id="attendanceResult"></div></div>
-<div class="card" style="margin-top:14px"><h3>تسجيل حضور بواسطة QR</h3><p class="muted small">امسحي QR اللاعب باستخدام كاميرا الجهاز أو أدخلي الرمز يدويًا. يلزم إنشاء حصة أولًا.</p><div class="row"><label>رمز QR<input id="qrToken" autocomplete="off"></label><div style="align-self:end"><button type="button" onclick="scanQr()">تسجيل الرمز</button></div></div><div id="qrMsg" class="small muted"></div><div id="qrReader"></div></div>
+<div class="card">
+<h3>إنشاء حصة وتسجيل الحضور</h3>
+<form id="sessionForm">
+<div class="row">
+<label>الفرع<select id="sessionBranch" required></select></label>
+<label>المجموعة<select id="sessionGroup"></select></label>
+<label>التاريخ<input id="sessionDate" type="date" required></label>
+<label>الوقت<input id="sessionTime" type="time"></label>
+</div>
+<button>إنشاء الحصة وعرض كشف الحضور</button>
+</form>
+<div id="sessionMsg" class="notice">اختاري الفرع والمجموعة والتاريخ لبدء كشف الحضور.</div>
+</div>
+<div class="card" style="margin-top:14px">
+<h3>كشف الحضور والغياب</h3>
+<p class="muted small">علّمي اللاعبين الحاضرين ثم احفظي الكشف. اللاعبون غير المحددين سيظهرون في قائمة الغياب.</p>
+<div id="attendanceRoster"></div>
+<button id="saveAttendance" class="hidden" onclick="saveAttendance()">حفظ كشف الحضور</button>
+<div id="attendanceResult"></div>
+</div>
+<div class="card" style="margin-top:14px">
+<h3>تسجيل حضور بواسطة QR</h3>
+<p class="muted small">أدخلي رمز اللاعب بعد تجهيز QR الخاص به. يلزم إنشاء حصة أولًا.</p>
+<div class="row">
+<label>رمز QR<input id="qrToken" autocomplete="off"></label>
+<div style="align-self:end"><button type="button" onclick="scanQr()">تسجيل الرمز</button></div>
+</div>
+<div id="qrMsg" class="small muted"></div>
+</div>
 </div>
 
-<div id="tab-evaluations" class="adminTab hidden"><div class="card"><h3>تقييم لاعب</h3><form id="evaluationForm"><label>اللاعب<select id="evaluationPlayer" required></select></label><div class="row"><label>التقييم الفني (من 10)<input id="technical" type="number" min="0" max="10"></label><label>السلوك (من 10)<input id="behavior" type="number" min="0" max="10"></label><label>اللياقة (من 10)<input id="fitness" type="number" min="0" max="10"></label></div><label>ملاحظات<textarea id="evaluationNotes"></textarea></label><button>حفظ التقييم</button><div id="evaluationMsg" class="small muted"></div></form></div></div>
+<div id="tab-evaluations" class="adminTab hidden">
+<div class="card"><h3>تقييم لاعب</h3>
+<form id="evaluationForm">
+<label>اللاعب<select id="evaluationPlayer" required></select></label>
+<div class="row">
+<label>التقييم الفني (من 10)<input id="technical" type="number" min="0" max="10"></label>
+<label>السلوك (من 10)<input id="behavior" type="number" min="0" max="10"></label>
+<label>اللياقة (من 10)<input id="fitness" type="number" min="0" max="10"></label>
+</div>
+<label>ملاحظات<textarea id="evaluationNotes"></textarea></label>
+<button>حفظ التقييم</button><div id="evaluationMsg" class="small muted"></div>
+</form></div></div>
 
-<div id="tab-events" class="adminTab hidden"><div class="card"><h3>إضافة فعالية</h3><form id="eventForm"><label>اسم الفعالية<input id="eventTitle" required></label><label>الوصف<textarea id="eventDescription"></textarea></label><div class="row"><label>التاريخ<input id="eventDate" type="date"></label><label>السعة<input id="eventCapacity" type="number" min="1"></label></div><label><span><input id="eventPublished" type="checkbox" checked style="width:auto"> نشر الفعالية</span></label><button>حفظ الفعالية</button><div id="eventMsg" class="small muted"></div></form></div><div id="eventsList" class="card" style="margin-top:14px"></div></div>
+<div id="tab-events" class="adminTab hidden">
+<div class="card"><h3>إضافة فعالية</h3>
+<form id="eventForm">
+<label>اسم الفعالية<input id="eventTitle" required></label>
+<label>الوصف<textarea id="eventDescription"></textarea></label>
+<div class="row"><label>التاريخ<input id="eventDate" type="date"></label><label>السعة<input id="eventCapacity" type="number" min="1"></label></div>
+<label style="display:flex;align-items:center;gap:8px"><input id="eventPublished" type="checkbox" checked> نشر الفعالية</label>
+<button>حفظ الفعالية</button><div id="eventMsg" class="small muted"></div>
+</form></div>
+<div id="eventsList" class="card" style="margin-top:14px"></div>
+</div>
 
-<div id="tab-requests" class="adminTab hidden"><div class="card"><h3>طلبات الالتحاق الواردة</h3><div id="requestsTable" class="tablewrap"></div></div></div>
+<div id="tab-requests" class="adminTab hidden">
+<div class="card"><h3>طلبات الالتحاق الواردة</h3><div id="requestsTable" class="tablewrap"></div></div>
+</div>
 </section>
 <div class="footer">BLACK HORSE FOOTBALL ACADEMY · MORE THAN FOOTBALL</div>
 </main>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = "https://rjkdgjncxkszleorcave.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE";
+const SUPABASE_URL="https://rjkdgjncxkszleorcave.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_QgNtkC4EwtJAg2rcRdeuVg_yCdHI64y";
+
 let db=null,user=null,branches=[],groups=[],players=[],activeSession=null,attendanceMarked=new Set();
 const $=id=>document.getElementById(id);
+const today=()=>new Date().toLocaleDateString('en-CA');
+
 function msg(id,text){$(id).textContent=text}
-function showPublic(which){$('enrollPanel').classList.toggle('hidden',which!=='enroll');$('publicBranches').classList.toggle('hidden',which==='enroll');$('loginPanel').classList.add('hidden');$('enrollPanel').scrollIntoView({behavior:'smooth',block:'start'})}
-function showLogin(){$('loginPanel').classList.remove('hidden');$('enrollPanel').classList.add('hidden');$('loginPanel').scrollIntoView({behavior:'smooth'})}
-function ready(){if(!window.supabase||SUPABASE_PUBLISHABLE_KEY.startsWith('PASTE_'))return false;db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);return true}
-function fillSelect(id,items,placeholder){const el=$(id);if(!el)return;el.innerHTML=placeholder?`<option value="">${placeholder}</option>`:'';items.forEach(x=>{const o=document.createElement('option');o.value=x.id;o.textContent=x.name;el.appendChild(o)})}
-async function init(){if(!ready()){msg('enrollMsg','الموقع يحتاج إضافة Publishable Key من إعدادات Supabase قبل تفعيل الإرسال والدخول.');return}
-const [b,g]=await Promise.all([db.from('branches').select('id,name').order('name'),db.from('academy_groups').select('id,name').order('name')]);
-if(b.error||g.error){console.error(b.error||g.error);return}branches=b.data||[];groups=g.data||[];
-['enrollBranch','playerBranch','sessionBranch','filterBranch'].forEach(id=>fillSelect(id,branches,id==='filterBranch'?'كل الفروع':'اختار الفرع'));
-['playerGroup','sessionGroup'].forEach(id=>fillSelect(id,groups,id==='sessionGroup'?'كل المجموعات / غير محدد':'اختار المجموعة'));
-}
-$('loginForm').addEventListener('submit',async e=>{e.preventDefault();if(!db){msg('loginMsg','إعداد مفتاح Supabase مطلوب قبل الدخول.');return}const {data,error}=await db.auth.signInWithPassword({email:$('email').value,password:$('password').value});if(error){msg('loginMsg',error.message);return}user=data.user;const a=await db.from('academy_admins').select('admin_name').eq('user_id',user.id).maybeSingle();if(a.error||!a.data){await db.auth.signOut();msg('loginMsg','الحساب غير موجود ضمن إدارة الأكاديمية.');return}$('adminWelcome').textContent='مرحبًا '+a.data.admin_name;$('adminPanel').classList.remove('hidden');$('loginPanel').classList.add('hidden');await loadDashboard();$('adminPanel').scrollIntoView({behavior:'smooth'})});
-async function logout(){await db.auth.signOut();user=null;$('adminPanel').classList.add('hidden');showLogin()}
-async function loadDashboard(){if(!db||!user)return;const [p,r,e]=await Promise.all([db.from('players').select('id',{count:'exact',head:true}).eq('active',true),db.from('enrollment_requests').select('id',{count:'exact',head:true}),db.from('academy_events').select('id',{count:'exact',head:true}).eq('published',true)]);$('statPlayers').textContent=p.count??'—';$('statRequests').textContent=r.count??'—';$('statEvents').textContent=e.count??'—';await Promise.all([loadPlayers(),loadRequests(),loadEvents(),loadEvaluationPlayers()])}
-document.querySelectorAll('#adminTabs button').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('#adminTabs button').forEach(b=>b.classList.toggle('active',b===btn));document.querySelectorAll('.adminTab').forEach(t=>t.classList.add('hidden'));$('tab-'+btn.dataset.tab).classList.remove('hidden')}));
-$('playerForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target),obj=Object.fromEntries(f.entries());obj.birth_year=obj.birth_year?Number(obj.birth_year):null;obj.branch_id=obj.branch_id||null;obj.group_id=obj.group_id||null;obj.active=true;const {error}=await db.from('players').insert(obj);msg('playerMsg',error?error.message:'تم حفظ اللاعب بنجاح');if(!error){e.target.reset();await loadPlayers();await loadDashboard()}});
-async function loadPlayers(){const {data,error}=await db.from('players').select('id,full_name,birth_year,branch_id,group_id,group_note,active').order('full_name');if(error){$('playersTable').textContent=error.message;return}players=data||[];renderPlayers();fillSelect('evaluationPlayer',players.map(p=>({id:p.id,name:p.full_name})),'اختاري اللاعب')}
-function renderPlayers(){const q=$('playerSearch').value.trim();const branch=$('filterBranch').value;const rows=players.filter(p=>(!branch||p.branch_id===branch)&&(!q||p.full_name.includes(q)));$('playersTable').innerHTML='<table><thead><tr><th>اللاعب</th><th>سنة الميلاد</th><th>الفرع</th><th>المجموعة</th><th>الحالة</th></tr></thead><tbody>'+rows.map(p=>`<tr><td>${esc(p.full_name)}</td><td>${p.birth_year||'—'}</td><td>${nameOf(branches,p.branch_id)}</td><td>${nameOf(groups,p.group_id)||esc(p.group_note||'غير محدد')}</td><td>${p.active?'نشط':'متوقف'}</td></tr>`).join('')+'</tbody></table>'}
-$('playerSearch').addEventListener('input',renderPlayers);$('filterBranch').addEventListener('change',renderPlayers);
-function nameOf(list,id){return list.find(x=>x.id===id)?.name||'—'}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-$('sessionForm').addEventListener('submit',async e=>{e.preventDefault();const branch_id=$('sessionBranch').value,group_id=$('sessionGroup').value||null,session_date=$('sessionDate').value,session_time=$('sessionTime').value||null;if(!branch_id||!session_date)return;const {data,error}=await db.from('attendance_sessions').insert({branch_id,group_id,session_date,session_time}).select().single();if(error){msg('sessionMsg',error.message);return}activeSession=data;attendanceMarked=new Set();const roster=players.filter(p=>p.active&&p.branch_id===branch_id&&(!group_id||p.group_id===group_id));$('attendanceRoster').innerHTML=roster.map(p=>`<label style="display:flex;grid-template-columns:auto 1fr;align-items:center;padding:8px;border-bottom:1px solid var(--line)"><input type="checkbox" data-player="${p.id}" style="width:auto" onchange="togglePresent('${p.id}',this.checked)"><span>${esc(p.full_name)} <span class="muted small">${p.birth_year||''}</span></span></label>`).join('')||'<p class="muted">لا يوجد لاعبون مسجلون في هذا الاختيار.</p>';$('saveAttendance').classList.remove('hidden');msg('sessionMsg','تم إنشاء الحصة. علّمي الحاضرين ثم احفظي الكشف.');$('attendanceResult').innerHTML=''}
-function togglePresent(id,on){if(on)attendanceMarked.add(id);else attendanceMarked.delete(id)}
-async function saveAttendance(){if(!activeSession)return;const roster=players.filter(p=>p.active&&p.branch_id===activeSession.branch_id&&(!activeSession.group_id||p.group_id===activeSession.group_id));const ids=Array.from(attendanceMarked);if(ids.length){const {error}=await db.from('attendance_records').insert(ids.map(player_id=>({session_id:activeSession.id,player_id})));if(error){$('attendanceResult').textContent=error.message;return}}const present=roster.filter(p=>attendanceMarked.has(p.id)),absent=roster.filter(p=>!attendanceMarked.has(p.id));$('attendanceResult').innerHTML=`<div class="grid"><div class="card"><h3>الحاضرون (${present.length})</h3>${present.map(p=>'<p>'+esc(p.full_name)+'</p>').join('')||'—'}</div><div class="card"><h3>الغائبون (${absent.length})</h3>${absent.map(p=>'<p>'+esc(p.full_name)+'</p>').join('')||'—'}</div></div>`;$('saveAttendance').disabled=true;$('saveAttendance').textContent='تم حفظ الكشف'}
-async function scanQr(){const token=$('qrToken').value.trim();if(!token||!activeSession){msg('qrMsg','أنشئي حصة أولًا ثم أدخلي رمز اللاعب.');return}const hash=await sha256(token);const {data,error}=await db.from('players').select('id,full_name').eq('attendance_qr_hash',hash).eq('active',true).maybeSingle();if(error||!data){msg('qrMsg','الرمز غير صحيح أو اللاعب غير نشط.');return}if(players.find(p=>p.id===data.id)){attendanceMarked.add(data.id);const cb=document.querySelector(`[data-player="${data.id}"]`);if(cb)cb.checked=true}msg('qrMsg','تم التعرف على اللاعب: '+data.full_name+' — اضغطي حفظ كشف الحضور.');$('qrToken').value=''}
-async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}
-$('evaluationForm').addEventListener('submit',async e=>{e.preventDefault();const obj={player_id:$('evaluationPlayer').value,evaluation_date:new Date().toISOString().slice(0,10),technical_score:num('technical'),behavior_score:num('behavior'),fitness_score:num('fitness'),notes:$('evaluationNotes').value||null};const {error}=await db.from('player_evaluations').insert(obj);msg('evaluationMsg',error?error.message:'تم حفظ التقييم');if(!error)e.target.reset()});
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function nameOf(list,id){return list.find(x=>x.id===id)?.name||'—'}
 function num(id){return $(id).value===''?null:Number($(id).value)}
-$('eventForm').addEventListener('submit',async e=>{e.preventDefault();const obj={title:$('eventTitle').value,description:$('eventDescription').value||null,event_date:$('eventDate').value||null,capacity:num('eventCapacity'),published:$('eventPublished').checked};const {error}=await db.from('academy_events').insert(obj);msg('eventMsg',error?error.message:'تم حفظ الفعالية');if(!error){e.target.reset();await loadEvents()}});
-async function loadEvents(){const {data,error}=await db.from('academy_events').select('*').order('created_at',{ascending:false});$('eventsList').innerHTML='<h3>الفعاليات</h3>'+(error?esc(error.message):(data||[]).map(x=>`<p>${esc(x.title)} · ${x.event_date||'بدون تاريخ'} · ${x.published?'منشورة':'مسودة'}</p>`).join('')||'<p class="muted">لا توجد فعاليات بعد.</p>')}
-async function loadRequests(){const {data,error}=await db.from('enrollment_requests').select('player_name,parent_phone,submitted_at,status').order('submitted_at',{ascending:false});$('requestsTable').innerHTML=error?esc(error.message):'<table><thead><tr><th>اسم اللاعب</th><th>رقم ولي الأمر</th><th>تاريخ الطلب</th><th>الحالة</th></tr></thead><tbody>'+(data||[]).map(x=>`<tr><td>${esc(x.player_name)}</td><td>${esc(x.parent_phone)}</td><td>${new Date(x.submitted_at).toLocaleDateString('ar-EG')}</td><td>${esc(x.status)}</td></tr>`).join('')+'</tbody></table>'}
-async function loadEvaluationPlayers(){if(players.length)fillSelect('evaluationPlayer',players.map(p=>({id:p.id,name:p.full_name})),'اختاري اللاعب')}
-$('enrollForm').addEventListener('submit',async e=>{e.preventDefault();if(!db){msg('enrollMsg','إعداد مفتاح Supabase مطلوب أولًا.');return}const f=new FormData(e.target);const obj={player_name:f.get('player_name'),birth_date:f.get('birth_date')||null,father_occupation:f.get('father_occupation')||null,mother_occupation:f.get('mother_occupation')||null,address:f.get('address')||null,branch_id:f.get('branch_id')||null,parent_phone:f.get('parent_phone'),additional_phone:f.get('additional_phone')||null,status:'pending'};const {error}=await db.from('enrollment_requests').insert(obj);msg('enrollMsg',error?'تعذر إرسال الطلب: '+error.message:'تم استلام طلب الالتحاق بنجاح، شكرًا لثقتكم في بلاك هورس.');if(!error)e.target.reset()});
+
+function showPublic(which){
+$('enrollPanel').classList.toggle('hidden',which!=='enroll');
+$('publicBranches').classList.toggle('hidden',which==='enroll');
+$('loginPanel').classList.add('hidden');
+if(which==='enroll')$('enrollPanel').scrollIntoView({behavior:'smooth'});
+else $('publicBranches').scrollIntoView({behavior:'smooth'});
+}
+function showLogin(){
+$('loginPanel').classList.remove('hidden');
+$('enrollPanel').classList.add('hidden');
+$('loginPanel').scrollIntoView({behavior:'smooth'});
+}
+function ready(){
+if(!window.supabase||!SUPABASE_PUBLISHABLE_KEY)return false;
+db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+return true;
+}
+function fillSelect(id,items,placeholder){
+const el=$(id);if(!el)return;
+el.innerHTML='';
+if(placeholder!==null)el.add(new Option(placeholder,''));
+items.forEach(x=>el.add(new Option(x.name,x.id)));
+}
+async function init(){
+if(!ready()){
+msg('enrollMsg','تعذر تحميل مكتبة الاتصال. حدّثي الصفحة وجربي مرة أخرى.');
+return;
+}
+const [b,g]=await Promise.all([
+db.from('branches').select('id,name').order('name'),
+db.from('academy_groups').select('id,name').order('name')
+]);
+if(b.error||g.error){
+msg('enrollMsg','تعذر تحميل بيانات الفروع والمجموعات: '+(b.error||g.error).message);
+return;
+}
+branches=b.data||[];groups=g.data||[];
+fillSelect('enrollBranch',branches,'اختاري الفرع');
+fillSelect('playerBranch',branches,'اختاري الفرع');
+fillSelect('filterBranch',branches,'كل الفروع');
+fillSelect('sessionBranch',branches,'اختاري الفرع');
+fillSelect('playerGroup',groups,'غير محدد');
+fillSelect('sessionGroup',groups,'كل المجموعات / غير محدد');
+msg('enrollMsg','يمكن إرسال طلب الالتحاق من هنا.');
+}
+$('loginForm').addEventListener('submit',async e=>{
+e.preventDefault();
+if(!db){msg('loginMsg','الاتصال بقاعدة البيانات غير جاهز.');return}
+msg('loginMsg','جاري تسجيل الدخول...');
+const {data,error}=await db.auth.signInWithPassword({email:$('email').value,password:$('password').value});
+if(error){msg('loginMsg','تعذر الدخول: '+error.message);return}
+user=data.user;
+const a=await db.from('academy_admins').select('admin_name').eq('user_id',user.id).maybeSingle();
+if(a.error||!a.data){
+await db.auth.signOut();user=null;
+msg('loginMsg','الحساب غير مضاف إلى إدارة الأكاديمية.');
+return;
+}
+$('adminWelcome').textContent='مرحبًا '+a.data.admin_name;
+$('adminPanel').classList.remove('hidden');
+$('loginPanel').classList.add('hidden');
+await loadDashboard();
+$('adminPanel').scrollIntoView({behavior:'smooth'});
+});
+async function logout(){
+if(db)await db.auth.signOut();
+user=null;activeSession=null;
+$('adminPanel').classList.add('hidden');showLogin();
+}
+async function loadDashboard(){
+if(!db||!user)return;
+const [p,r,e]=await Promise.all([
+db.from('players').select('id',{count:'exact',head:true}).eq('active',true),
+db.from('enrollment_requests').select('id',{count:'exact',head:true}),
+db.from('academy_events').select('id',{count:'exact',head:true}).eq('published',true)
+]);
+$('statPlayers').textContent=p.count??'—';
+$('statRequests').textContent=r.count??'—';
+$('statEvents').textContent=e.count??'—';
+await Promise.all([loadPlayers(),loadRequests(),loadEvents()]);
+}
+document.querySelectorAll('#adminTabs button').forEach(btn=>btn.addEventListener('click',()=>{
+document.querySelectorAll('#adminTabs button').forEach(b=>b.classList.toggle('active',b===btn));
+document.querySelectorAll('.adminTab').forEach(t=>t.classList.add('hidden'));
+$('tab-'+btn.dataset.tab).classList.remove('hidden');
+}));
+
+$('playerForm').addEventListener('submit',async e=>{
+e.preventDefault();
+const id=$('editPlayerId').value;
+const obj={
+full_name:$('playerName').value.trim(),
+birth_year:$('birthYear').value?Number($('birthYear').value):null,
+branch_id:$('playerBranch').value||null,
+group_id:$('playerGroup').value||null,
+group_note:$('groupNote').value.trim()||null,
+active:true
+};
+if(!obj.full_name){msg('playerMsg','اكتبي اسم اللاعب.');return}
+let result=id
+?await db.from('players').update(obj).eq('id',id)
+:await db.from('players').insert(obj);
+if(result.error){msg('playerMsg','تعذر الحفظ: '+result.error.message);return}
+msg('playerMsg',id?'تم تعديل بيانات اللاعب.':'تمت إضافة اللاعب بنجاح.');
+cancelPlayerEdit();
+await loadPlayers();
+});
+function editPlayer(id){
+const p=players.find(x=>x.id===id);if(!p)return;
+$('editPlayerId').value=p.id;
+$('playerName').value=p.full_name;
+$('birthYear').value=p.birth_year||'';
+$('playerBranch').value=p.branch_id||'';
+$('playerGroup').value=p.group_id||'';
+$('groupNote').value=p.group_note||'';
+$('playerFormTitle').textContent='تعديل بيانات لاعب';
+$('playerSubmit').textContent='حفظ التعديلات';
+$('cancelEdit').classList.remove('hidden');
+$('playerFormTitle').scrollIntoView({behavior:'smooth'});
+}
+function cancelPlayerEdit(){
+$('editPlayerId').value='';
+$('playerForm').reset();
+$('playerFormTitle').textContent='إضافة لاعب';
+$('playerSubmit').textContent='حفظ اللاعب';
+$('cancelEdit').classList.add('hidden');
+}
+async function deletePlayer(id){
+const p=players.find(x=>x.id===id);if(!p)return;
+if(!confirm('هل تريدين إيقاف اللاعب '+p.full_name+'؟ لن نحذف سجلاته القديمة.'))return;
+const {error}=await db.from('players').update({active:false}).eq('id',id);
+if(error){alert('تعذر إيقاف اللاعب: '+error.message);return}
+await loadPlayers();await loadDashboard();
+}
+async function loadPlayers(){
+const {data,error}=await db.from('players').select('id,full_name,birth_year,branch_id,group_id,group_note,active').order('full_name');
+if(error){$('playersTable').textContent=error.message;return}
+players=data||[];renderPlayers();
+fillSelect('evaluationPlayer',players.filter(p=>p.active).map(p=>({id:p.id,name:p.full_name})),'اختاري اللاعب');
+}
+function renderPlayers(){
+const q=$('playerSearch').value.trim().toLowerCase();
+const branch=$('filterBranch').value;
+const rows=players.filter(p=>(!branch||p.branch_id===branch)&&(!q||p.full_name.toLowerCase().includes(q)));
+$('playersTable').innerHTML='<table><thead><tr><th>اللاعب</th><th>سنة الميلاد</th><th>الفرع</th><th>المجموعة</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>'+
+rows.map(p=>`<tr>
+<td>${esc(p.full_name)}</td><td>${p.birth_year||'—'}</td>
+<td>${esc(nameOf(branches,p.branch_id))}</td>
+<td>${esc(nameOf(groups,p.group_id)!=='—'?nameOf(groups,p.group_id):(p.group_note||'غير محدد'))}</td>
+<td>${p.active?'<span class="pill">نشط</span>':'<span class="pill red">متوقف</span>'}</td>
+<td><button class="secondary" onclick="editPlayer('${p.id}')">تعديل</button> ${p.active?`<button class="danger" onclick="deletePlayer('${p.id}')">إيقاف</button>`:''}</td>
+</tr>`).join('')+'</tbody></table>';
+}
+$('playerSearch').addEventListener('input',renderPlayers);
+$('filterBranch').addEventListener('change',renderPlayers);
+
+$('sessionForm').addEventListener('submit',async e=>{
+e.preventDefault();
+const branch_id=$('sessionBranch').value;
+const group_id=$('sessionGroup').value||null;
+const session_date=$('sessionDate').value;
+const session_time=$('sessionTime').value||null;
+if(!branch_id||!session_date){msg('sessionMsg','اختاري الفرع والتاريخ.');return}
+const {data,error}=await db.from('attendance_sessions').insert({branch_id,group_id,session_date,session_time}).select().single();
+if(error){msg('sessionMsg','تعذر إنشاء الحصة: '+error.message);return}
+activeSession=data;
+attendanceMarked=new Set();
+$('attendanceResult').innerHTML='';
+$('saveAttendance').disabled=false;
+$('saveAttendance').textContent='حفظ كشف الحضور';
+$('saveAttendance').classList.remove('hidden');
+renderAttendanceRoster();
+msg('sessionMsg','تم إنشاء الحصة. حددي الحاضرين ثم احفظي الكشف.');
+});
+function currentRoster(){
+if(!activeSession)return [];
+return players.filter(p=>p.active&&p.branch_id===activeSession.branch_id&&
+(!activeSession.group_id||p.group_id===activeSession.group_id));
+}
+function renderAttendanceRoster(){
+const roster=currentRoster();
+$('attendanceRoster').innerHTML=roster.map(p=>`
+<label class="player-row">
+<input type="checkbox" data-player="${p.id}" ${attendanceMarked.has(p.id)?'checked':''} onchange="togglePresent('${p.id}',this.checked)">
+<span>
+<span class="attendance-name">${esc(p.full_name)}</span>
+<span class="attendance-meta">الميلاد: ${p.birth_year||'غير مسجل'} · الفرع: ${esc(nameOf(branches,p.branch_id))} · المجموعة: ${esc(nameOf(groups,p.group_id)!=='—'?nameOf(groups,p.group_id):(p.group_note||'غير محددة'))}</span>
+</span>
+</label>`).join('')||'<p class="muted">لا يوجد لاعبون نشطون في هذا الاختيار. راجعي الفرع والمجموعة.</p>';
+}
+function togglePresent(id,on){
+if(on)attendanceMarked.add(id);else attendanceMarked.delete(id);
+}
+async function saveAttendance(){
+if(!activeSession)return;
+const roster=currentRoster();
+const ids=[...attendanceMarked].filter(id=>roster.some(p=>p.id===id));
+const {error:delError}=await db.from('attendance_records').delete().eq('session_id',activeSession.id);
+if(delError){$('attendanceResult').textContent='تعذر تحديث الكشف: '+delError.message;return}
+if(ids.length){
+const {error}=await db.from('attendance_records').insert(ids.map(player_id=>({session_id:activeSession.id,player_id})));
+if(error){$('attendanceResult').textContent='تعذر حفظ الحضور: '+error.message;return}
+}
+showAttendanceResult(roster);
+msg('sessionMsg','تم حفظ كشف الحضور والغياب بنجاح.');
+$('saveAttendance').disabled=false;
+$('saveAttendance').textContent='تحديث كشف الحضور';
+}
+function showAttendanceResult(roster){
+const present=roster.filter(p=>attendanceMarked.has(p.id));
+const absent=roster.filter(p=>!attendanceMarked.has(p.id));
+const item=p=>`<div class="player-row"><span></span><span><b>${esc(p.full_name)}</b><div class="attendance-meta">الميلاد: ${p.birth_year||'غير مسجل'} · ${esc(nameOf(branches,p.branch_id))} · ${esc(nameOf(groups,p.group_id)!=='—'?nameOf(groups,p.group_id):(p.group_note||'غير محددة'))}</div></span></div>`;
+$('attendanceResult').innerHTML=`
+<div class="grid">
+<div class="card"><h3>الحاضرون (${present.length})</h3>${present.map(item).join('')||'<p class="muted">لا يوجد حاضرين.</p>'}</div>
+<div class="card"><h3>الغائبون (${absent.length})</h3>${absent.map(item).join('')||'<p class="muted">لا يوجد غائبون.</p>'}</div>
+</div>`;
+}
+async function scanQr(){
+const token=$('qrToken').value.trim();
+if(!token||!activeSession){msg('qrMsg','أنشئي حصة أولًا ثم أدخلي رمز اللاعب.');return}
+const {data,error}=await db.rpc('scan_player_qr',{p_session_id:activeSession.id,p_qr_token:token});
+if(error){msg('qrMsg','تعذر تسجيل الرمز: '+error.message);return}
+if(!data?.success){msg('qrMsg',data?.message||'لم يتم تسجيل الحضور.');return}
+const found=players.find(p=>p.full_name===data.player_name);
+if(found){
+attendanceMarked.add(found.id);
+const cb=document.querySelector(`[data-player="${found.id}"]`);
+if(cb)cb.checked=true;
+}
+msg('qrMsg',data.message||('تم التعرف على اللاعب: '+data.player_name));
+$('qrToken').value='';
+}
+$('evaluationForm').addEventListener('submit',async e=>{
+e.preventDefault();
+const obj={player_id:$('evaluationPlayer').value,evaluation_date:today(),technical_score:num('technical'),behavior_score:num('behavior'),fitness_score:num('fitness'),notes:$('evaluationNotes').value||null};
+const {error}=await db.from('player_evaluations').insert(obj);
+msg('evaluationMsg',error?'تعذر حفظ التقييم: '+error.message:'تم حفظ التقييم بنجاح.');
+if(!error)e.target.reset();
+});
+$('eventForm').addEventListener('submit',async e=>{
+e.preventDefault();
+const obj={title:$('eventTitle').value.trim(),description:$('eventDescription').value||null,event_date:$('eventDate').value||null,capacity:num('eventCapacity'),published:$('eventPublished').checked};
+const {error}=await db.from('academy_events').insert(obj);
+msg('eventMsg',error?'تعذر حفظ الفعالية: '+error.message:'تم حفظ الفعالية.');
+if(!error){e.target.reset();await loadEvents();await loadDashboard()}
+});
+async function loadEvents(){
+const {data,error}=await db.from('academy_events').select('*').order('created_at',{ascending:false});
+$('eventsList').innerHTML='<h3>الفعاليات</h3>'+(error?esc(error.message):(data||[]).map(x=>`<p>${esc(x.title)} · ${x.event_date||'بدون تاريخ'} · ${x.published?'منشورة':'مسودة'}</p>`).join('')||'<p class="muted">لا توجد فعاليات بعد.</p>');
+}
+async function loadRequests(){
+const {data,error}=await db.from('enrollment_requests').select('player_name,parent_phone,submitted_at,status').order('submitted_at',{ascending:false});
+$('requestsTable').innerHTML=error?esc(error.message):'<table><thead><tr><th>اسم اللاعب</th><th>رقم ولي الأمر</th><th>تاريخ الطلب</th><th>الحالة</th></tr></thead><tbody>'+
+(data||[]).map(x=>`<tr><td>${esc(x.player_name)}</td><td>${esc(x.parent_phone)}</td><td>${new Date(x.submitted_at).toLocaleDateString('ar-EG')}</td><td>${esc(x.status)}</td></tr>`).join('')+'</tbody></table>';
+}
+$('enrollForm').addEventListener('submit',async e=>{
+e.preventDefault();
+if(!db){msg('enrollMsg','الاتصال بقاعدة البيانات غير جاهز.');return}
+const f=new FormData(e.target);
+const obj={
+player_name:f.get('player_name'),
+birth_date:f.get('birth_date')||null,
+father_occupation:f.get('father_occupation')||null,
+mother_occupation:f.get('mother_occupation')||null,
+address:f.get('address')||null,
+branch_id:f.get('branch_id')||null,
+parent_phone:f.get('parent_phone'),
+additional_phone:f.get('additional_phone')||null,
+status:'pending'
+};
+const {error}=await db.from('enrollment_requests').insert(obj);
+msg('enrollMsg',error?'تعذر إرسال الطلب: '+error.message:'تم استلام طلب الالتحاق بنجاح، شكرًا لثقتكم في بلاك هورس.');
+if(!error)e.target.reset();
+});
 init();
 </script>
-</body></html>
+</body>
+</html>
