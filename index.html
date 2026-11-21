@@ -11,25 +11,73 @@
 *{box-sizing:border-box}
 body{margin:0;background:radial-gradient(ellipse at top,#1b2224 0,#090b0d 58%);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;min-height:100vh}
 header{padding:20px 16px;border-bottom:1px solid #34302a;background:#080a0cdd;position:sticky;top:0;z-index:5;backdrop-filter:blur(12px)}
-.wrap{max-width:1120px;margin:auto}.brand{display:flex;align-items:center;gap:14px}.mark{width:52px;height:52px;border:1px solid var(--gold);border-radius:14px;display:grid;place-items:center;color:var(--gold);font-size:27px}.brand h1{font-size:19px;letter-spacing:2px;margin:0;color:var(--gold2)}.brand p{margin:4px 0 0;color:var(--muted);font-size:12px;letter-spacing:1px}
-main{max-width:1120px;margin:26px auto;padding:0 16px 60px}.hero{padding:34px 22px;border:1px solid #5b4927;border-radius:22px;background:linear-gradient(135deg,#171b1c,#0c0f10 65%);text-align:center}.eyebrow{color:var(--gold);letter-spacing:3px;font-size:12px}.hero h2{font-size:clamp(27px,5vw,46px);margin:12px 0;color:var(--gold2)}.hero p{color:var(--muted);margin:8px 0}
+.wrap{max-width:1120px;margin:auto}
+.brand{display:flex;align-items:center;gap:14px}
+.mark{width:52px;height:52px;border:1px solid var(--gold);border-radius:14px;display:grid;place-items:center;color:var(--gold);font-size:27px}
+.brand h1{font-size:19px;letter-spacing:2px;margin:0;color:var(--gold2)}
+.brand p{margin:4px 0 0;color:var(--muted);font-size:12px;letter-spacing:1px}
+main{max-width:1120px;margin:26px auto;padding:0 16px 60px}
+.hero{padding:34px 22px;border:1px solid #5b4927;border-radius:22px;background:linear-gradient(135deg,#171b1c,#0c0f10 65%);text-align:center}
+.eyebrow{color:var(--gold);letter-spacing:3px;font-size:12px}
+.hero h2{font-size:clamp(27px,5vw,46px);margin:12px 0;color:var(--gold2)}
+.hero p{color:var(--muted);margin:8px 0}
 .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:22px}
 button,.btn{border:1px solid var(--gold);background:var(--gold);color:#111;padding:11px 16px;border-radius:11px;font-weight:750;cursor:pointer;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}
-button.secondary,.btn.secondary{background:transparent;color:var(--gold2)}button.danger{background:#542a28;border-color:#8b4944;color:#fff}button:disabled{opacity:.5;cursor:not-allowed}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:18px}.card{background:linear-gradient(160deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:17px;padding:18px}.card h3{margin:0 0 10px;color:var(--gold2)}.muted{color:var(--muted)}.small{font-size:12px}.section{margin-top:28px}.section>h2{color:var(--gold2);font-size:21px}
-form{display:grid;gap:12px}label{display:grid;gap:6px;color:#d9d6cd;font-size:13px}
-input,select,textarea{width:100%;background:#090d0f;border:1px solid #394347;border-radius:10px;padding:11px;color:white;font:inherit;min-width:0}input[type=checkbox]{width:auto;accent-color:var(--gold)}textarea{min-height:82px;resize:vertical}
-.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.tabs{display:flex;gap:8px;overflow:auto;padding:3px 0 12px}.tabs button{white-space:nowrap}.tabs button.active{background:var(--gold);color:#111}
-.hidden{display:none!important}.notice{padding:12px;border:1px solid var(--line);border-radius:10px;background:#101618;color:var(--muted);font-size:13px;margin-top:10px}
-.stat{font-size:28px;color:var(--gold2);font-weight:800}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}
-table{width:100%;border-collapse:collapse;min-width:620px}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:right;font-size:13px}th{color:var(--gold2);background:#151a1c}tr:last-child td{border:0}
-.pill{display:inline-block;padding:4px 9px;border-radius:20px;background:#203328;color:#b7dfc4;font-size:11px}.pill.red{background:#3d2423;color:#f2b4ae}
-.footer{text-align:center;color:#777;font-size:12px;margin-top:40px}.player-row{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center;padding:11px;border-bottom:1px solid var(--line)}.player-row:last-child{border:0}.attendance-name{font-weight:700}.attendance-meta{font-size:12px;color:var(--muted);margin-top:3px}
-@media(max-width:600px){header{padding:14px}.brand h1{font-size:15px}.hero{padding:27px 15px}main{margin-top:16px}}
+button.secondary,.btn.secondary{background:transparent;color:var(--gold2)}
+button.danger{background:#542a28;border-color:#8b4944;color:#fff}
+button:disabled{opacity:.5;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:18px}
+.card{background:linear-gradient(160deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:17px;padding:18px}
+.card h3{margin:0 0 10px;color:var(--gold2)}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.section{margin-top:28px}
+.section>h2{color:var(--gold2);font-size:21px}
+form{display:grid;gap:12px}
+label{display:grid;gap:6px;color:#d9d6cd;font-size:13px}
+input,select,textarea{width:100%;background:#090d0f;border:1px solid #394347;border-radius:10px;padding:11px;color:white;font:inherit;min-width:0}
+input[type=checkbox]{width:auto;accent-color:var(--gold)}
+textarea{min-height:82px;resize:vertical}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.tabs{display:flex;gap:8px;overflow:auto;padding:3px 0 12px}
+.tabs button{white-space:nowrap}
+.tabs button.active{background:var(--gold);color:#111}
+.hidden{display:none!important}
+.notice{padding:12px;border:1px solid var(--line);border-radius:10px;background:#101618;color:var(--muted);font-size:13px;margin-top:10px}
+.stat{font-size:28px;color:var(--gold2);font-weight:800}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;min-width:700px}
+th,td{padding:10px;border-bottom:1px solid var(--line);text-align:right;font-size:13px}
+th{color:var(--gold2);background:#151a1c}
+tr:last-child td{border:0}
+.pill{display:inline-block;padding:4px 9px;border-radius:20px;background:#203328;color:#b7dfc4;font-size:11px}
+.pill.red{background:#3d2423;color:#f2b4ae}
+.footer{text-align:center;color:#777;font-size:12px;margin-top:40px}
+.player-row{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center;padding:11px;border-bottom:1px solid var(--line)}
+.player-row:last-child{border:0}
+.attendance-name{font-weight:700}
+.attendance-meta{font-size:12px;color:var(--muted);margin-top:3px}
+.qrbox{background:#fff;padding:14px;border-radius:14px;display:inline-block;margin:12px auto}
+.qrbox img,.qrbox canvas{max-width:100%;height:auto}
+.qrmodal{text-align:center}
+#qrReader{width:100%;max-width:500px;margin:15px auto;overflow:hidden;border-radius:12px}
+#qrReader video{border-radius:12px}
+@media(max-width:600px){
+header{padding:14px}
+.brand h1{font-size:15px}
+.hero{padding:27px 15px}
+main{margin-top:16px}
+}
 </style>
 </head>
 <body>
-<header><div class="wrap brand"><div class="mark">♞</div><div><h1>BLACK HORSE</h1><p>FOOTBALL ACADEMY · MORE THAN FOOTBALL</p></div></div></header>
+<header>
+<div class="wrap brand">
+<div class="mark">♞</div>
+<div><h1>BLACK HORSE</h1><p>FOOTBALL ACADEMY · MORE THAN FOOTBALL</p></div>
+</div>
+</header>
+
 <main>
 <section class="hero">
 <div class="eyebrow">SMALL STEPS, BIG DREAMS</div>
@@ -43,13 +91,28 @@ table{width:100%;border-collapse:collapse;min-width:620px}th,td{padding:10px;bor
 </section>
 
 <section id="publicBranches" class="grid section">
-<div class="card"><h3>فرع العرب</h3><p class="muted">حديقة البستان – خلف مكتبة سوزان مبارك</p><p>الأحد 8 مساءً · الثلاثاء والخميس 7 مساءً</p><a class="btn secondary" target="_blank" rel="noopener" href="https://maps.app.goo.gl/9PfDo5GPUwYLzgtM8">الموقع على الخريطة</a></div>
-<div class="card"><h3>فرع الزهراء</h3><p class="muted">مدرسة القدس – بيتشو أمريكان – زهراء المعادي</p><p>السبت والأربعاء 7 مساءً · الاثنين 5:45 مساءً</p><a class="btn secondary" target="_blank" rel="noopener" href="https://maps.app.goo.gl/PjnK98vCVkvR1p6t8">الموقع على الخريطة</a></div>
-<div class="card"><h3>تواصل معنا</h3><p>01115099181</p><p>01147009393</p><p class="muted small">اتصال وواتساب</p></div>
+<div class="card">
+<h3>فرع العرب</h3>
+<p class="muted">حديقة البستان – خلف مكتبة سوزان مبارك</p>
+<p>الأحد 8 مساءً · الثلاثاء والخميس 7 مساءً</p>
+<a class="btn secondary" target="_blank" rel="noopener" href="https://maps.app.goo.gl/9PfDo5GPUwYLzgtM8">الموقع على الخريطة</a>
+</div>
+<div class="card">
+<h3>فرع الزهراء</h3>
+<p class="muted">مدرسة القدس – بيتشو أمريكان – زهراء المعادي</p>
+<p>السبت والأربعاء 7 مساءً · الاثنين 5:45 مساءً</p>
+<a class="btn secondary" target="_blank" rel="noopener" href="https://maps.app.goo.gl/PjnK98vCVkvR1p6t8">الموقع على الخريطة</a>
+</div>
+<div class="card">
+<h3>تواصل معنا</h3>
+<p>01115099181</p><p>01147009393</p>
+<p class="muted small">اتصال وواتساب</p>
+</div>
 </section>
 
 <section id="enrollPanel" class="card section hidden">
-<h2>طلب التحاق لاعب</h2><p class="muted small">املأ البيانات الأساسية وسيتواصل معكم فريق الأكاديمية.</p>
+<h2>طلب التحاق لاعب</h2>
+<p class="muted small">املأ البيانات الأساسية وسيتواصل معكم فريق الأكاديمية.</p>
 <form id="enrollForm">
 <div class="row">
 <label>اسم اللاعب *<input name="player_name" required maxlength="120"></label>
@@ -61,22 +124,30 @@ table{width:100%;border-collapse:collapse;min-width:620px}th,td{padding:10px;bor
 <label>وظيفة الأم<input name="mother_occupation"></label>
 <label>العنوان<input name="address"></label>
 </div>
-<button type="submit">إرسال طلب الالتحاق</button><div id="enrollMsg" class="notice">جاري تجهيز الاتصال بقاعدة البيانات.</div>
-</form></section>
+<button type="submit">إرسال طلب الالتحاق</button>
+<div id="enrollMsg" class="notice">جاري تجهيز الاتصال بقاعدة البيانات.</div>
+</form>
+</section>
 
 <section id="loginPanel" class="card section hidden">
 <h2>دخول الإدارة</h2>
 <form id="loginForm">
 <label>البريد الإلكتروني<input id="email" type="email" required autocomplete="username"></label>
 <label>كلمة المرور<input id="password" type="password" required autocomplete="current-password"></label>
-<button>دخول</button><div id="loginMsg" class="notice">الدخول مخصص لحسابات إدارة الأكاديمية المعتمدة.</div>
-</form></section>
+<button>دخول</button>
+<div id="loginMsg" class="notice">الدخول مخصص لحسابات إدارة الأكاديمية المعتمدة.</div>
+</form>
+</section>
 
 <section id="adminPanel" class="section hidden">
 <div class="row" style="align-items:center">
 <div><h2 style="color:var(--gold2)">لوحة إدارة الأكاديمية</h2><p class="muted small" id="adminWelcome">BLACK HORSE ADMIN</p></div>
-<div style="display:flex;gap:8px;justify-content:flex-end"><button class="secondary" onclick="loadDashboard()">تحديث</button><button class="danger" onclick="logout()">خروج</button></div>
+<div style="display:flex;gap:8px;justify-content:flex-end">
+<button class="secondary" onclick="loadDashboard()">تحديث</button>
+<button class="danger" onclick="logout()">خروج</button>
 </div>
+</div>
+
 <div class="tabs" id="adminTabs">
 <button class="active" data-tab="overview">الرئيسية</button>
 <button data-tab="players">اللاعبون</button>
@@ -107,9 +178,14 @@ table{width:100%;border-collapse:collapse;min-width:620px}th,td{padding:10px;bor
 <label>المجموعة<select id="playerGroup"></select></label>
 <label>ملاحظة المجموعة<input id="groupNote" placeholder="مثلاً: المجموعة غير محددة"></label>
 </div>
-<div class="actions" style="justify-content:flex-start"><button id="playerSubmit">حفظ اللاعب</button><button type="button" class="secondary hidden" id="cancelEdit" onclick="cancelPlayerEdit()">إلغاء التعديل</button></div>
+<div class="actions" style="justify-content:flex-start">
+<button id="playerSubmit">حفظ اللاعب</button>
+<button type="button" class="secondary hidden" id="cancelEdit" onclick="cancelPlayerEdit()">إلغاء التعديل</button>
+</div>
 <div id="playerMsg" class="small muted"></div>
-</form></div>
+</form>
+</div>
+
 <div class="card" style="margin-top:14px">
 <h3>قائمة اللاعبين</h3>
 <div class="row">
@@ -117,7 +193,8 @@ table{width:100%;border-collapse:collapse;min-width:620px}th,td{padding:10px;bor
 <label>بحث بالاسم<input id="playerSearch" placeholder="اكتب اسم اللاعب"></label>
 </div>
 <div id="playersTable" class="tablewrap" style="margin-top:12px"></div>
-</div></div>
+</div>
+</div>
 
 <div id="tab-attendance" class="adminTab hidden">
 <div class="card">
@@ -133,6 +210,7 @@ table{width:100%;border-collapse:collapse;min-width:620px}th,td{padding:10px;bor
 </form>
 <div id="sessionMsg" class="notice">اختاري الفرع والمجموعة والتاريخ لبدء كشف الحضور.</div>
 </div>
+
 <div class="card" style="margin-top:14px">
 <h3>كشف الحضور والغياب</h3>
 <p class="muted small">علّمي اللاعبين الحاضرين ثم احفظي الكشف. اللاعبون غير المحددين سيظهرون في قائمة الغياب.</p>
@@ -140,19 +218,26 @@ table{width:100%;border-collapse:collapse;min-width:620px}th,td{padding:10px;bor
 <button id="saveAttendance" class="hidden" onclick="saveAttendance()">حفظ كشف الحضور</button>
 <div id="attendanceResult"></div>
 </div>
+
 <div class="card" style="margin-top:14px">
-<h3>تسجيل حضور بواسطة QR</h3>
-<p class="muted small">أدخلي رمز اللاعب بعد تجهيز QR الخاص به. يلزم إنشاء حصة أولًا.</p>
-<div class="row">
-<label>رمز QR<input id="qrToken" autocomplete="off"></label>
+<h3>تسجيل الحضور بالكاميرا</h3>
+<p class="muted small">أنشئي الحصة أولًا، ثم افتحي الكاميرا ووجهيها إلى QR اللاعب.</p>
+<div class="actions">
+<button type="button" onclick="startCamera()">فتح الكاميرا</button>
+<button type="button" class="secondary" onclick="stopCamera()">إيقاف الكاميرا</button>
+</div>
+<div id="qrReader"></div>
+<div id="qrMsg" class="notice">الكاميرا لم تبدأ بعد.</div>
+<div class="row" style="margin-top:12px">
+<label>أو أدخلي رمز QR يدويًا<input id="qrToken" autocomplete="off"></label>
 <div style="align-self:end"><button type="button" onclick="scanQr()">تسجيل الرمز</button></div>
 </div>
-<div id="qrMsg" class="small muted"></div>
 </div>
 </div>
 
 <div id="tab-evaluations" class="adminTab hidden">
-<div class="card"><h3>تقييم لاعب</h3>
+<div class="card">
+<h3>تقييم لاعب</h3>
 <form id="evaluationForm">
 <label>اللاعب<select id="evaluationPlayer" required></select></label>
 <div class="row">
@@ -161,18 +246,27 @@ table{width:100%;border-collapse:collapse;min-width:620px}th,td{padding:10px;bor
 <label>اللياقة (من 10)<input id="fitness" type="number" min="0" max="10"></label>
 </div>
 <label>ملاحظات<textarea id="evaluationNotes"></textarea></label>
-<button>حفظ التقييم</button><div id="evaluationMsg" class="small muted"></div>
-</form></div></div>
+<button>حفظ التقييم</button>
+<div id="evaluationMsg" class="small muted"></div>
+</form>
+</div>
+</div>
 
 <div id="tab-events" class="adminTab hidden">
-<div class="card"><h3>إضافة فعالية</h3>
+<div class="card">
+<h3>إضافة فعالية</h3>
 <form id="eventForm">
 <label>اسم الفعالية<input id="eventTitle" required></label>
 <label>الوصف<textarea id="eventDescription"></textarea></label>
-<div class="row"><label>التاريخ<input id="eventDate" type="date"></label><label>السعة<input id="eventCapacity" type="number" min="1"></label></div>
+<div class="row">
+<label>التاريخ<input id="eventDate" type="date"></label>
+<label>السعة<input id="eventCapacity" type="number" min="1"></label>
+</div>
 <label style="display:flex;align-items:center;gap:8px"><input id="eventPublished" type="checkbox" checked> نشر الفعالية</label>
-<button>حفظ الفعالية</button><div id="eventMsg" class="small muted"></div>
-</form></div>
+<button>حفظ الفعالية</button>
+<div id="eventMsg" class="small muted"></div>
+</form>
+</div>
 <div id="eventsList" class="card" style="margin-top:14px"></div>
 </div>
 
@@ -180,15 +274,29 @@ table{width:100%;border-collapse:collapse;min-width:620px}th,td{padding:10px;bor
 <div class="card"><h3>طلبات الالتحاق الواردة</h3><div id="requestsTable" class="tablewrap"></div></div>
 </div>
 </section>
+
+<section id="playerQrPanel" class="card section hidden qrmodal">
+<h3 id="qrPlayerName">QR اللاعب</h3>
+<p class="muted small">هذا الكود خاص باللاعب، ويُستخدم لتسجيل حضوره.</p>
+<div id="playerQrImage" class="qrbox"></div>
+<p class="small muted">احتفظي بالكود واعرضيه للمدرب عند تسجيل الحضور.</p>
+<button class="secondary" onclick="closePlayerQR()">إغلاق</button>
+</section>
+
 <div class="footer">BLACK HORSE FOOTBALL ACADEMY · MORE THAN FOOTBALL</div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 <script>
 const SUPABASE_URL="https://rjkdgjncxkszleorcave.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_QgNtkC4EwtJAg2rcRdeuVg_yCdHI64y";
 
 let db=null,user=null,branches=[],groups=[],players=[],activeSession=null,attendanceMarked=new Set();
+let html5QrCode=null,cameraRunning=false,processingQr=false,scannedTokens=new Set();
+
 const $=id=>document.getElementById(id);
 const today=()=>new Date().toLocaleDateString('en-CA');
 
@@ -196,17 +304,22 @@ function msg(id,text){$(id).textContent=text}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function nameOf(list,id){return list.find(x=>x.id===id)?.name||'—'}
 function num(id){return $(id).value===''?null:Number($(id).value)}
+function makeQrToken(){
+return crypto.randomUUID().replace(/-/g,'');
+}
 
 function showPublic(which){
 $('enrollPanel').classList.toggle('hidden',which!=='enroll');
 $('publicBranches').classList.toggle('hidden',which==='enroll');
 $('loginPanel').classList.add('hidden');
+$('playerQrPanel').classList.add('hidden');
 if(which==='enroll')$('enrollPanel').scrollIntoView({behavior:'smooth'});
 else $('publicBranches').scrollIntoView({behavior:'smooth'});
 }
 function showLogin(){
 $('loginPanel').classList.remove('hidden');
 $('enrollPanel').classList.add('hidden');
+$('playerQrPanel').classList.add('hidden');
 $('loginPanel').scrollIntoView({behavior:'smooth'});
 }
 function ready(){
@@ -242,6 +355,7 @@ fillSelect('playerGroup',groups,'غير محدد');
 fillSelect('sessionGroup',groups,'كل المجموعات / غير محدد');
 msg('enrollMsg','يمكن إرسال طلب الالتحاق من هنا.');
 }
+
 $('loginForm').addEventListener('submit',async e=>{
 e.preventDefault();
 if(!db){msg('loginMsg','الاتصال بقاعدة البيانات غير جاهز.');return}
@@ -261,10 +375,13 @@ $('loginPanel').classList.add('hidden');
 await loadDashboard();
 $('adminPanel').scrollIntoView({behavior:'smooth'});
 });
+
 async function logout(){
+await stopCamera();
 if(db)await db.auth.signOut();
 user=null;activeSession=null;
-$('adminPanel').classList.add('hidden');showLogin();
+$('adminPanel').classList.add('hidden');
+showLogin();
 }
 async function loadDashboard(){
 if(!db||!user)return;
@@ -278,7 +395,8 @@ $('statRequests').textContent=r.count??'—';
 $('statEvents').textContent=e.count??'—';
 await Promise.all([loadPlayers(),loadRequests(),loadEvents()]);
 }
-document.querySelectorAll('#adminTabs button').forEach(btn=>btn.addEventListener('click',()=>{
+document.querySelectorAll('#adminTabs button').forEach(btn=>btn.addEventListener('click',async()=>{
+if(btn.dataset.tab!=='attendance')await stopCamera();
 document.querySelectorAll('#adminTabs button').forEach(b=>b.classList.toggle('active',b===btn));
 document.querySelectorAll('.adminTab').forEach(t=>t.classList.add('hidden'));
 $('tab-'+btn.dataset.tab).classList.remove('hidden');
@@ -296,14 +414,19 @@ group_note:$('groupNote').value.trim()||null,
 active:true
 };
 if(!obj.full_name){msg('playerMsg','اكتبي اسم اللاعب.');return}
-let result=id
-?await db.from('players').update(obj).eq('id',id)
-:await db.from('players').insert(obj);
+let result;
+if(id){
+result=await db.from('players').update(obj).eq('id',id);
+}else{
+obj.attendance_qr_hash=makeQrToken();
+result=await db.from('players').insert(obj);
+}
 if(result.error){msg('playerMsg','تعذر الحفظ: '+result.error.message);return}
 msg('playerMsg',id?'تم تعديل بيانات اللاعب.':'تمت إضافة اللاعب بنجاح.');
 cancelPlayerEdit();
 await loadPlayers();
 });
+
 function editPlayer(id){
 const p=players.find(x=>x.id===id);if(!p)return;
 $('editPlayerId').value=p.id;
@@ -331,25 +454,54 @@ const {error}=await db.from('players').update({active:false}).eq('id',id);
 if(error){alert('تعذر إيقاف اللاعب: '+error.message);return}
 await loadPlayers();await loadDashboard();
 }
+
 async function loadPlayers(){
-const {data,error}=await db.from('players').select('id,full_name,birth_year,branch_id,group_id,group_note,active').order('full_name');
+const {data,error}=await db.from('players')
+.select('id,full_name,birth_year,branch_id,group_id,group_note,active,attendance_qr_hash')
+.order('full_name');
 if(error){$('playersTable').textContent=error.message;return}
-players=data||[];renderPlayers();
+players=data||[];
+renderPlayers();
 fillSelect('evaluationPlayer',players.filter(p=>p.active).map(p=>({id:p.id,name:p.full_name})),'اختاري اللاعب');
 }
 function renderPlayers(){
 const q=$('playerSearch').value.trim().toLowerCase();
 const branch=$('filterBranch').value;
 const rows=players.filter(p=>(!branch||p.branch_id===branch)&&(!q||p.full_name.toLowerCase().includes(q)));
-$('playersTable').innerHTML='<table><thead><tr><th>اللاعب</th><th>سنة الميلاد</th><th>الفرع</th><th>المجموعة</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>'+
+$('playersTable').innerHTML='<table><thead><tr><th>اللاعب</th><th>سنة الميلاد</th><th>الفرع</th><th>المجموعة</th><th>الحالة</th><th>QR</th><th>إجراءات</th></tr></thead><tbody>'+
 rows.map(p=>`<tr>
-<td>${esc(p.full_name)}</td><td>${p.birth_year||'—'}</td>
+<td>${esc(p.full_name)}</td>
+<td>${p.birth_year||'—'}</td>
 <td>${esc(nameOf(branches,p.branch_id))}</td>
 <td>${esc(nameOf(groups,p.group_id)!=='—'?nameOf(groups,p.group_id):(p.group_note||'غير محدد'))}</td>
 <td>${p.active?'<span class="pill">نشط</span>':'<span class="pill red">متوقف</span>'}</td>
+<td><button class="secondary" onclick="showPlayerQR('${p.id}')">عرض QR</button></td>
 <td><button class="secondary" onclick="editPlayer('${p.id}')">تعديل</button> ${p.active?`<button class="danger" onclick="deletePlayer('${p.id}')">إيقاف</button>`:''}</td>
 </tr>`).join('')+'</tbody></table>';
 }
+
+function showPlayerQR(id){
+const p=players.find(x=>x.id===id);
+if(!p)return;
+if(!p.attendance_qr_hash){
+alert('لا يوجد رمز QR لهذا اللاعب. حدّثي قائمة اللاعبين وجربي مرة أخرى.');
+return;
+}
+$('qrPlayerName').textContent='QR اللاعب: '+p.full_name;
+$('playerQrImage').innerHTML='';
+new QRCode($('playerQrImage'),{
+text:p.attendance_qr_hash,
+width:220,
+height:220,
+correctLevel:QRCode.CorrectLevel.M
+});
+$('playerQrPanel').classList.remove('hidden');
+$('playerQrPanel').scrollIntoView({behavior:'smooth'});
+}
+function closePlayerQR(){
+$('playerQrPanel').classList.add('hidden');
+}
+
 $('playerSearch').addEventListener('input',renderPlayers);
 $('filterBranch').addEventListener('change',renderPlayers);
 
@@ -360,17 +512,21 @@ const group_id=$('sessionGroup').value||null;
 const session_date=$('sessionDate').value;
 const session_time=$('sessionTime').value||null;
 if(!branch_id||!session_date){msg('sessionMsg','اختاري الفرع والتاريخ.');return}
-const {data,error}=await db.from('attendance_sessions').insert({branch_id,group_id,session_date,session_time}).select().single();
+const {data,error}=await db.from('attendance_sessions')
+.insert({branch_id,group_id,session_date,session_time}).select().single();
 if(error){msg('sessionMsg','تعذر إنشاء الحصة: '+error.message);return}
 activeSession=data;
 attendanceMarked=new Set();
+scannedTokens=new Set();
 $('attendanceResult').innerHTML='';
 $('saveAttendance').disabled=false;
 $('saveAttendance').textContent='حفظ كشف الحضور';
 $('saveAttendance').classList.remove('hidden');
 renderAttendanceRoster();
-msg('sessionMsg','تم إنشاء الحصة. حددي الحاضرين ثم احفظي الكشف.');
+msg('sessionMsg','تم إنشاء الحصة. حددي الحاضرين أو استخدمي الكاميرا ثم احفظي الكشف.');
+msg('qrMsg','الحصة جاهزة. اضغطي فتح الكاميرا لمسح QR اللاعبين.');
 });
+
 function currentRoster(){
 if(!activeSession)return [];
 return players.filter(p=>p.active&&p.branch_id===activeSession.branch_id&&
@@ -415,31 +571,113 @@ $('attendanceResult').innerHTML=`
 <div class="card"><h3>الغائبون (${absent.length})</h3>${absent.map(item).join('')||'<p class="muted">لا يوجد غائبون.</p>'}</div>
 </div>`;
 }
-async function scanQr(){
-const token=$('qrToken').value.trim();
-if(!token||!activeSession){msg('qrMsg','أنشئي حصة أولًا ثم أدخلي رمز اللاعب.');return}
-const {data,error}=await db.rpc('scan_player_qr',{p_session_id:activeSession.id,p_qr_token:token});
-if(error){msg('qrMsg','تعذر تسجيل الرمز: '+error.message);return}
-if(!data?.success){msg('qrMsg',data?.message||'لم يتم تسجيل الحضور.');return}
-const found=players.find(p=>p.full_name===data.player_name);
+
+async function registerQrToken(token){
+if(!token||!activeSession){msg('qrMsg','أنشئي حصة أولًا قبل تسجيل الحضور.');return}
+if(processingQr)return;
+if(scannedTokens.has(token)){
+msg('qrMsg','تم مسح هذا الكود بالفعل في الحصة الحالية.');
+return;
+}
+processingQr=true;
+msg('qrMsg','جاري التحقق من رمز اللاعب...');
+try{
+const {data,error}=await db.rpc('scan_player_qr',{
+p_session_id:activeSession.id,
+p_qr_token:token
+});
+if(error){
+msg('qrMsg','تعذر تسجيل الرمز: '+error.message);
+return;
+}
+if(!data?.success){
+msg('qrMsg',data?.message||'لم يتم تسجيل الحضور.');
+return;
+}
+const found=players.find(p=>p.attendance_qr_hash===token);
 if(found){
 attendanceMarked.add(found.id);
 const cb=document.querySelector(`[data-player="${found.id}"]`);
 if(cb)cb.checked=true;
+showAttendanceResult(currentRoster());
 }
-msg('qrMsg',data.message||('تم التعرف على اللاعب: '+data.player_name));
+scannedTokens.add(token);
+msg('qrMsg',(data.message||'تم تسجيل الحضور')+(found?' — '+found.full_name:''));
 $('qrToken').value='';
+}catch(err){
+msg('qrMsg','حدث خطأ أثناء قراءة الرمز: '+err.message);
+}finally{
+processingQr=false;
 }
+}
+
+async function startCamera(){
+if(!activeSession){
+msg('qrMsg','أنشئي الحصة أولًا قبل فتح الكاميرا.');
+return;
+}
+if(!window.Html5Qrcode){
+msg('qrMsg','تعذر تحميل مكتبة الكاميرا. حدّثي الصفحة وجربي مرة أخرى.');
+return;
+}
+if(cameraRunning)return;
+try{
+html5QrCode=new Html5Qrcode('qrReader');
+await html5QrCode.start(
+{facingMode:'environment'},
+{fps:10,qrbox:{width:230,height:230},aspectRatio:1.0},
+async decodedText=>{
+await registerQrToken(decodedText.trim());
+},
+()=>{}
+);
+cameraRunning=true;
+msg('qrMsg','الكاميرا تعمل الآن. وجهيها إلى QR اللاعب.');
+}catch(err){
+html5QrCode=null;
+cameraRunning=false;
+msg('qrMsg','لم نتمكن من فتح الكاميرا. اسمحي للمتصفح باستخدام الكاميرا وتأكدي من فتح الموقع عبر HTTPS. '+err);
+}
+}
+async function stopCamera(){
+if(html5QrCode&&cameraRunning){
+try{await html5QrCode.stop();await html5QrCode.clear()}catch(e){}
+}
+html5QrCode=null;
+cameraRunning=false;
+if($('qrReader'))$('qrReader').innerHTML='';
+}
+
+async function scanQr(){
+const token=$('qrToken').value.trim();
+if(!token){msg('qrMsg','اكتبي رمز QR أولًا.');return}
+await registerQrToken(token);
+}
+
 $('evaluationForm').addEventListener('submit',async e=>{
 e.preventDefault();
-const obj={player_id:$('evaluationPlayer').value,evaluation_date:today(),technical_score:num('technical'),behavior_score:num('behavior'),fitness_score:num('fitness'),notes:$('evaluationNotes').value||null};
+const obj={
+player_id:$('evaluationPlayer').value,
+evaluation_date:today(),
+technical_score:num('technical'),
+behavior_score:num('behavior'),
+fitness_score:num('fitness'),
+notes:$('evaluationNotes').value||null
+};
 const {error}=await db.from('player_evaluations').insert(obj);
 msg('evaluationMsg',error?'تعذر حفظ التقييم: '+error.message:'تم حفظ التقييم بنجاح.');
 if(!error)e.target.reset();
 });
+
 $('eventForm').addEventListener('submit',async e=>{
 e.preventDefault();
-const obj={title:$('eventTitle').value.trim(),description:$('eventDescription').value||null,event_date:$('eventDate').value||null,capacity:num('eventCapacity'),published:$('eventPublished').checked};
+const obj={
+title:$('eventTitle').value.trim(),
+description:$('eventDescription').value||null,
+event_date:$('eventDate').value||null,
+capacity:num('eventCapacity'),
+published:$('eventPublished').checked
+};
 const {error}=await db.from('academy_events').insert(obj);
 msg('eventMsg',error?'تعذر حفظ الفعالية: '+error.message:'تم حفظ الفعالية.');
 if(!error){e.target.reset();await loadEvents();await loadDashboard()}
@@ -449,7 +687,9 @@ const {data,error}=await db.from('academy_events').select('*').order('created_at
 $('eventsList').innerHTML='<h3>الفعاليات</h3>'+(error?esc(error.message):(data||[]).map(x=>`<p>${esc(x.title)} · ${x.event_date||'بدون تاريخ'} · ${x.published?'منشورة':'مسودة'}</p>`).join('')||'<p class="muted">لا توجد فعاليات بعد.</p>');
 }
 async function loadRequests(){
-const {data,error}=await db.from('enrollment_requests').select('player_name,parent_phone,submitted_at,status').order('submitted_at',{ascending:false});
+const {data,error}=await db.from('enrollment_requests')
+.select('player_name,parent_phone,submitted_at,status')
+.order('submitted_at',{ascending:false});
 $('requestsTable').innerHTML=error?esc(error.message):'<table><thead><tr><th>اسم اللاعب</th><th>رقم ولي الأمر</th><th>تاريخ الطلب</th><th>الحالة</th></tr></thead><tbody>'+
 (data||[]).map(x=>`<tr><td>${esc(x.player_name)}</td><td>${esc(x.parent_phone)}</td><td>${new Date(x.submitted_at).toLocaleDateString('ar-EG')}</td><td>${esc(x.status)}</td></tr>`).join('')+'</tbody></table>';
 }
