@@ -4,343 +4,360 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#090b0d">
-<title>BLACK HORSE | بوابة ولي الأمر</title>
+<meta name="theme-color" content="#080a0c">
+<title>BLACK HORSE | Parent Portal</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{color-scheme:dark;--gold:#d7b45a;--panel:#15191d}
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Cinzel:wght@500;600;700;800&display=swap');
+:root{
+  --gold:#d8b568;--gold2:#f4dfaa;--bg:#080a0c;
+  --panel:#111519;--muted:#a7a39a;--line:#514329;
+}
 *{box-sizing:border-box}
-body{margin:0;background:radial-gradient(circle at top,#202329,#090b0d 60%);color:#f6f4ee;font-family:Arial,Tahoma,sans-serif;min-height:100vh;padding:24px 14px}
-main{max-width:760px;margin:auto}
-.brand{text-align:center;margin:18px 0 28px}
-.horse{font-size:38px;color:var(--gold)}
-h1{font-size:25px;letter-spacing:2px;margin:6px 0;color:var(--gold)}
-.sub,.note{color:#aab0b5;font-size:13px;line-height:1.7}
-.card{background:var(--panel);border:1px solid #4c4128;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 12px 35px #0006}
-h2{font-size:18px;color:var(--gold);margin:0 0 15px}
-label{display:block;color:#d9d9d5;font-size:13px;margin:12px 0 6px}
-input,textarea,select{width:100%;background:#090c0f;color:#fff;border:1px solid #45494c;border-radius:10px;padding:13px;font:inherit}
-textarea{min-height:90px;resize:vertical}
-.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
-button{background:var(--gold);color:#151515;border:0;border-radius:10px;padding:12px 17px;font-weight:bold;font-size:14px;cursor:pointer}
-button.secondary{background:#2b3035;color:#fff;border:1px solid #555}
-button:disabled{opacity:.5;cursor:wait}
-.msg{color:#f3d98d;font-size:13px;line-height:1.7;min-height:20px}
+body{
+  margin:0;min-height:100vh;color:#f5f1e8;
+  background:
+    radial-gradient(ellipse at 50% -15%,#4a3920 0%,transparent 43%),
+    radial-gradient(ellipse at 100% 70%,#17140e 0%,transparent 35%),var(--bg);
+  font-family:'Cairo',Arial,sans-serif;padding:24px 15px 40px;
+}
+main{max-width:850px;margin:auto}
+.brand{text-align:center;padding:18px 10px 25px}
+.logo{
+  width:112px;height:112px;margin:0 auto 15px;
+  border:1px solid #9d8045;border-radius:50%;
+  display:grid;place-items:center;position:relative;
+  background:linear-gradient(145deg,#292216,#090b0d 70%);
+  box-shadow:0 0 0 6px #d8b5680b,0 12px 40px #000;
+}
+.logo:before,.logo:after{
+  content:"";position:absolute;inset:7px;border:1px solid #d8b56855;border-radius:50%;
+}
+.logo svg{width:69px;height:69px;filter:drop-shadow(0 3px 8px #d8b56855)}
+.brand-name{
+  font-family:'Cinzel',serif;letter-spacing:4px;font-size:30px;
+  font-weight:800;color:var(--gold2);margin:0;
+}
+.brand-sub{font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;color:#b9a16c;margin-top:5px}
+.tagline{color:#c6bda9;font-size:13px;margin-top:13px}
+.ornament{display:flex;align-items:center;gap:12px;justify-content:center;margin:17px auto 0;color:var(--gold);font-size:10px;letter-spacing:3px}
+.ornament:before,.ornament:after{content:"";height:1px;width:55px;background:linear-gradient(90deg,transparent,var(--gold))}
+.ornament:after{transform:rotate(180deg)}
+.card{
+  background:linear-gradient(145deg,#171b1e,#0e1114);
+  border:1px solid #5a4929;border-radius:18px;
+  padding:23px;margin:15px 0;
+  box-shadow:0 16px 42px #0008,inset 0 1px #ffffff08;
+}
+.card-head{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.card-mark{width:34px;height:34px;border:1px solid #8e713b;border-radius:10px;display:grid;place-items:center;color:var(--gold);font-size:17px}
+h2{font-size:18px;color:var(--gold2);margin:0;font-weight:700}
+.eyebrow{font:10px 'Cinzel',serif;color:#a88b50;letter-spacing:2px;margin-top:3px}
+p{line-height:1.9}
+.note{font-size:12px;color:var(--muted);line-height:1.9}
+label{display:block;color:#d8cba9;font-size:13px;margin:14px 0 7px}
+input,textarea,select{
+  width:100%;background:#090c0e;color:#fff;border:1px solid #494239;
+  border-radius:11px;padding:14px;font:inherit;outline:none;
+  transition:.2s;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px #d8b56818}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+button{
+  border:1px solid #e5c77f;border-radius:10px;padding:12px 20px;
+  background:linear-gradient(135deg,#f0d99e,#bd974b);
+  color:#17130b;font:700 13px 'Cairo',sans-serif;cursor:pointer;
+  box-shadow:0 5px 18px #c49d4b22;transition:.2s;
+}
+button:hover{filter:brightness(1.08);transform:translateY(-1px)}
+button.secondary{background:#202428;color:#e4d7b8;border:1px solid #5c5038;box-shadow:none}
+button:disabled{opacity:.5;cursor:wait;transform:none}
+.msg{font-size:13px;color:var(--gold2);min-height:22px;line-height:1.8}
 .hidden{display:none!important}
-.player{border:1px solid #41464a;border-radius:13px;padding:15px;margin:12px 0;background:#101418}
-.player h3{margin:0 0 8px;color:var(--gold)}
-.chips{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}
-.chip{background:#252b30;padding:6px 9px;border-radius:20px;font-size:12px}
-.score{font-size:14px;line-height:1.9}
-.topline{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.topline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.player{
+  background:linear-gradient(140deg,#1a1e20,#0b0e10);
+  border:1px solid #59482a;border-radius:14px;padding:17px;margin:13px 0;
+}
+.player h3{color:var(--gold2);margin:0 0 10px;font-size:17px}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
+.chip{background:#29271f;border:1px solid #54452c;color:#e5d2a3;border-radius:30px;padding:5px 11px;font-size:11px}
+.score{font-size:13px;line-height:2.1;color:#ddd7ca}
+.score strong{color:var(--gold2)}
+.request{padding:12px 14px;border:1px solid #3d382c;border-radius:11px;margin:9px 0;background:#0b0e10}
+.status{color:var(--gold2);font-size:12px}
+.divider{height:1px;background:linear-gradient(90deg,transparent,#80663a,transparent);margin:20px 0}
+footer{text-align:center;padding:25px 8px 5px;color:#8f805d}
+footer strong{font:12px 'Cinzel',serif;letter-spacing:3px;color:var(--gold)}
+@media(max-width:520px){
+ body{padding:13px 11px 28px}
+ .brand-name{font-size:25px;letter-spacing:3px}
+ .logo{width:98px;height:98px}
+ .card{padding:17px}
+ .actions button{flex:1}
+}
 </style>
 </head>
 <body>
 <main>
+
 <header class="brand">
-<div class="horse">♞</div>
-<h1>BLACK HORSE</h1>
-<div class="sub">FOOTBALL ACADEMY · PARENT PORTAL</div>
+  <div class="logo" aria-label="Black Horse emblem">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="gold" x1="20" y1="10" x2="80" y2="90" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#fff0bd"/>
+          <stop offset=".48" stop-color="#d8b568"/>
+          <stop offset="1" stop-color="#987039"/>
+        </linearGradient>
+      </defs>
+      <path d="M27 79L34 61L29 47L33 28L45 35L57 20L74 25L69 38L80 47L72 57L69 74L57 68L48 82L43 66L35 83Z" fill="url(#gold)"/>
+      <path d="M34 29L23 15L43 23L57 20L51 34L40 43L37 58L47 67L40 76L27 69L31 53L25 42Z" fill="#17130c"/>
+      <path d="M58 28L72 27L66 39L78 47L67 52L62 65L53 60L58 49L51 42Z" fill="#17130c"/>
+      <path d="M43 35L55 29L49 43L39 50L43 35Z" fill="url(#gold)"/>
+      <path d="M59 46L68 43L65 51L59 53Z" fill="#fff0bd"/>
+      <path d="M31 83L48 75L57 82L67 76" stroke="url(#gold)" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <h1 class="brand-name">BLACK HORSE</h1>
+  <div class="brand-sub">FOOTBALL ACADEMY</div>
+  <div class="tagline">نصنع الأبطال.. ونبني المستقبل</div>
+  <div class="ornament">PARENT PORTAL</div>
 </header>
 
 <section id="authBox" class="card">
+  <div id="loginView">
+    <div class="card-head">
+      <div class="card-mark">♜</div>
+      <div><h2>مرحبًا بكم في عائلة بلاك هورس</h2><div class="eyebrow">WELCOME BACK</div></div>
+    </div>
+    <p class="note">سجّل دخولك إلى مساحتك الخاصة لمتابعة رحلة لاعبنا، والاطلاع على إنجازاته وتطوره داخل الأكاديمية.</p>
+    <form id="authForm">
+      <label>البريد الإلكتروني</label>
+      <input id="email" type="email" autocomplete="email" placeholder="name@example.com" required>
+      <label>كلمة المرور</label>
+      <input id="password" type="password" autocomplete="current-password" placeholder="كلمة المرور" required>
+      <div class="actions">
+        <button type="submit">تسجيل الدخول</button>
+        <button class="secondary" id="showSignup" type="button">إنشاء حساب جديد</button>
+      </div>
+    </form>
+  </div>
 
-<div id="loginView">
-<h2>دخول ولي الأمر</h2>
-<form id="authForm">
-<label>البريد الإلكتروني</label>
-<input id="email" type="email" autocomplete="email" required>
-
-<label>كلمة المرور</label>
-<input id="password" type="password" autocomplete="current-password" required>
-
-<div class="actions">
-<button type="submit">تسجيل الدخول</button>
-<button class="secondary" id="showSignup" type="button">إنشاء حساب جديد</button>
-</div>
-</form>
-</div>
-
-<div id="signupView" class="hidden">
-<h2>إنشاء حساب ولي الأمر</h2>
-<form id="signupForm">
-<label>البريد الإلكتروني</label>
-<input id="newEmail" type="email" autocomplete="email" required>
-
-<label>اختاري كلمة مرور جديدة (6 أحرف على الأقل)</label>
-<input id="newPassword" type="password" minlength="6" autocomplete="new-password" required>
-
-<div class="actions">
-<button type="submit">إنشاء الحساب</button>
-<button class="secondary" id="backLogin" type="button">رجوع لتسجيل الدخول</button>
-</div>
-</form>
-</div>
-
-<p id="authMsg" class="msg"></p>
-<p class="note">استخدمي إنشاء الحساب لأول مرة فقط، وبعدها سجّلي الدخول بنفس البريد وكلمة المرور.</p>
+  <div id="signupView" class="hidden">
+    <div class="card-head">
+      <div class="card-mark">✦</div>
+      <div><h2>انضم إلى بوابة أولياء الأمور</h2><div class="eyebrow">CREATE YOUR ACCOUNT</div></div>
+    </div>
+    <p class="note">أنشئ حسابك لمتابعة بيانات اللاعب وتقييماته بكل سهولة.</p>
+    <form id="signupForm">
+      <label>البريد الإلكتروني</label>
+      <input id="newEmail" type="email" autocomplete="email" required>
+      <label>كلمة المرور (6 أحرف على الأقل)</label>
+      <input id="newPassword" type="password" minlength="6" autocomplete="new-password" required>
+      <div class="actions">
+        <button type="submit">إنشاء الحساب</button>
+        <button class="secondary" id="backLogin" type="button">العودة للدخول</button>
+      </div>
+    </form>
+  </div>
+  <p id="authMsg" class="msg" aria-live="polite"></p>
 </section>
 
 <section id="portal" class="hidden">
+  <div class="card topline">
+    <div>
+      <h2>مساحتكم الخاصة</h2>
+      <div class="note" id="signedEmail"></div>
+    </div>
+    <button class="secondary" id="logout">تسجيل الخروج</button>
+  </div>
 
-<div class="card topline">
-<div>
-<h2 style="margin:0">بوابة ولي الأمر</h2>
-<div id="signedEmail" class="note"></div>
-</div>
-<button class="secondary" id="logout">تسجيل خروج</button>
-</div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-mark">♞</div>
+      <div><h2>ربط حسابك باللاعب</h2><div class="eyebrow">PLAYER CONNECTION</div></div>
+    </div>
+    <p class="note">اكتب اسم اللاعب بالكامل كما هو مسجل لدى الأكاديمية، وسيتم إرسال طلب الربط إلى الإدارة للمراجعة.</p>
+    <label>اسم اللاعب</label>
+    <input id="playerName" placeholder="الاسم بالكامل">
+    <div class="actions"><button id="linkBtn">إرسال طلب الربط</button></div>
+    <p id="linkMsg" class="msg" aria-live="polite"></p>
+  </div>
 
-<div class="card">
-<h2>ربط حسابك باللاعب</h2>
-<label>اسم اللاعب كما هو مسجل بالأكاديمية</label>
-<input id="playerName" placeholder="اكتبي الاسم بالكامل">
-<p class="note">يُستخدم كود ربط الأكاديمية الموحد لإتمام الربط.</p>
-<button id="linkBtn">ربط اللاعب</button>
-<p id="linkMsg" class="msg"></p>
-</div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-mark">✧</div>
+      <div><h2>طلبات ربط اللاعبين</h2><div class="eyebrow">LINK REQUESTS</div></div>
+    </div>
+    <div id="requests"><p class="note">جاري تحميل الطلبات...</p></div>
+  </div>
 
-<div class="card">
-<h2>أبنائي وتقييم الأكاديمية</h2>
-<div id="players">
-<p class="note">سجّلي الدخول ثم اربطي اللاعب لعرض بياناته.</p>
-</div>
-</div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-mark">★</div>
+      <div><h2>أبناؤنا وإنجازاتهم</h2><div class="eyebrow">PLAYER PROGRESS</div></div>
+    </div>
+    <div id="players"><p class="note">جاري تحميل بيانات اللاعبين...</p></div>
+  </div>
 
-<div class="card hidden" id="feedbackBox">
-<h2>رأيك يهمنا</h2>
-<label>اللاعب</label>
-<select id="feedbackPlayer"></select>
-
-<label>تقييم مستوى ابنك (من 1 إلى 5)</label>
-<select id="level">
-<option value="5">5 - ممتاز</option>
-<option value="4">4 - جيد جدًا</option>
-<option value="3">3 - جيد</option>
-<option value="2">2 - يحتاج لتحسين</option>
-<option value="1">1 - يحتاج لمتابعة</option>
-</select>
-
-<label>تقييم الأكاديمية (من 1 إلى 5)</label>
-<select id="academyRating">
-<option value="5">5 - ممتاز</option>
-<option value="4">4 - جيد جدًا</option>
-<option value="3">3 - جيد</option>
-<option value="2">2 - يحتاج لتحسين</option>
-<option value="1">1 - غير راضٍ</option>
-</select>
-
-<label>ملاحظات أو اقتراحات</label>
-<textarea id="comments" placeholder="اكتبي ملاحظاتك هنا (اختياري)"></textarea>
-<button id="sendFeedback">إرسال التقييم</button>
-<p id="feedbackMsg" class="msg"></p>
-</div>
-
+  <div class="card hidden" id="feedbackBox">
+    <div class="card-head">
+      <div class="card-mark">♡</div>
+      <div><h2>رأيكم محل تقدير</h2><div class="eyebrow">PARENT FEEDBACK</div></div>
+    </div>
+    <p class="note">خدمة تقييم ولي الأمر متاحة من خلال إدارة الأكاديمية، وسيتم إظهارها هنا عند تفعيل نموذج التقييم المعتمد.</p>
+  </div>
 </section>
 
-<footer class="sub" style="text-align:center;margin:25px 0">MORE THAN FOOTBALL</footer>
+<footer>
+  <strong>MORE THAN FOOTBALL</strong>
+  <div class="note">EXCELLENCE · DISCIPLINE · PASSION</div>
+</footer>
 </main>
 
 <script>
 const SUPABASE_URL="https://rjkdgjncxkszleorcave.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_QgNtkC4EwtJAg2rcRdeuVg_yCdHI64y";
-const FAMILY_TOKEN="BH-2026-FAMILY";
-
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const $=id=>document.getElementById(id);
+let currentUser=null;
 
-let currentUser=null,linkedPlayers=[];
-
-function message(id,text){
-$(id).textContent=text;
-}
-
+function message(id,text){$(id).textContent=text;}
 function esc(v){
-return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+ return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
-
 function showPortal(user){
-currentUser=user;
-$("authBox").classList.add("hidden");
-$("portal").classList.remove("hidden");
-$("signedEmail").textContent=user.email||"";
-loadPortal();
+ currentUser=user;
+ $("authBox").classList.add("hidden");
+ $("portal").classList.remove("hidden");
+ $("signedEmail").textContent=user.email||"";
+ loadPortal();
 }
-
+function statusText(s){
+ if(s==="pending")return "قيد مراجعة الإدارة";
+ if(s==="approved")return "تمت الموافقة";
+ if(s==="rejected")return "لم تتم الموافقة";
+ return s||"قيد المراجعة";
+}
 async function loadPortal(){
-const {data,error}=await db.rpc("get_my_linked_players");
+ const [playersResult,requestsResult]=await Promise.all([
+  db.rpc("get_my_linked_players"),
+  db.rpc("get_my_parent_link_requests")
+ ]);
 
-if(error){
-message("linkMsg","تعذر تحميل اللاعبين: "+error.message);
-return;
+ if(playersResult.error){
+  $("players").innerHTML='<p class="note">تعذر تحميل بيانات اللاعبين. '+esc(playersResult.error.message)+'</p>';
+ }else{
+  const players=playersResult.data||[];
+  $("players").innerHTML=players.length?players.map(p=>`
+   <article class="player">
+    <h3>${esc(p.full_name)}</h3>
+    <div class="chips">
+     <span class="chip">سنة الميلاد: ${esc(p.birth_year??"—")}</span>
+     <span class="chip">المجموعة: ${esc(p.group_note||"—")}</span>
+    </div>
+    <div class="score">
+     <strong>آخر تقييم:</strong> ${esc(p.evaluation_date||"لا يوجد تقييم بعد")}<br>
+     <strong>المستوى الفني:</strong> ${esc(p.technical_score??"—")} / 5<br>
+     <strong>السلوك:</strong> ${esc(p.behavior_score??"—")} / 5<br>
+     <strong>اللياقة:</strong> ${esc(p.fitness_score??"—")} / 5<br>
+     <strong>ملاحظات المدرب:</strong> ${esc(p.evaluation_notes||"لا توجد ملاحظات")}
+    </div>
+   </article>`).join(""):'<p class="note">لا يوجد لاعب مرتبط بالحساب حتى الآن. يمكنك إرسال طلب ربط من القسم السابق.</p>';
+ }
+
+ if(requestsResult.error){
+  $("requests").innerHTML='<p class="note">تعذر تحميل الطلبات: '+esc(requestsResult.error.message)+'</p>';
+ }else{
+  const requests=requestsResult.data||[];
+  $("requests").innerHTML=requests.length?requests.map(r=>`
+   <div class="request">
+    <strong>${esc(r.requested_name)}</strong>
+    <div class="status">${esc(statusText(r.status))}</div>
+    <div class="note">${r.created_at?new Date(r.created_at).toLocaleDateString("ar-EG"):""}</div>
+   </div>`).join(""):'<p class="note">لا توجد طلبات ربط سابقة.</p>';
+ }
+
+ const enabled=await db.rpc("parent_feedback_is_enabled");
+ if(!enabled.error&&enabled.data===true){
+  $("feedbackBox").classList.remove("hidden");
+ }else{
+  $("feedbackBox").classList.add("hidden");
+ }
 }
 
-linkedPlayers=data||[];
-
-$("players").innerHTML=linkedPlayers.length
-?linkedPlayers.map(p=>`
-<div class="player">
-<h3>${esc(p.full_name)}</h3>
-<div class="chips">
-<span class="chip">سنة الميلاد: ${esc(p.birth_year??"—")}</span>
-<span class="chip">المجموعة: ${esc(p.group_note||"—")}</span>
-</div>
-<div class="score">
-آخر تقييم أكاديمي: ${esc(p.evaluation_date||"لا يوجد")}<br>
-المستوى الفني: ${esc(p.technical_score??"—")} / 5<br>
-السلوك: ${esc(p.behavior_score??"—")} / 5<br>
-اللياقة: ${esc(p.fitness_score??"—")} / 5<br>
-ملاحظات المدرب: ${esc(p.evaluation_notes||"لا توجد ملاحظات")}
-</div>
-</div>`).join("")
-:'<p class="note">لسه مفيش لاعب مربوط بالحساب. استخدمي خانة ربط اللاعب بالأعلى.</p>';
-
-$("feedbackBox").classList.add("hidden");
-
-const enabled=await db.rpc("parent_feedback_is_enabled");
-
-if(enabled.error){
-message("feedbackMsg","تعذر التحقق من إتاحة التقييم: "+enabled.error.message);
-return;
-}
-
-if(enabled.data===true&&linkedPlayers.length){
-$("feedbackPlayer").innerHTML=linkedPlayers.map(p=>'<option value="'+esc(p.player_id)+'">'+esc(p.full_name)+'</option>').join("");
-$("feedbackBox").classList.remove("hidden");
-}
-}
-
-// تسجيل الدخول
 $("authForm").addEventListener("submit",async e=>{
-e.preventDefault();
-message("authMsg","جاري تسجيل الدخول...");
-
-const {data,error}=await db.auth.signInWithPassword({
-email:$("email").value.trim(),
-password:$("password").value
+ e.preventDefault();
+ message("authMsg","جاري تسجيل الدخول...");
+ const {data,error}=await db.auth.signInWithPassword({
+  email:$("email").value.trim(),
+  password:$("password").value
+ });
+ if(error){message("authMsg","تعذر تسجيل الدخول: "+error.message);return;}
+ showPortal(data.user);
 });
 
-if(error){
-message("authMsg","تعذر الدخول: "+error.message);
-return;
-}
-
-showPortal(data.user);
-});
-
-// الانتقال لشاشة إنشاء الحساب
 $("showSignup").addEventListener("click",()=>{
-$("loginView").classList.add("hidden");
-$("signupView").classList.remove("hidden");
-message("authMsg","");
+ $("loginView").classList.add("hidden");
+ $("signupView").classList.remove("hidden");
+ message("authMsg","");
 });
-
-// الرجوع لشاشة الدخول
 $("backLogin").addEventListener("click",()=>{
-$("signupView").classList.add("hidden");
-$("loginView").classList.remove("hidden");
-message("authMsg","");
+ $("signupView").classList.add("hidden");
+ $("loginView").classList.remove("hidden");
+ message("authMsg","");
 });
 
-// إنشاء حساب جديد
 $("signupForm").addEventListener("submit",async e=>{
-e.preventDefault();
-
-const email=$("newEmail").value.trim();
-const password=$("newPassword").value;
-
-if(!email||password.length<6){
-message("authMsg","اكتبي بريدًا صحيحًا وكلمة مرور 6 أحرف على الأقل.");
-return;
-}
-
-message("authMsg","جاري إنشاء الحساب...");
-
-const {data,error}=await db.auth.signUp({email,password});
-
-if(error){
-message("authMsg","تعذر إنشاء الحساب: "+error.message);
-return;
-}
-
-if(data.session){
-showPortal(data.user);
-}else{
-message("authMsg","تم إنشاء الحساب. لو طُلب تأكيد البريد، أكّديه ثم ارجعي لتسجيل الدخول بنفس البيانات.");
-}
+ e.preventDefault();
+ const email=$("newEmail").value.trim();
+ const password=$("newPassword").value;
+ if(!email||password.length<6){
+  message("authMsg","اكتبي بريدًا صحيحًا وكلمة مرور لا تقل عن 6 أحرف.");
+  return;
+ }
+ message("authMsg","جاري إنشاء الحساب...");
+ const {data,error}=await db.auth.signUp({email,password});
+ if(error){message("authMsg","تعذر إنشاء الحساب: "+error.message);return;}
+ if(data.session){
+  showPortal(data.user);
+ }else{
+  message("authMsg","تم إرسال طلب إنشاء الحساب. إذا طُلب تأكيد البريد، اتبعي التعليمات ثم سجّلي الدخول.");
+ }
 });
 
-// ربط اللاعب
 $("linkBtn").addEventListener("click",async()=>{
-const name=$("playerName").value.trim();
-
-if(!name){
-message("linkMsg","اكتبي اسم اللاعب أولًا.");
-return;
-}
-
-$("linkBtn").disabled=true;
-message("linkMsg","جاري ربط اللاعب...");
-
-const {data,error}=await db.rpc("link_parent_by_name",{
-p_player_name:name,
-p_token:FAMILY_TOKEN
+ const name=$("playerName").value.trim();
+ if(!name){message("linkMsg","اكتبي اسم اللاعب بالكامل أولًا.");return;}
+ $("linkBtn").disabled=true;
+ message("linkMsg","جاري إرسال طلب الربط...");
+ const {data,error}=await db.rpc("submit_parent_link_request",{p_player_name:name});
+ $("linkBtn").disabled=false;
+ if(error){message("linkMsg","تعذر إرسال الطلب: "+error.message);return;}
+ if(data==="already_linked"){
+  message("linkMsg","اللاعب مرتبط بحسابك بالفعل.");
+ }else if(data==="pending"){
+  message("linkMsg","طلب الربط موجود بالفعل وينتظر مراجعة الإدارة.");
+ }else{
+  message("linkMsg","تم إرسال طلب الربط بنجاح، وسيظهر اللاعب بعد موافقة الإدارة.");
+ }
+ await loadPortal();
 });
 
-$("linkBtn").disabled=false;
-
-if(error){
-message("linkMsg","تعذر الربط: "+error.message);
-return;
-}
-
-message("linkMsg","تم إرسال طلب الربط. جاري تحميل بيانات اللاعب...");
-await loadPortal();
-});
-
-// إرسال التقييم
-$("sendFeedback").addEventListener("click",async()=>{
-const playerId=$("feedbackPlayer").value;
-
-if(!playerId){
-message("feedbackMsg","اختاري اللاعب.");
-return;
-}
-
-$("sendFeedback").disabled=true;
-message("feedbackMsg","جاري إرسال التقييم...");
-
-const {error}=await db.from("parent_feedback").insert({
-player_id:playerId,
-parent_player_level:Number($("level").value),
-academy_rating:Number($("academyRating").value),
-comments:$("comments").value.trim()||null,
-submitted_by:currentUser.id
-});
-
-$("sendFeedback").disabled=false;
-
-message("feedbackMsg",error
-?"تعذر إرسال التقييم: "+error.message
-:"شكرًا ليكي، تم إرسال تقييمك بنجاح.");
-
-if(!error)$("comments").value="";
-});
-
-// تسجيل الخروج
 $("logout").addEventListener("click",async()=>{
-await db.auth.signOut();
-currentUser=null;
-linkedPlayers=[];
-$("portal").classList.add("hidden");
-$("authBox").classList.remove("hidden");
-message("authMsg","تم تسجيل الخروج.");
+ await db.auth.signOut();
+ currentUser=null;
+ $("portal").classList.add("hidden");
+ $("authBox").classList.remove("hidden");
+ $("loginView").classList.remove("hidden");
+ $("signupView").classList.add("hidden");
+ message("authMsg","تم تسجيل الخروج بنجاح.");
 });
 
-// استعادة جلسة الدخول
 (async()=>{
-const {data}=await db.auth.getSession();
-if(data.session)showPortal(data.session.user);
+ const {data,error}=await db.auth.getSession();
+ if(!error&&data.session)showPortal(data.session.user);
 })();
 </script>
 </body>
