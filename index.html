@@ -1,4 +1,4 @@
-doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
@@ -66,18 +66,7 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 .footer{text-align:center;padding:35px 10px;color:#887c61;font:11px Cinzel,serif;letter-spacing:2px}
 .qrbox{display:inline-block;background:white;padding:12px;border-radius:10px;margin:10px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-
-/* زر الرجوع */
-.back-button{
-  position:fixed;
-  bottom:20px;
-  right:18px;
-  z-index:30;
-  min-width:105px;
-  box-shadow:0 5px 22px #0009;
-  border-radius:30px;
-}
-
+.back-button{position:fixed;bottom:20px;right:18px;z-index:30;min-width:105px;box-shadow:0 5px 22px #0009;border-radius:30px}
 @media(max-width:700px){
   .nav{align-items:flex-start;flex-direction:column}
   .navlinks{width:100%}
@@ -237,7 +226,7 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 <form id="loginForm">
 <label>البريد الإلكتروني<input id="adminEmail" type="email" required></label>
 <label>كلمة المرور<input id="adminPass" type="password" required></label>
-<button>دخول</button>
+<button type="submit">دخول</button>
 <div id="loginMsg" class="notice">الدخول لحسابات الإدارة المعتمدة فقط.</div>
 </form>
 </div>
@@ -397,11 +386,7 @@ function currentView(){
   const activeTab=activePage?.id==='admin'
     ?document.querySelector('.adminTab:not(.hidden)')
     :null;
-
-  return {
-    page:activePage?.id||'home',
-    tab:activeTab?.id||null
-  };
+  return {page:activePage?.id||'home',tab:activeTab?.id||null};
 }
 
 function syncBackButton(){
@@ -412,74 +397,50 @@ function syncBackButton(){
 function renderView(view){
   const target=$(view.page);
   if(!target)return;
-
   document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
   target.classList.add('active');
 
   if(view.page==='admin'){
     const tabId=$(view.tab)?view.tab:'players';
-
     document.querySelectorAll('.adminTab').forEach(x=>x.classList.add('hidden'));
     $(tabId).classList.remove('hidden');
-
     document.querySelectorAll('.tabs button').forEach(btn=>{
       btn.classList.toggle('on',btn.getAttribute('onclick')?.includes("'"+tabId+"'"));
     });
-
     if(tabId==='eventsAdmin')loadBookings();
     if(tabId==='matches')loadMatches();
     if(tabId==='requests')loadRequests();
     if(tabId==='parents')loadParentRequests();
   }
-
   window.scrollTo({top:0,behavior:'smooth'});
-
   if(view.page==='events'&&db)loadPublicEvents();
-
   syncBackButton();
 }
 
 function page(id,track=true){
   const target=$(id);
-  if(!target){
-    console.error('Missing page:',id);
-    return;
-  }
-
+  if(!target){console.error('Missing page:',id);return}
   const current=currentView();
-
-  if(track&&current.page!==id){
-    viewHistory.push(current);
-  }
-
+  if(track&&current.page!==id)viewHistory.push(current);
   renderView({page:id,tab:id==='admin'?'players':null});
 }
 
 function tab(id,btn,track=true){
   const current=currentView();
-
-  if(track&&current.page==='admin'&&current.tab!==id){
-    viewHistory.push(current);
-  }
-
+  if(track&&current.page==='admin'&&current.tab!==id)viewHistory.push(current);
   document.querySelectorAll('.adminTab').forEach(x=>x.classList.add('hidden'));
   $(id).classList.remove('hidden');
-
   document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));
-
-  if(btn){
-    btn.classList.add('on');
-  }else{
+  if(btn){btn.classList.add('on')}
+  else{
     document.querySelectorAll('.tabs button').forEach(x=>{
       if(x.getAttribute('onclick')?.includes("'"+id+"'"))x.classList.add('on');
     });
   }
-
   if(id==='eventsAdmin')loadBookings();
   if(id==='matches')loadMatches();
   if(id==='requests')loadRequests();
   if(id==='parents')loadParentRequests();
-
   syncBackButton();
 }
 
@@ -521,22 +482,56 @@ function showAdmin(n){
   refreshAll();
 }
 
+/* إصلاح تسجيل دخول الإدارة */
 $('loginForm').addEventListener('submit',async e=>{
   e.preventDefault();
-  $('loginMsg').textContent='جاري التحقق…';
-  const {data,error}=await db.auth.signInWithPassword({
-    email:$('adminEmail').value,
-    password:$('adminPass').value
-  });
-  if(error){$('loginMsg').textContent=error.message;return}
-  const {data:ad,error:ae}=await db.from('academy_admins').select('admin_name').eq('user_id',data.user.id).maybeSingle();
-  if(ae||!ad){
-    await db.auth.signOut();
-    $('loginMsg').textContent='هذا الحساب غير معتمد كإدارة للأكاديمية.';
+
+  const msg=$('loginMsg');
+  const btn=$('loginForm').querySelector('button[type="submit"]');
+
+  if(!db){
+    msg.textContent='تعذر الاتصال بقاعدة البيانات. حدّثي الصفحة وحاولي مرة أخرى.';
     return;
   }
-  user=data.user;
-  showAdmin(ad.admin_name);
+
+  btn.disabled=true;
+  btn.textContent='جاري التحقق…';
+  msg.textContent='جاري التحقق من بيانات الدخول…';
+
+  try{
+    const {data,error}=await db.auth.signInWithPassword({
+      email:$('adminEmail').value.trim(),
+      password:$('adminPass').value
+    });
+
+    if(error)throw error;
+    if(!data?.user)throw new Error('لم يتم استلام بيانات الحساب.');
+
+    msg.textContent='تم التحقق من الحساب، جاري تحميل صلاحيات الإدارة…';
+
+    const {data:ad,error:ae}=await db
+      .from('academy_admins')
+      .select('admin_name')
+      .eq('user_id',data.user.id)
+      .maybeSingle();
+
+    if(ae)throw ae;
+
+    if(!ad){
+      await db.auth.signOut();
+      throw new Error('هذا البريد غير معتمد كحساب إدارة.');
+    }
+
+    user=data.user;
+    showAdmin(ad.admin_name);
+
+  }catch(err){
+    console.error('Admin login error:',err);
+    msg.textContent=err.message||'حصل خطأ أثناء تسجيل الدخول. حاولي مرة أخرى.';
+  }finally{
+    btn.disabled=false;
+    btn.textContent='دخول';
+  }
 });
 
 async function adminLogout(){
