@@ -249,7 +249,7 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
   <article class="gallery-card">
     <div class="gallery-media">
       <img src="assets/gallery-coach.jpg" alt="صور المدرب أثناء التدريب مع اللاعبين" onload="this.nextElementSibling.classList.add('hidden')" onerror="this.classList.add('hidden')">
-      <div class="gallery-missing">لم يتم العثور على الملف <code>assets/gallery-coach.jpg</code></div>
+      <div class="gallery-missing">المسار: <code>assets/gallery-coach.jpg</code></div>
     </div>
     <div class="gallery-body">
       <span class="gallery-tag">3 · المدرب مع اللاعبين</span>
@@ -273,7 +273,7 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
   <article class="gallery-card">
     <div class="gallery-media">
       <img src="assets/gallery-matches.jpg" alt="صور اللاعبين أثناء المباريات والاحتفال" onload="this.nextElementSibling.classList.add('hidden')" onerror="this.classList.add('hidden')">
-      <div class="gallery-missing">لم يتم العثور على الملف <code>assets/gallery-matches.jpg</code></div>
+      <div class="gallery-missing">المسار: <code>assets/gallery-matches.jpg</code></div>
     </div>
     <div class="gallery-body">
       <span class="gallery-tag">5 · المباريات والاحتفال</span>
@@ -473,7 +473,7 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 </div>
 <div class="tabs">
 <button type="button" class="on" onclick="tab('players',this)">اللاعبون</button>
-<button type="button" onclick="tab('attendance',this)">الحضور والغياب</button>
+<button type="button" class="on" onclick="tab('attendance',this)">الحضور والغياب</button>
 <button type="button" onclick="tab('evaluations',this)">التقييمات</button>
 <button type="button" onclick="tab('eventsAdmin',this)">الفعاليات والحجوزات</button>
 <button type="button" onclick="tab('matches',this)">المباريات</button>
@@ -1062,10 +1062,11 @@ async function createSession(){
   if(!user)return;
   const client=getSupabaseClient();
   if(!client){setNotice($('attMsg'),'تعذر الاتصال بقاعدة البيانات.','err');return;}
-  let branch=$('attBranch').value,group=$('attGroup')?.value||'',date=$('attDate').value||today();
+  let branch=$('attBranch').value,date=$('attDate').value||today();
   if(!branch){setNotice($('attMsg'),'اختاري الفرع أولًا.','err');return}
+  if(!date){setNotice($('attMsg'),'اختاري التاريخ أولًا.','err');return}
   let {data,error}=await client.from('attendance_sessions').insert({
-    branch_id:branch,group_id:group||null,session_date:date,session_closed:false
+    branch_id:branch,session_date:date,session_closed:false
   }).select().single();
   if(error){setNotice($('attMsg'),error.message,'err');return}
   activeSession=data;
@@ -1075,29 +1076,17 @@ async function createSession(){
   await showAttendanceLists();
 }
 
-function getRosterForSessions(sessionsList, filterBranch, filterGroup){
+function getRosterForSessions(sessionsList, filterBranch){
   const list = Array.isArray(sessionsList) ? sessionsList : (sessionsList ? [sessionsList] : []);
   const sessionBranchIds = new Set(list.map(s=>s.branch_id).filter(Boolean).map(String));
-  const sessionGroupIds = new Set(list.map(s=>s.group_id).filter(Boolean).map(String));
-  const hasAnySessionWithoutGroup = list.some(s=>!s.group_id);
 
   return (players||[]).filter(p=>{
     if(p.active === false) return false;
     const pBranch = p.branch_id ? String(p.branch_id) : '';
-    const pGroup = p.group_id ? String(p.group_id) : '';
 
     if(filterBranch && pBranch !== String(filterBranch)) return false;
     if(sessionBranchIds.size && !sessionBranchIds.has(pBranch)) return false;
 
-    if(filterGroup){
-      return pGroup === String(filterGroup);
-    }
-    if(hasAnySessionWithoutGroup){
-      return true;
-    }
-    if(sessionGroupIds.size){
-      return pGroup !== '' && sessionGroupIds.has(pGroup);
-    }
     return true;
   });
 }
@@ -1193,16 +1182,14 @@ async function loadAttendanceReportByFilter(){
   const client=getSupabaseClient();
   if(!client) return;
   const branch=$('attBranch')?.value||'';
-  const group=$('attGroup')?.value||'';
   const date=$('attDate')?.value||'';
 
-  if(!branch && !group && !date && activeSession){
+  if(!branch && !date && activeSession){
     return showAttendanceLists();
   }
 
   let sessQuery = client.from('attendance_sessions').select('*');
   if(branch) sessQuery = sessQuery.eq('branch_id', branch);
-  if(group) sessQuery = sessQuery.eq('group_id', group);
   if(date) sessQuery = sessQuery.eq('session_date', date);
 
   const {data:matchedSessions, error:sessErr} = await sessQuery.order('created_at',{ascending:false});
@@ -1216,31 +1203,8 @@ async function loadAttendanceReportByFilter(){
     activeSession = null;
     scannedInSession.clear();
     $('closeSession').classList.add('hidden');
-    $('attendanceLists').innerHTML='<div class="card muted">لا توجد حصة مطابقة للفلتر المحدد.</div>';
-    setNotice($('attMsg'),'لم يتم العثور على حصة مطابقة للفرع أو المجموعة أو التاريخ المحدد.');
-    return;
-  }
-
-  if(!group && sessionsList.length > 1){
-    const combinedItems = [];
-    for(const sess of sessionsList){
-      const { rows: sRows, error: sErr } = await fetchSessionAttendanceRows(client, sess.id);
-      if(sErr){
-        setNotice($('attMsg'),'تعذر تحميل تقرير الحضور: ' + sErr,'err');
-        return;
-      }
-      const sRoster = getRosterForSessions([sess], branch, '');
-      const sItems = buildAttendanceFromReport(sRows, sRoster, sess, date);
-      combinedItems.push(...sItems);
-    }
-
-    const allClosed = sessionsList.every(s=>Boolean(s.session_closed));
-
-    activeSession = null;
-    scannedInSession.clear();
-    $('closeSession').classList.add('hidden');
-
-    renderGroupedAttendance(combinedItems, allClosed, `تقرير كل المجموعات (${sessionsList.length} حصص)`);
+    $('attendanceLists').innerHTML='<div class="card muted">لا توجد حصة مطابقة للفرع أو التاريخ المحدد.</div>';
+    setNotice($('attMsg'),'لم يتم العثور على حصة مطابقة للفرع أو التاريخ المحدد.');
     return;
   }
 
@@ -1258,7 +1222,7 @@ async function loadAttendanceReportByFilter(){
     return;
   }
 
-  const roster = getRosterForSessions([targetSession], branch, group);
+  const roster = getRosterForSessions([targetSession], branch);
   const items = buildAttendanceFromReport(repRows||[], roster, targetSession, date);
   renderGroupedAttendance(items, Boolean(targetSession.session_closed), 'تقرير الحصة');
 }
@@ -1373,7 +1337,7 @@ async function showAttendanceLists(){
   if(closed) $('closeSession').classList.add('hidden');
   else $('closeSession').classList.remove('hidden');
 
-  const roster = getRosterForSessions([sessMeta], $('attBranch')?.value || '', $('attGroup')?.value || '');
+  const roster = getRosterForSessions([sessMeta], $('attBranch')?.value || '');
   const items = buildAttendanceFromReport(repRes.rows||[], roster, sessMeta, sessMeta?.session_date || $('attDate')?.value || '');
   renderGroupedAttendance(items, closed);
 }
@@ -2344,6 +2308,7 @@ function applyLocalImagePreview(input){
       applySrcToSlot(slot, dataUrl);
       setNotice(msg, `تم حفظ الصورة (${file.name}) في المتصفح وستبقى بعد الريفريش.`, 'ok');
     }catch(e){
+      // Fallback to temporary object URL if localStorage quota is exceeded
       const tempUrl = URL.createObjectURL(file);
       applySrcToSlot(slot, tempUrl);
       setNotice(msg, `تم عرض الصورة (${file.name}) مؤقتًا، لكن حجمها كبير على التخزين الدائم بالمتصفح؛ استخدم رابط صورة مباشر أو ارفعها في مجلد assets/ لتبقى بعد الريفريش.`, 'err');
