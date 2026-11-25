@@ -89,12 +89,12 @@ header{position:sticky;top:0;z-index:10;background:#080a0ceF;border-bottom:1px s
 .brand small{color:#b8a16b;letter-spacing:2px;font:10px Cinzel,serif}
 .navlinks{display:flex;gap:7px;flex-wrap:wrap}
 .navlinks button{padding:8px 12px;font-size:12px}
-.hero{margin:30px auto 20px;text-align:center;padding:55px 22px;border:1px solid #766039;border-radius:26px;background:linear-gradient(130deg,#191d1d,#0c0f10 68%);box-shadow:0 25px 80px #0008;position:relative;overflow:hidden}
-.hero-bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.22;pointer-events:none;z-index:0}
-.hero > *:not(.hero-bg-img){position:relative;z-index:1}
-.hero:before{content:'♞';position:absolute;font-size:210px;color:#d5ad5508;left:5%;top:-25px;z-index:0}
+.hero{margin:30px auto 20px;text-align:center;padding:34px 22px 46px;border:1px solid #766039;border-radius:26px;background:linear-gradient(130deg,#191d1d,#0c0f10 68%);box-shadow:0 25px 80px #0008;position:relative;overflow:hidden}
+.hero-stadium-box{width:min(760px,100%);margin:0 auto 24px;border-radius:18px;overflow:hidden;border:1px solid rgba(213,173,85,.45);box-shadow:0 16px 40px #0009;background:#090c0e}
+.hero-stadium-img{width:100%;height:clamp(220px,36vw,360px);object-fit:cover;display:block}
+.hero > *:not(.hero-stadium-box){position:relative;z-index:1}
 .eyebrow{color:var(--gold);letter-spacing:4px;font:12px Cinzel,serif}
-.hero h1{font-size:clamp(28px,5vw,52px);color:var(--gold2);margin:12px 0}
+.hero h1{font-size:clamp(28px,5vw,50px);color:var(--gold2);margin:10px 0}
 .hero p{color:#d2cec3;line-height:2;margin:8px auto;max-width:760px}
 .hero .actions{justify-content:center;margin-top:24px}
 .actions{display:flex;gap:9px;flex-wrap:wrap}
@@ -107,7 +107,7 @@ header{position:sticky;top:0;z-index:10;background:#080a0ceF;border-bottom:1px s
 .card{background:linear-gradient(150deg,#171d21,#101416);border:1px solid var(--line);border-radius:17px;padding:19px;box-shadow:0 12px 35px #0005;transition:transform .22s ease,border-color .22s ease}
 .card:hover{border-color:#786238;transform:translateY(-2px)}
 .card h3{color:var(--gold2);margin:0 0 10px}
-.kit-img{width:100%;height:220px;object-fit:cover;border-radius:12px;border:1px solid #453a25;margin-bottom:12px;background:#0c0f12}
+.kit-img{width:100%;height:270px;object-fit:contain;border-radius:12px;border:1px solid #453a25;margin-bottom:12px;background:radial-gradient(circle at 50% 45%,#221c12,#0a0d0f 75%);padding:8px;display:block}
 
 .gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;margin-top:12px}
 .gallery-card{background:linear-gradient(155deg,#181e22,#0d1012);border:1px solid #5a4929;border-radius:18px;overflow:hidden;box-shadow:0 16px 40px #0007;display:flex;flex-direction:column;transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
@@ -152,9 +152,9 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
   .nav{align-items:flex-start;flex-direction:column}
   .navlinks{width:100%}
   .navlinks button{flex:1}
-  .hero{padding:38px 16px}
+  .hero{padding:24px 14px 36px}
   .two{grid-template-columns:1fr}
-  .kit-img{height:185px}
+  .kit-img{height:230px}
   .gallery-media{height:200px}
 }
 </style>
@@ -179,6 +179,7 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 <button class="secondary" type="button" onclick="page('uniform')">الزي</button>
 <button class="secondary" type="button" onclick="page('enroll')">التقديم</button>
 <button class="secondary" type="button" onclick="page('events')">الفعاليات</button>
+<button class="secondary" type="button" onclick="page('contact')">تواصل معنا</button>
 <button class="secondary" type="button" onclick="page('parent')">ولي الأمر</button>
 <button type="button" onclick="page('login')">الإدارة</button>
 </div>
@@ -189,14 +190,16 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 
 <section id="home" class="section active">
 <div class="hero">
-<img class="hero-bg-img" src="assets/stadium-hero.jpg.jpg" alt="ملعب أكاديمية بلاك هورس" onload="this.style.opacity='.22'" onerror="this.style.display='none'">
+<div class="hero-stadium-box">
+<img class="hero-stadium-img" src="assets/stadium-hero.jpg.jpg" alt="ملعب أكاديمية بلاك هورس" onerror="this.parentElement.style.display='none'">
+</div>
 <div class="eyebrow">MORE THAN FOOTBALL</div>
 <h1>أكاديمية بلاك هورس لكرة القدم</h1>
 <p>مش مجرد أكاديمية… دي بداية صناعة الأبطال.</p>
 <p>هنا لا نصنع لاعبين فقط… هنا نصنع أبطالًا يتركون أثرًا.</p>
 <p>في BLACK HORSE نصنع بيئة تصنع الثقة، وتنمّي الموهبة، وتحوّل الطموح إلى إنجاز. هنا تبدأ رحلة كل بطل.</p>
 <div class="actions">
-<button type="button" onclick="page('enroll')">ابدأ رحلتك</button>
+<button type="button" onclick="page('enroll')">ابدأ رحلتك الآن</button>
 <button type="button" class="secondary" onclick="page('gallery')">معرض اللاعبين</button>
 <button type="button" class="secondary" onclick="page('branches')">اكتشف فروعنا</button>
 <button type="button" class="secondary" onclick="page('parent')">بوابة ولي الأمر</button>
@@ -272,23 +275,11 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 
   <article class="gallery-card">
     <div class="gallery-media">
-      <img src="assets/gallery-matches.jpg.jpg" alt="صور اللاعبين أثناء المباريات والاحتفال" onload="this.nextElementSibling.classList.add('hidden')" onerror="this.classList.add('hidden')">
-      <div class="gallery-missing">لم يتم العثور على الملف <code>assets/gallery-matches.jpg.jpg</code></div>
-    </div>
-    <div class="gallery-body">
-      <span class="gallery-tag">5 · المباريات والاحتفال</span>
-      <h3>اللاعبون أثناء المباريات والاحتفال</h3>
-      <p>في أرض الملعب تُختبر المعادن الحقيقية؛ لحظات التحدي والاحتفال بالانتصار هي ثمرة أيام من الإصرار والالتزام والعمل بروح لا تنكسر.</p>
-    </div>
-  </article>
-
-  <article class="gallery-card">
-    <div class="gallery-media">
       <img src="assets/gallery-shooting.jpg.jpg" alt="لقطة تسديد على المرمى" onload="this.nextElementSibling.classList.add('hidden')" onerror="this.classList.add('hidden')">
       <div class="gallery-missing">لم يتم العثور على الملف <code>assets/gallery-shooting.jpg.jpg</code></div>
     </div>
     <div class="gallery-body">
-      <span class="gallery-tag">6 · التسديد</span>
+      <span class="gallery-tag">5 · التسديد</span>
       <h3>لقطة تسديد على المرمى</h3>
       <p>حسم اللحظات الكبيرة لا يأتي صدفة، بل يُبنى بتكرار الإتقان وهدوء الأعصاب؛ كل تسديدة هنا هي رسالة طموح نحو شباك المجد.</p>
     </div>
@@ -300,7 +291,7 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
       <div class="gallery-missing">لم يتم العثور على الملف <code>assets/gallery-trophy.jpg.jpg</code></div>
     </div>
     <div class="gallery-body">
-      <span class="gallery-tag">7 · المجد والتتويج</span>
+      <span class="gallery-tag">6 · المجد والتتويج</span>
       <h3>منصات التتويج والكؤوس</h3>
       <p>الكؤوس ليست نهاية الطريق، بل شهادة فخر على تعبٍ لا يعرف التراجع؛ في BLACK HORSE نرفع راية البطولة ونصنع ذكريات تبقى للأبد.</p>
     </div>
@@ -326,6 +317,29 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 <h3>تواصل معنا</h3>
 <p><a href="https://wa.me/201115099181" target="_blank" rel="noopener">01115099181 · واتساب</a></p>
 <p><a href="https://wa.me/201147009393" target="_blank" rel="noopener">01147009393 · واتساب</a></p>
+</article>
+</div>
+</section>
+
+<section id="contact" class="section">
+<div class="section-title"><h2>تواصل معنا</h2></div>
+<div class="grid">
+<article class="card">
+<h3>أرقام التواصل والواتساب</h3>
+<p class="muted small">تواصلوا معنا مباشرة للاستفسار عن التقديم أو المواعيد أو الفعاليات.</p>
+<div class="actions" style="margin-top:12px">
+<a class="btn" href="https://wa.me/201115099181" target="_blank" rel="noopener">واتساب: 01115099181</a>
+<a class="btn secondary" href="https://wa.me/201147009393" target="_blank" rel="noopener">واتساب: 01147009393</a>
+</div>
+</article>
+<article class="card">
+<h3>مواقع الفروع</h3>
+<p class="muted small">فرع العرب: حديقة البستان خلف مكتبة سوزان مبارك، عرب المعادي، القاهرة.</p>
+<p class="muted small">فرع الزهراء: مدرسة القدس، بيشو أمريكان، زهراء المعادي، القاهرة.</p>
+<div class="actions" style="margin-top:12px">
+<a class="btn secondary" href="https://maps.app.goo.gl/9PfDo5GPUwYLzgtM8" target="_blank" rel="noopener">خريطة فرع العرب</a>
+<a class="btn secondary" href="https://maps.app.goo.gl/PjnK98vCVkvR1p6t8" target="_blank" rel="noopener">خريطة فرع الزهراء</a>
+</div>
 </article>
 </div>
 </section>
