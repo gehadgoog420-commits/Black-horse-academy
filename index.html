@@ -175,6 +175,7 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 <button class="secondary" type="button" onclick="page('academy')">الأكاديمية</button>
 <button class="secondary" type="button" onclick="page('gallery')">معرض اللاعبين</button>
 <button class="secondary" type="button" onclick="page('branches')">الفروع</button>
+<button class="secondary" type="button" onclick="page('schedule')">المواعيد</button>
 <button class="secondary" type="button" onclick="page('uniform')">الزي</button>
 <button class="secondary" type="button" onclick="page('enroll')">التقديم</button>
 <button class="secondary" type="button" onclick="page('events')">الفعاليات</button>
@@ -296,24 +297,36 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 </section>
 
 <section id="branches" class="section">
-<div class="section-title"><h2>الفروع والمواعيد</h2></div>
+<div class="section-title"><h2>الفروع</h2></div>
 <div class="grid">
 <article class="card">
 <h3>فرع العرب</h3>
 <p>حديقة البستان خلف مكتبة سوزان مبارك – شارع محمد أبو زيد – عرب المعادي – القاهرة.</p>
-<p><strong>البراعم B والكيدز (Kids):</strong> الأحد من 8 إلى 9 مساءً، والثلاثاء والخميس من 7 إلى 8 مساءً.<br><strong>الناشئين والبراعم A:</strong> الأحد والثلاثاء والخميس من 8 إلى 9 مساءً.</p>
 <a class="btn secondary" href="https://maps.app.goo.gl/9PfDo5GPUwYLzgtM8" target="_blank" rel="noopener">الموقع على الخريطة</a>
 </article>
 <article class="card">
 <h3>فرع الزهراء</h3>
 <p>مدرسة القدس – بيشو أمريكان – زهراء المعادي – القاهرة.</p>
-<p><strong>الناشئين والكيدز والبراعم A وB:</strong> السبت والأربعاء الساعة 7 مساءً، والاثنين الساعة 5:45 مساءً.</p>
 <a class="btn secondary" href="https://maps.app.goo.gl/PjnK98vCVkvR1p6t8" target="_blank" rel="noopener">الموقع على الخريطة</a>
 </article>
 <article class="card">
 <h3>تواصل معنا</h3>
 <p><a href="https://wa.me/201115099181" target="_blank" rel="noopener">01115099181 · واتساب</a></p>
 <p><a href="https://wa.me/201147009393" target="_blank" rel="noopener">01147009393 · واتساب</a></p>
+</article>
+</div>
+</section>
+
+<section id="schedule" class="section">
+<div class="section-title"><h2>المواعيد</h2></div>
+<div class="grid">
+<article class="card">
+<h3>العرب</h3>
+<p>الأحد من 8 مساءً، والثلاثاء والخميس 7 مساءً.</p>
+</article>
+<article class="card">
+<h3>الزهراء</h3>
+<p>السبت والأربعاء الساعة 7 مساءً، والاثنين الساعة 5:45 مساءً.</p>
 </article>
 </div>
 </section>
@@ -342,9 +355,9 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 <form id="enrollForm">
 <div class="formgrid">
 <label>اسم اللاعب *<input name="player_name" required></label>
+<label>رقم التليفون *<input name="parent_phone" id="enPhone" required inputmode="tel" placeholder="مثال: 01115099181"></label>
 <label>تاريخ الميلاد<input name="birth_date" type="date"></label>
 <label>الفرع<select name="branch_id" id="enBranch" required></select></label>
-<label>رقم التليفون / واتساب ولي الأمر *<input name="parent_phone" required inputmode="tel"></label>
 <label>وظيفة الأب<input name="father_occupation"></label>
 <label>وظيفة الأم<input name="mother_occupation"></label>
 <label>العنوان<input name="address"></label>
