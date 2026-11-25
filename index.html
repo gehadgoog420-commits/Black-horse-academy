@@ -107,6 +107,9 @@ header{position:sticky;top:0;z-index:10;background:#080a0ceF;border-bottom:1px s
 .card{background:linear-gradient(150deg,#171d21,#101416);border:1px solid var(--line);border-radius:17px;padding:19px;box-shadow:0 12px 35px #0005;transition:transform .22s ease,border-color .22s ease}
 .card:hover{border-color:#786238;transform:translateY(-2px)}
 .card h3{color:var(--gold2);margin:0 0 10px}
+.about-copy p{line-height:2;color:#e7e2d6;margin:10px 0}
+.about-divider{border:0;border-top:1px solid #453a25;margin:18px 0}
+.about-highlight{color:var(--gold2);font-weight:800}
 .kit-img{width:100%;height:270px;object-fit:contain;border-radius:12px;border:1px solid #453a25;margin-bottom:12px;background:radial-gradient(circle at 50% 45%,#221c12,#0a0d0f 75%);padding:8px;display:block}
 
 .gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;margin-top:12px}
@@ -165,8 +168,8 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 <div class="wrap nav">
 <div class="brand">
 <div class="crest-wrap">
-<div id="defaultCrest" class="crest" title="BLACK HORSE">♞</div>
-<img id="brandLogoImg" class="brand-logo hidden" src="assets/logo.png.PNG" alt="شعار أكاديمية بلاك هورس" onload="this.classList.remove('hidden');document.getElementById('defaultCrest').classList.add('hidden')" onerror="this.classList.add('hidden');document.getElementById('defaultCrest').classList.remove('hidden')">
+<img id="brandLogoImg" class="brand-logo" src="assets/logo.png.PNG" alt="شعار أكاديمية بلاك هورس" data-fallbacks='["assets/logo.png","assets/logo.PNG","assets/logo.jpg","assets/logo.JPG","assets/logo.webp"]' onload="this.classList.remove('hidden');document.getElementById('defaultCrest').classList.add('hidden')" onerror="(function(img){var list=JSON.parse(img.dataset.fallbacks||'[]');var idx=Number(img.dataset.fbIdx||'0');if(idx<list.length){img.dataset.fbIdx=String(idx+1);img.src=list[idx];}else{img.classList.add('hidden');document.getElementById('defaultCrest').classList.remove('hidden');}})(this)">
+<div id="defaultCrest" class="crest hidden" title="BLACK HORSE">♞</div>
 </div>
 <div><strong>BLACK HORSE</strong><small>FOOTBALL ACADEMY · MORE THAN FOOTBALL</small></div>
 </div>
@@ -213,8 +216,30 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 </section>
 
 <section id="academy" class="section">
-<div class="section-title"><h2>عن الأكاديمية</h2></div>
-<div class="card"><p>في BLACK HORSE نؤمن أن كرة القدم أكثر من مجرد لعبة؛ إنها مدرسة للثقة والانضباط والعمل الجماعي. نعمل على تنمية الموهبة وصناعة شخصية اللاعب داخل الملعب وخارجه.</p><h3>THE LEGACY STARTS HERE</h3><p>هنا تبدأ الحكاية… وهنا يُصنع الأبطال.</p></div>
+<div class="section-title"><h2>الأكاديمية</h2></div>
+<div class="card about-copy">
+<div class="eyebrow">BLACK HORSE FOOTBALL ACADEMY</div>
+<h3 style="margin-top:6px">نصنع المواهب.. ونصنع الأبطال</h3>
+
+<h3>من نحن؟</h3>
+<p>انطلاقًا من إيماننا بأن كل موهبة تستحق فرصة حقيقية للوصول إلى القمة، تأسست أكاديمية BLACK HORSE FOOTBALL ACADEMY تحت قيادة وإشراف الكابتن أحمد عمران، برؤية طموحة تهدف إلى اكتشاف المواهب الكروية الواعدة وصقلها وفق أسس تدريبية حديثة ومعايير فنية واحترافية.</p>
+<p>لا تقتصر رسالتنا على تعليم مهارات كرة القدم فحسب، بل نسعى إلى إعداد جيل من اللاعبين القادرين على المنافسة والتميز، من خلال برامج تدريبية متخصصة تهتم بالتطوير الفني والبدني والذهني، إلى جانب غرس قيم الالتزام والانضباط والعمل الجماعي والروح الرياضية.</p>
+<p>هدفنا هو صناعة لاعب متكامل، يمتلك المهارة والثقة والشخصية الاحترافية، وتأهيل المواهب المتميزة للانتقال إلى مراحل أكثر تقدمًا في مسيرتها الكروية، وفتح آفاق الفرص أمامها للانضمام إلى الأندية والكيانات الرياضية الكبرى، والسير بخطوات ثابتة نحو عالم الاحتراف.</p>
+<p>في BLACK HORSE نؤمن أن صناعة البطل تبدأ من الأساس الصحيح، وأن الحلم الكبير يحتاج إلى رؤية واضحة، وتدريب احترافي، وعمل مستمر.</p>
+
+<hr class="about-divider">
+
+<h3>رؤيتنا</h3>
+<p>أن نكون محطة حقيقية في رحلة صناعة نجوم كرة القدم، وأن نساهم في إعداد جيل يترك بصمته داخل الملاعب.</p>
+
+<h3>رسالتنا</h3>
+<p>اكتشاف الموهبة، تطوير القدرات، وبناء أبطال للمستقبل.</p>
+
+<hr class="about-divider">
+
+<p class="about-highlight">BLACK HORSE — MORE THAN FOOTBALL</p>
+<p class="about-highlight">موهبة نكتشفها.. شخصية نبنيها.. وبطل نصنعه.</p>
+</div>
 </section>
 
 <section id="gallery" class="section">
