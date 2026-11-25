@@ -219,7 +219,7 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 <h2>معرض صور لاعبي الأكاديمية</h2>
 <span class="badge">BLACK HORSE GALLERY</span>
 </div>
-<p class="muted small">صور الأكاديمية المعتمدة والمرتبطة بالمسارات المحددة. الصور غير المرفقة حاليًا (<code>assets/gallery-coach.jpg</code> و<code>assets/gallery-matches.jpg</code>) تُعرض بمجرد إضافتها إلى مجلد <code>assets/</code>.</p>
+<p class="muted small">صور الأكاديمية المعتمدة والمرتبطة بمسارات مجلد <code>assets/</code>.</p>
 
 <div class="gallery-grid">
   <article class="gallery-card">
@@ -249,12 +249,12 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
   <article class="gallery-card">
     <div class="gallery-media">
       <img src="assets/gallery-coach.jpg" alt="صور المدرب أثناء التدريب مع اللاعبين" onload="this.nextElementSibling.classList.add('hidden')" onerror="this.classList.add('hidden')">
-      <div class="gallery-missing">غير مرفقة حاليًا — المسار: <code>assets/gallery-coach.jpg</code></div>
+      <div class="gallery-missing">لم يتم العثور على الملف <code>assets/gallery-coach.jpg</code></div>
     </div>
     <div class="gallery-body">
       <span class="gallery-tag">3 · المدرب مع اللاعبين</span>
       <h3>المدرب أثناء التدريب مع اللاعبين</h3>
-      <p>المسار: <code>assets/gallery-coach.jpg</code> (غير مرفقة حاليًا)</p>
+      <p>المسار: <code>assets/gallery-coach.jpg</code></p>
     </div>
   </article>
 
@@ -273,12 +273,12 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
   <article class="gallery-card">
     <div class="gallery-media">
       <img src="assets/gallery-matches.jpg" alt="صور اللاعبين أثناء المباريات والاحتفال" onload="this.nextElementSibling.classList.add('hidden')" onerror="this.classList.add('hidden')">
-      <div class="gallery-missing">غير مرفقة حاليًا — المسار: <code>assets/gallery-matches.jpg</code></div>
+      <div class="gallery-missing">لم يتم العثور على الملف <code>assets/gallery-matches.jpg</code></div>
     </div>
     <div class="gallery-body">
       <span class="gallery-tag">5 · المباريات والاحتفال</span>
       <h3>اللاعبون أثناء المباريات والاحتفال</h3>
-      <p>المسار: <code>assets/gallery-matches.jpg</code> (غير مرفقة حاليًا)</p>
+      <p>المسار: <code>assets/gallery-matches.jpg</code></p>
     </div>
   </article>
 
@@ -293,6 +293,39 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
       <p>المسار: <code>assets/gallery-shooting.jpg</code></p>
     </div>
   </article>
+</div>
+
+<div class="card" style="margin-top:18px">
+<h3>إدارة وحفظ صور الموقع (تبقى بعد الريفريش)</h3>
+<p class="muted small">يمكنك وضع <strong>رابط صورة مباشر</strong> لأي خانة ليُحفظ تلقائيًا في المتصفح (<code>localStorage</code>) ويبقى بعد الريفريش، أو رفع صورة من جهازك (يُفضّل أن تكون مضغوطة/صغيرة حتى لا يتجاوز حد التخزين المحلي في المتصفح). وللمشاركة العامة مع كل الزوار، ارفع الملفات بنفس الأسماء داخل مجلد <code>assets/</code> أو استضفها على رابط دائم.</p>
+<div class="formgrid">
+<label>اختر الخانة المستهدفة
+<select id="mediaTargetSlot" onchange="syncMediaSlotInput()">
+  <option value="logo">شعار الأكاديمية (assets/logo.png)</option>
+  <option value="hero">خلفية الرئيسية (assets/stadium-hero.jpg)</option>
+  <option value="gallery-training">المعرض 1: التدريب (assets/gallery-training.jpg)</option>
+  <option value="gallery-dribbling-shooting">المعرض 2: المراوغة والتسديد (assets/gallery-dribbling-shooting.jpg)</option>
+  <option value="gallery-coach">المعرض 3: المدرب مع اللاعبين (assets/gallery-coach.jpg)</option>
+  <option value="gallery-team">المعرض 4: الفريق (assets/gallery-team.jpg)</option>
+  <option value="gallery-matches">المعرض 5: المباريات والاحتفال (assets/gallery-matches.jpg)</option>
+  <option value="gallery-shooting">المعرض 6: التسديد (assets/gallery-shooting.jpg)</option>
+  <option value="summer-kit">الزي الصيفي (assets/summer-kit.jpg)</option>
+  <option value="winter-kit">الزي الشتوي (assets/winter-kit.jpg)</option>
+</select>
+</label>
+<label>رابط صورة مباشر (https://...) أو مسار
+<input id="mediaUrlInput" type="url" placeholder="https://example.com/image.jpg">
+</label>
+<label>أو ارفع ملف صورة من جهازك
+<input id="mediaFileInput" type="file" accept="image/*" onchange="applyLocalImagePreview(this)">
+</label>
+</div>
+<div class="actions" style="margin-top:10px">
+<button type="button" onclick="saveMediaUrlSlot()">حفظ الرابط للخانة</button>
+<button type="button" class="secondary" onclick="resetMediaSlot()">استعادة الافتراضي للخانة</button>
+<button type="button" class="danger" onclick="resetAllCustomMedia()">استعادة كل الصور الافتراضية</button>
+</div>
+<div id="mediaPreviewMsg" class="notice">اختر الخانة وأدخل رابطًا مباشرًا أو ارفع صورة لعرضها وحفظها في المتصفح.</div>
 </div>
 </section>
 
@@ -478,14 +511,13 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 <h3>إنشاء حصة أو عرض تقرير حصة</h3>
 <div class="formgrid">
 <label>الفرع<select id="attBranch" onchange="loadAttendanceReportByFilter()"></select></label>
-<label>المجموعة<select id="attGroup" onchange="loadAttendanceReportByFilter()"></select></label>
 <label>التاريخ<input id="attDate" type="date" onchange="loadAttendanceReportByFilter()"></label>
 </div>
 <div class="actions" style="margin-top:10px">
 <button type="button" onclick="createSession()">إنشاء الحصة</button>
 <button type="button" class="secondary" onclick="loadAttendanceReportByFilter()">عرض تقرير الحضور والغياب</button>
 </div>
-<div id="attMsg" class="notice">اختاري الفرع والمجموعة والتاريخ.</div>
+<div id="attMsg" class="notice">اختاري الفرع والتاريخ.</div>
 </div>
 <div class="card" style="margin-top:14px">
 <h3>تسجيل الحضور</h3>
@@ -771,7 +803,7 @@ async function init(){
     branches=b.data||[];
     groups=g.data||[];
     ['enBranch','plBranch','attBranch'].forEach(id=>fill(id,branches));
-    ['plGroup','attGroup'].forEach(id=>fill(id,groups,'كل المجموعات / غير محدد'));
+    fill('plGroup',groups,'كل المجموعات / غير محدد');
     if($('attDate') && !$('attDate').value) $('attDate').value = today();
     await loadPublicEvents();
 
@@ -1030,7 +1062,7 @@ async function createSession(){
   if(!user)return;
   const client=getSupabaseClient();
   if(!client){setNotice($('attMsg'),'تعذر الاتصال بقاعدة البيانات.','err');return;}
-  let branch=$('attBranch').value,group=$('attGroup').value,date=$('attDate').value||today();
+  let branch=$('attBranch').value,group=$('attGroup')?.value||'',date=$('attDate').value||today();
   if(!branch){setNotice($('attMsg'),'اختاري الفرع أولًا.','err');return}
   let {data,error}=await client.from('attendance_sessions').insert({
     branch_id:branch,group_id:group||null,session_date:date,session_closed:false
@@ -2176,6 +2208,180 @@ async function sendLinkRequest(){
   await showParentDash();
 }
 
+const MEDIA_STORAGE_KEY = 'bh_custom_media_v1';
+const DEFAULT_SLOT_SRCS = {
+  'logo': 'assets/logo.png',
+  'hero': 'assets/stadium-hero.jpg',
+  'gallery-training': 'assets/gallery-training.jpg',
+  'gallery-dribbling-shooting': 'assets/gallery-dribbling-shooting.jpg',
+  'gallery-coach': 'assets/gallery-coach.jpg',
+  'gallery-team': 'assets/gallery-team.jpg',
+  'gallery-matches': 'assets/gallery-matches.jpg',
+  'gallery-shooting': 'assets/gallery-shooting.jpg',
+  'summer-kit': 'assets/summer-kit.jpg',
+  'winter-kit': 'assets/winter-kit.jpg'
+};
+
+function readCustomMediaMap(){
+  try{
+    const raw = localStorage.getItem(MEDIA_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){
+    return {};
+  }
+}
+
+function writeCustomMediaMap(map){
+  localStorage.setItem(MEDIA_STORAGE_KEY, JSON.stringify(map));
+}
+
+function applySrcToSlot(slot, srcValue){
+  const effectiveSrc = srcValue || DEFAULT_SLOT_SRCS[slot];
+  if(!effectiveSrc) return;
+
+  if(slot === 'logo'){
+    const img = $('brandLogoImg');
+    const crest = $('defaultCrest');
+    if(img){
+      img.onload = function(){
+        this.classList.remove('hidden');
+        if(crest) crest.classList.add('hidden');
+      };
+      img.onerror = function(){
+        this.classList.add('hidden');
+        if(crest) crest.classList.remove('hidden');
+      };
+      img.src = effectiveSrc;
+    }
+  }else if(slot === 'hero'){
+    const heroImg = document.querySelector('.hero-bg-img');
+    if(heroImg){
+      heroImg.style.display = '';
+      heroImg.onload = function(){ this.style.opacity = '.22'; };
+      heroImg.onerror = function(){ this.style.display = 'none'; };
+      heroImg.src = effectiveSrc;
+    }
+  }else if(slot === 'summer-kit' || slot === 'winter-kit'){
+    const defaultSrc = DEFAULT_SLOT_SRCS[slot];
+    const kitImg = document.querySelector(`img[src="${defaultSrc}"]`) || document.querySelector(`img[data-slot="${slot}"]`);
+    if(kitImg){
+      kitImg.setAttribute('data-slot', slot);
+      kitImg.style.display = '';
+      kitImg.onerror = function(){ this.style.display = 'none'; };
+      kitImg.src = effectiveSrc;
+    }
+  }else{
+    const defaultSrc = `assets/${slot}.jpg`;
+    const galImg = document.querySelector(`img[src="${defaultSrc}"]`) || document.querySelector(`img[data-slot="${slot}"]`);
+    if(galImg){
+      galImg.setAttribute('data-slot', slot);
+      galImg.classList.remove('hidden');
+      galImg.onload = function(){
+        this.classList.remove('hidden');
+        if(this.nextElementSibling) this.nextElementSibling.classList.add('hidden');
+      };
+      galImg.onerror = function(){
+        this.classList.add('hidden');
+        if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');
+      };
+      galImg.src = effectiveSrc;
+    }
+  }
+}
+
+function restorePersistedMedia(){
+  const map = readCustomMediaMap();
+  Object.keys(DEFAULT_SLOT_SRCS).forEach(slot=>{
+    if(map[slot]){
+      applySrcToSlot(slot, map[slot]);
+    }
+  });
+  syncMediaSlotInput();
+}
+
+function syncMediaSlotInput(){
+  const slot = $('mediaTargetSlot')?.value;
+  const urlInput = $('mediaUrlInput');
+  if(!slot || !urlInput) return;
+  const map = readCustomMediaMap();
+  const saved = map[slot] || '';
+  urlInput.value = saved.startsWith('data:') ? '' : saved;
+}
+
+function saveMediaUrlSlot(){
+  const slot = $('mediaTargetSlot')?.value;
+  const url = ($('mediaUrlInput')?.value || '').trim();
+  const msg = $('mediaPreviewMsg');
+  if(!slot) return;
+  if(!url){
+    setNotice(msg, 'أدخل رابط صورة صحيح أولًا أو ارفع ملف صورة.', 'err');
+    return;
+  }
+  try{
+    const map = readCustomMediaMap();
+    map[slot] = url;
+    writeCustomMediaMap(map);
+    applySrcToSlot(slot, url);
+    setNotice(msg, 'تم حفظ رابط الصورة وسيبقى ظاهرًا حتى بعد الريفريش على هذا المتصفح.', 'ok');
+  }catch(e){
+    setNotice(msg, 'تعذر حفظ الرابط في المتصفح: ' + (e?.message || e), 'err');
+  }
+}
+
+function applyLocalImagePreview(input){
+  const file = input?.files?.[0];
+  const slot = $('mediaTargetSlot')?.value;
+  const msg = $('mediaPreviewMsg');
+  if(!file || !slot) return;
+
+  const reader = new FileReader();
+  reader.onload = function(){
+    const dataUrl = String(reader.result || '');
+    try{
+      const map = readCustomMediaMap();
+      map[slot] = dataUrl;
+      writeCustomMediaMap(map);
+      applySrcToSlot(slot, dataUrl);
+      setNotice(msg, `تم حفظ الصورة (${file.name}) في المتصفح وستبقى بعد الريفريش.`, 'ok');
+    }catch(e){
+      const tempUrl = URL.createObjectURL(file);
+      applySrcToSlot(slot, tempUrl);
+      setNotice(msg, `تم عرض الصورة (${file.name}) مؤقتًا، لكن حجمها كبير على التخزين الدائم بالمتصفح؛ استخدم رابط صورة مباشر أو ارفعها في مجلد assets/ لتبقى بعد الريفريش.`, 'err');
+    }
+  };
+  reader.onerror = function(){
+    setNotice(msg, 'تعذر قراءة ملف الصورة المحدد.', 'err');
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetMediaSlot(){
+  const slot = $('mediaTargetSlot')?.value;
+  const msg = $('mediaPreviewMsg');
+  if(!slot) return;
+  const map = readCustomMediaMap();
+  delete map[slot];
+  writeCustomMediaMap(map);
+  applySrcToSlot(slot, DEFAULT_SLOT_SRCS[slot]);
+  if($('mediaUrlInput')) $('mediaUrlInput').value = '';
+  if($('mediaFileInput')) $('mediaFileInput').value = '';
+  setNotice(msg, 'تمت استعادة الصورة الافتراضية للخانة المحددة.', 'ok');
+}
+
+function resetAllCustomMedia(){
+  const msg = $('mediaPreviewMsg');
+  try{
+    localStorage.removeItem(MEDIA_STORAGE_KEY);
+  }catch(e){}
+  Object.keys(DEFAULT_SLOT_SRCS).forEach(slot=>{
+    applySrcToSlot(slot, DEFAULT_SLOT_SRCS[slot]);
+  });
+  if($('mediaUrlInput')) $('mediaUrlInput').value = '';
+  if($('mediaFileInput')) $('mediaFileInput').value = '';
+  setNotice(msg, 'تمت استعادة جميع الصور الافتراضية.', 'ok');
+}
+
+restorePersistedMedia();
 init();
 </script>
 </body>
