@@ -26,11 +26,29 @@
     });
   }
 
+function loadSupabase(){
+  return loadScriptWithFallback([
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  ]).then(async function(loaded){
+    if(loaded && window.supabase &&
+       typeof window.supabase.createClient === 'function') return true;
+
+    try {
+      var mod = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+      if(mod && typeof mod.createClient === 'function'){
+        window.supabase = mod;
+        return true;
+      }
+    } catch(e) {}
+
+    return Boolean(window.supabase &&
+      typeof window.supabase.createClient === 'function');
+  });
+}
+
   window.__assetsReady = Promise.all([
-    loadScriptWithFallback([
-      'https://unpkg.com/@supabase/supabase-js@2',
-      'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
-    ]),
+    loadSupabase(),
     loadScriptWithFallback([
       'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
       'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'
