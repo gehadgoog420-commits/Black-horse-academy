@@ -557,6 +557,9 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 <button type="button" class="secondary" onclick="stopScanner()">إيقاف الكاميرا</button>
 <button type="button" class="secondary" onclick="manualPresent()">تسجيل رمز QR يدويًا</button>
 </div>
+<label class="small muted" style="margin-top:10px">أو اختر صورة رمز QR مباشرة من الجهاز:
+<input id="qrImageInput" type="file" accept="image/*" onchange="scanQrFromImageFile(this)" style="margin-top:6px">
+</label>
 <div id="reader"></div>
 <label>رمز QR<input id="qrToken"></label>
 <div id="scanMsg" class="notice"></div>
@@ -707,6 +710,11 @@ today=()=>{
   return `${y}-${m}-${day}`;
 },
 esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function getBranchName(branchId){
+  if(!branchId) return 'غير محدد';
+  return branches.find(b=>String(b.id)===String(branchId))?.name || 'غير محدد';
+}
 
 function isKidsGroup(groupId, groupNote, groupName){
   const gName = String(
@@ -1157,7 +1165,7 @@ async function createSession(){
   if(error){setNotice($('attMsg'),error.message,'err');return}
   activeSession=data;
   scannedInSession.clear();
-  setNotice($('attMsg'),'تم إنشاء الحصة. سجّلي اللاعبين بالـ QR ثم أنهي الحصة لاعتماد الغياب.','ok');
+  setNotice($('attMsg'),`تم إنشاء حصة فرع (${getBranchName(branch)}) بتاريخ (${date}). ابدأ مسح رموز QR ثم أنهِ الحصة لاعتماد الغياب.`,'ok');
   $('closeSession').classList.remove('hidden');
   if($('deleteSessionBtn')) $('deleteSessionBtn').classList.remove('hidden');
   await showAttendanceLists();
@@ -1220,7 +1228,8 @@ async function setPlayerAttendanceStatus(playerId, newStatus){
     setNotice($('attMsg'),'تعذر تحديث حالة الحضور: ' + (res.error?.message || 'لم يتم الحفظ.'),'err');
     return;
   }
-  setNotice($('attMsg'),'تم تحديث حالة اللاعب بنجاح.','ok');
+  const pName = players.find(p=>String(p.id)===String(playerId))?.full_name || 'الطالب';
+  setNotice($('attMsg'),`تم تحديث حالة الطالب (${pName}) إلى (${newStatus === 'present' ? 'حاضر' : 'غائب'}).`,'ok');
   await showAttendanceLists();
 }
 
@@ -1245,15 +1254,12 @@ async function deletePlayerAttendanceRecord(playerId){
 
 function getRosterForSessions(sessionsList, filterBranch){
   const list = Array.isArray(sessionsList) ? sessionsList : (sessionsList ? [sessionsList] : []);
-  const sessionBranchIds = new Set(list.map(s=>s.branch_id).filter(Boolean).map(String));
+  const targetBranch = filterBranch || (list[0]?.branch_id ? String(list[0].branch_id) : '');
 
   return (players||[]).filter(p=>{
     if(p.active === false) return false;
     const pBranch = p.branch_id ? String(p.branch_id) : '';
-
-    if(filterBranch && pBranch !== String(filterBranch)) return false;
-    if(sessionBranchIds.size && !sessionBranchIds.has(pBranch)) return false;
-
+    if(targetBranch && pBranch !== String(targetBranch)) return false;
     return true;
   });
 }
@@ -1269,6 +1275,7 @@ function normalizeReportStatus(rawStatus, sessionClosed){
 function buildAttendanceFromReport(reportRows, roster, sessionMeta, sessionDateFallback){
   const sDate = sessionMeta?.session_date || sessionDateFallback || '';
   const isClosed = Boolean(sessionMeta?.session_closed);
+  const branchLabel = getBranchName(sessionMeta?.branch_id || $('attBranch')?.value || '');
   const rosterById = new Map();
   const rosterByName = new Map();
 
@@ -1300,6 +1307,7 @@ function buildAttendanceFromReport(reportRows, roster, sessionMeta, sessionDateF
     merged.push({
       player_id: pl.id ?? rec?.player_id ?? null,
       player_name: rec?.player_name || pl.full_name || '—',
+      branch_name: branchLabel,
       session_date: rec?.session_date || sDate,
       status
     });
@@ -1319,6 +1327,7 @@ function buildAttendanceFromReport(reportRows, roster, sessionMeta, sessionDateF
     merged.push({
       player_id: matchedRoster.id,
       player_name: rec.player_name || matchedRoster.full_name || '—',
+      branch_name: branchLabel,
       session_date: rec.session_date || sDate,
       status
     });
@@ -1371,8 +1380,8 @@ async function loadAttendanceReportByFilter(){
     scannedInSession.clear();
     $('closeSession').classList.add('hidden');
     if($('deleteSessionBtn')) $('deleteSessionBtn').classList.add('hidden');
-    $('attendanceLists').innerHTML='<div class="card muted">لا توجد حصة مطابقة للفرع أو التاريخ المحدد.</div>';
-    setNotice($('attMsg'),'لم يتم العثور على حصة مطابقة للفرع أو التاريخ المحدد.');
+    $('attendanceLists').innerHTML='<div class="card muted">لا توجد حصة مسجلة للفرع أو التاريخ المحدد.</div>';
+    setNotice($('attMsg'),'لا توجد حصة مسجلة للفرع أو التاريخ المحدد. يمكنك الضغط على «إنشاء الحصة» لبدء حصة جديدة.','');
     return;
   }
 
@@ -1380,6 +1389,9 @@ async function loadAttendanceReportByFilter(){
   const isNewSession = !activeSession || String(activeSession.id) !== String(targetSession.id);
   activeSession = targetSession;
   if(isNewSession) scannedInSession.clear();
+  if(targetSession.branch_id && $('attBranch')){
+    $('attBranch').value = targetSession.branch_id;
+  }
 
   if(targetSession.session_closed) $('closeSession').classList.add('hidden');
   else $('closeSession').classList.remove('hidden');
@@ -1391,9 +1403,10 @@ async function loadAttendanceReportByFilter(){
     return;
   }
 
-  const roster = getRosterForSessions([targetSession], branch);
+  const effectiveBranch = branch || targetSession.branch_id || '';
+  const roster = getRosterForSessions([targetSession], effectiveBranch);
   const items = buildAttendanceFromReport(repRows||[], roster, targetSession, date);
-  renderGroupedAttendance(items, Boolean(targetSession.session_closed), 'تقرير الحصة');
+  renderGroupedAttendance(items, Boolean(targetSession.session_closed), `تقرير ${getBranchName(effectiveBranch)}`);
 }
 
 async function submitQrToken(tokenValue){
@@ -1409,8 +1422,9 @@ async function submitQrToken(tokenValue){
   const playerKey = matchedPlayer?.id ? `${activeSession.id}::player:${String(matchedPlayer.id)}` : null;
 
   if(scannedInSession.has(sessionKey) || (playerKey && scannedInSession.has(playerKey))){
-    const pName = matchedPlayer?.full_name || 'هذا اللاعب';
-    setNotice($('scanMsg'),`اللاعب (${pName}) مسجل بالفعل في هذه الحصة.`,'');
+    const pName = matchedPlayer?.full_name || 'هذا الطالب';
+    setNotice($('scanMsg'),`تم تسجيل الحضور الطالب ${pName} مسبقًا في هذه الحصة — جاهز لمسح الطالب التالي.`,'ok');
+    $('qrToken').value = '';
     return false;
   }
 
@@ -1425,12 +1439,15 @@ async function submitQrToken(tokenValue){
     return false;
   }
 
+  const studentName = matchedPlayer?.full_name || data.player_name || 'غير معروف';
+  const branchLabel = getBranchName(activeSession.branch_id || $('attBranch')?.value || '');
+
   if(data.already_registered === true){
     scannedInSession.add(sessionKey);
     if(playerKey) scannedInSession.add(playerKey);
     if(data.player_id) scannedInSession.add(`${activeSession.id}::player:${String(data.player_id)}`);
-    const pName = matchedPlayer?.full_name || data.player_name || 'هذا اللاعب';
-    setNotice($('scanMsg'),data.message || `اللاعب (${pName}) مسجل بالفعل في هذه الحصة.`,'');
+    setNotice($('scanMsg'),`تم تسجيل الحضور الطالب ${studentName} مسبقًا (${branchLabel}) — جاهز لمسح الطالب التالي.`,'ok');
+    $('qrToken').value = '';
     return false;
   }
 
@@ -1438,8 +1455,8 @@ async function submitQrToken(tokenValue){
   if(playerKey) scannedInSession.add(playerKey);
   if(data.player_id) scannedInSession.add(`${activeSession.id}::player:${String(data.player_id)}`);
 
-  const playerLabel = matchedPlayer?.full_name || data.player_name || '';
-  setNotice($('scanMsg'),data.message || (playerLabel ? `تم تسجيل حضور جديد للاعب (${playerLabel}) بنجاح.` : 'تم تسجيل حضور جديد بنجاح.'),'ok');
+  setNotice($('scanMsg'),`تم تسجيل الحضور الطالب ${studentName} (${branchLabel}) — جاهز لمسح الطالب التالي.`,'ok');
+  $('qrToken').value = '';
   await showAttendanceLists();
   return true;
 }
@@ -1458,33 +1475,34 @@ function renderAttendanceRow(x){
       <button type="button" class="danger" onclick="deletePlayerAttendanceRecord('${pid}')">حذف</button>
     </span>
   ` : '';
-  return `<div class="playerline"><span>${esc(x.player_name)} <small class="muted">${esc(x.session_date||'')}</small> <span class="badge">${statusBadge}</span></span>${actions}</div>`;
+  return `<div class="playerline"><span>${esc(x.player_name)} <small class="muted">${esc(x.branch_name||'')} · ${esc(x.session_date||'')}</small> <span class="badge">${statusBadge}</span></span>${actions}</div>`;
 }
 
 function renderGroupedAttendance(items, isClosed, titleLabel){
   const present = items.filter(x=>x.status==='present');
   const waiting = items.filter(x=>x.status==='waiting');
   const absent = items.filter(x=>x.status==='absent');
+  const branchName = getBranchName(activeSession?.branch_id || $('attBranch')?.value || '');
 
   if(isClosed){
     $('attendanceLists').innerHTML=`
       <div class="card">
-        <h3>قائمة الحاضرين (${present.length})</h3>
-        ${present.map(renderAttendanceRow).join('')||'لا يوجد حاضرون'}
+        <h3>الحاضرون — ${esc(branchName)} (${present.length})</h3>
+        ${present.map(renderAttendanceRow).join('')||'لا يوجد حاضرون في هذا الفرع'}
       </div>
       <div class="card">
-        <h3>قائمة الغائبين (${absent.length})</h3>
-        ${absent.map(renderAttendanceRow).join('')||'لا يوجد غائبون'}
+        <h3>الغائبون — ${esc(branchName)} (${absent.length})</h3>
+        ${absent.map(renderAttendanceRow).join('')||'لا يوجد غائبون في هذا الفرع'}
       </div>
     `;
   }else{
     $('attendanceLists').innerHTML=`
       <div class="card">
-        <h3>قائمة الحاضرين (${present.length})</h3>
+        <h3>الحاضرون حتى الآن — ${esc(branchName)} (${present.length})</h3>
         ${present.map(renderAttendanceRow).join('')||'—'}
       </div>
       <div class="card">
-        <h3>بانتظار التسجيل قبل الإغلاق (${waiting.length})</h3>
+        <h3>بانتظار التسجيل قبل الإغلاق — ${esc(branchName)} (${waiting.length})</h3>
         ${waiting.map(renderAttendanceRow).join('')||'—'}
       </div>
     `;
@@ -1492,8 +1510,8 @@ function renderGroupedAttendance(items, isClosed, titleLabel){
 
   if(titleLabel){
     setNotice($('attMsg'), isClosed
-      ? `${titleLabel} (مغلقة): الحاضرون ${present.length} — الغائبون ${absent.length}.`
-      : `${titleLabel} (مفتوحة): الحاضرون ${present.length} — بانتظار التسجيل ${waiting.length} (لا يُعتمد الغياب قبل إغلاق الحصة).`
+      ? `${titleLabel} (معتمدة ومغلقة): الحاضرون ${present.length} — الغائبون ${absent.length}.`
+      : `${titleLabel} (مفتوحة): الحاضرون ${present.length} — بانتظار التسجيل ${waiting.length} (اضغط «إنهاء الحصة واعتماد الغياب» لاعتماد الغياب نهائيًا).`
     );
   }
 }
@@ -1520,7 +1538,8 @@ async function showAttendanceLists(){
   else $('closeSession').classList.remove('hidden');
   if($('deleteSessionBtn')) $('deleteSessionBtn').classList.remove('hidden');
 
-  const roster = getRosterForSessions([sessMeta], $('attBranch')?.value || '');
+  const effectiveBranch = $('attBranch')?.value || sessMeta?.branch_id || '';
+  const roster = getRosterForSessions([sessMeta], effectiveBranch);
   const items = buildAttendanceFromReport(repRes.rows||[], roster, sessMeta, sessMeta?.session_date || $('attDate')?.value || '');
   renderGroupedAttendance(items, closed);
 }
@@ -1539,46 +1558,78 @@ async function closeSessionNow(){
     activeSession.session_closed = true;
   }
   $('closeSession').classList.add('hidden');
-  setNotice($('attMsg'), data.message || 'تم إغلاق الحصة واعتماد الغياب.', 'ok');
+  setNotice($('attMsg'), data.message || 'تم إغلاق الحصة واعتماد الغياب بنجاح.', 'ok');
   await showAttendanceLists();
 }
 
 async function startScanner(){
   if(!user){setNotice($('scanMsg'),'غير مصرح.','err');return;}
-  if(!activeSession){setNotice($('scanMsg'),'أنشئي الحصة أولًا.','err');return}
+  if(!activeSession){setNotice($('scanMsg'),'أنشئي الحصة أو حمّلي حصة مفتوحة أولًا.','err');return}
   if(activeSession.session_closed){setNotice($('scanMsg'),'الحصة مغلقة ولا يمكن المسح فيها.','err');return}
   if(scanner || scannerStarting){setNotice($('scanMsg'),'الكاميرا قيد التشغيل بالفعل.','ok');return;}
   await window.__assetsReady;
   if(typeof window.Html5Qrcode !== 'function'){
-    setNotice($('scanMsg'),'تعذر تحميل مكتبة قراءة QR. يمكنك إدخال الرمز يدويًا.','err');
+    setNotice($('scanMsg'),'تعذر تحميل مكتبة قراءة QR. يمكنك إدخال الرمز يدويًا أو اختيار صورة.','err');
     return;
   }
   scannerStarting=true;
   try{
-    const instance=new Html5Qrcode('reader');
+    const instance=new Html5Qrcode('reader',{
+      experimentalFeatures:{useBarCodeDetectorIfSupported:true},
+      verbose:false
+    });
     await instance.start(
       {facingMode:'environment'},
-      {fps:10,qrbox:{width:240,height:240}},
+      {fps:15,qrbox:{width:260,height:260},aspectRatio:1.0},
       async decoded=>{
         const code = String(decoded||'').trim();
         if(!code || !activeSession || activeSession.session_closed)return;
-        const matchedPlayer = (players||[]).find(p=>String(p.attendance_qr_hash||'').trim() === code);
-        const sessionKey = `${activeSession.id}::token:${code}`;
-        const playerKey = matchedPlayer?.id ? `${activeSession.id}::player:${String(matchedPlayer.id)}` : null;
-        if(scannedInSession.has(sessionKey) || (playerKey && scannedInSession.has(playerKey)))return;
         $('qrToken').value=code;
         await submitQrToken(code);
       },
       ()=>{}
     );
     scanner=instance;
-    setNotice($('scanMsg'),'الكاميرا تعمل. وجهيها إلى رمز اللاعب.','ok');
+    setNotice($('scanMsg'),'الكاميرا تعمل. وجّهها نحو رمز QR الخاص بالطالب.','ok');
   }catch(e){
     scanner=null;
     const detail = e?.message || String(e||'خطأ غير معروف');
-    setNotice($('scanMsg'),'تعذر تشغيل الكاميرا أو الوصول إليها: ' + detail + ' — يمكنك إدخال رمز QR يدويًا.','err');
+    setNotice($('scanMsg'),'تعذر تشغيل الكاميرا: ' + detail + ' — يمكنك اختيار صورة QR أو إدخال الرمز يدويًا.','err');
   }finally{
     scannerStarting=false;
+  }
+}
+
+async function scanQrFromImageFile(input){
+  const file = input?.files?.[0];
+  if(!file) return;
+  if(!user){setNotice($('scanMsg'),'غير مصرح.','err');return;}
+  if(!activeSession){setNotice($('scanMsg'),'أنشئي الحصة أو حمّلي حصة مفتوحة أولًا.','err');input.value='';return;}
+  if(activeSession.session_closed){setNotice($('scanMsg'),'الحصة مغلقة ولا يمكن المسح فيها.','err');input.value='';return;}
+  await window.__assetsReady;
+  if(typeof window.Html5Qrcode !== 'function'){
+    setNotice($('scanMsg'),'تعذر تحميل مكتبة قراءة QR.','err');
+    return;
+  }
+  try{
+    const tempId = 'qr-file-temp';
+    let host = $(tempId);
+    if(!host){
+      host = document.createElement('div');
+      host.id = tempId;
+      host.className = 'hidden';
+      document.body.appendChild(host);
+    }
+    const fileScanner = new Html5Qrcode(tempId, false);
+    const decoded = await fileScanner.scanFile(file, true);
+    try{await fileScanner.clear();}catch(e){}
+    const code = String(decoded||'').trim();
+    $('qrToken').value = code;
+    await submitQrToken(code);
+  }catch(err){
+    setNotice($('scanMsg'),'لم يتم التعرف على رمز QR داخل الصورة، جرّب صورة أوضح أو أدخل الرمز يدويًا.','err');
+  }finally{
+    input.value = '';
   }
 }
 
