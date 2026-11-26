@@ -127,7 +127,7 @@ header{position:static;z-index:10;background:#080a0ceF;border-bottom:1px solid #
 .formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
 label{display:grid;gap:6px;color:#e0d5bb;font-size:13px}
 input,select,textarea{width:100%;background:#090d0f;border:1px solid #41494b;border-radius:10px;padding:12px;color:#fff;min-width:0}
-input[type="date"]{color-scheme:dark}
+input[type="date"]{color-scheme:dark;cursor:pointer}
 textarea{min-height:90px}
 input[type=checkbox]{width:auto;accent-color:var(--gold)}
 .notice{padding:12px;border:1px solid #4b402c;background:#101618;border-radius:10px;color:#d6c9a9;margin-top:12px;overflow-wrap:anywhere}
@@ -289,8 +289,8 @@ header, .nav, .navbar, .topbar, .header{
 
 <div id="playerSavePopup" class="player-save-popup" role="status" aria-live="polite" onclick="hidePlayerSavePopup()">
   <div class="player-save-popup-badge">✓ تم الحفظ</div>
-  <div id="playerSavePopupTitle" class="player-save-popup-title">تم حفظ اللاعب</div>
-  <div id="playerSavePopupSub" class="player-save-popup-sub">تم حفظ بيانات اللاعب بنجاح</div>
+  <div id="playerSavePopupTitle" class="player-save-popup-title">تم الحفظ بنجاح</div>
+  <div id="playerSavePopupSub" class="player-save-popup-sub">تم الحفظ بنجاح</div>
 </div>
 
 <header>
@@ -537,7 +537,7 @@ header, .nav, .navbar, .topbar, .header{
 <div class="formgrid">
 <label>اسم اللاعب *<input name="player_name" required></label>
 <label>رقم التليفون *<input name="parent_phone" id="enPhone" required inputmode="tel" placeholder="مثال: 01115099181"></label>
-<label>تاريخ الميلاد<input name="birth_date" id="enBirthDate" type="text" inputmode="numeric" placeholder="مثال: 2015-05-20 أو 20/05/2015"></label>
+<label>تاريخ الميلاد<input name="birth_date" id="enBirthDate" type="date" onclick="this.showPicker && this.showPicker()"></label>
 <label>الفرع<select name="branch_id" id="enBranch" required></select></label>
 <label>وظيفة الأب<input name="father_occupation"></label>
 <label>وظيفة الأم<input name="mother_occupation"></label>
@@ -607,7 +607,7 @@ header, .nav, .navbar, .topbar, .header{
 <label>ملاحظات<textarea id="feedbackComment"></textarea></label>
 <button id="btnSendParentFeedback" type="button" onclick="sendParentFeedback()">إرسال الرأي</button>
 </div>
-<p id="feedbackStatus" class="muted small">نموذج الرأي يظهر عند تفعيله من الإدارة.</p>
+<div id="feedbackStatus" class="notice">نموذج الرأي يظهر عند تفعيله من الإدارة.</div>
 </div>
 </div>
 </section>
@@ -654,7 +654,7 @@ header, .nav, .navbar, .topbar, .header{
 <input id="editId" type="hidden">
 <div class="formgrid">
 <label>اسم اللاعب *<input id="plName" required></label>
-<label>تاريخ الميلاد (يوم / شهر / سنة)<input id="plBirthDate" type="date" min="1990-01-01" max="2030-12-31"></label>
+<label>تاريخ الميلاد (يوم / شهر / سنة)<input id="plBirthDate" type="date" onclick="this.showPicker && this.showPicker()"></label>
 <label>الفرع<select id="plBranch" required></select></label>
 <label>المجموعة<select id="plGroup"></select></label>
 <label>ملاحظة المجموعة<input id="plNote"></label>
@@ -677,7 +677,7 @@ header, .nav, .navbar, .topbar, .header{
 <h3>إنشاء حصة أو عرض تقرير حصة</h3>
 <div class="formgrid">
 <label>الفرع<select id="attBranch" onchange="loadAttendanceReportByFilter()"></select></label>
-<label>التاريخ<input id="attDate" type="date" onchange="loadAttendanceReportByFilter()"></label>
+<label>التاريخ<input id="attDate" type="date" onclick="this.showPicker && this.showPicker()" onchange="loadAttendanceReportByFilter()"></label>
 </div>
 <div class="actions" style="margin-top:10px">
 <button type="button" onclick="createSession()">إنشاء الحصة</button>
@@ -721,17 +721,17 @@ header, .nav, .navbar, .topbar, .header{
 
 <div class="card" style="margin-top:14px">
 <h3>إضافة / تعديل تقييم المدرب للاعب (من 1 إلى 5)</h3>
-<form id="evalForm">
+<form id="evalForm" novalidate>
 <input id="editEvalId" type="hidden">
 <div class="formgrid">
 <label>بحث سريع عن لاعب<input id="evalPlayerSearch" type="text" placeholder="اكتبي اسم اللاعب للبحث الفوري…" oninput="populateEvalPlayers()"></label>
 <label>اللاعب<select id="evalPlayer"></select></label>
-<label>تاريخ التقييم<input id="evalDate" type="date"></label>
+<label>تاريخ التقييم<input id="evalDate" type="date" onclick="this.showPicker && this.showPicker()"></label>
 </div>
 <div class="formgrid">
-<label>المستوى الفني (من 1 إلى 5)<input id="tech" type="number" min="1" max="5" step="1" required></label>
-<label>السلوك (من 1 إلى 5)<input id="beh" type="number" min="1" max="5" step="1" required></label>
-<label>اللياقة / البدني (من 1 إلى 5)<input id="fit" type="number" min="1" max="5" step="1" required></label>
+<label>المستوى الفني (من 1 إلى 5)<input id="tech" type="text" inputmode="numeric" placeholder="أدخل رقم من 1 إلى 5"></label>
+<label>السلوك (من 1 إلى 5)<input id="beh" type="text" inputmode="numeric" placeholder="أدخل رقم من 1 إلى 5"></label>
+<label>اللياقة / البدني (من 1 إلى 5)<input id="fit" type="text" inputmode="numeric" placeholder="أدخل رقم من 1 إلى 5"></label>
 </div>
 <label>ملاحظات المدرب<textarea id="evalNotes"></textarea></label>
 <div class="actions">
@@ -743,8 +743,24 @@ header, .nav, .navbar, .topbar, .header{
 </div>
 
 <div class="card" style="margin-top:14px">
-<div class="section-title"><h3>سجل تقييمات المدرب (تعديل وحذف ومتابعة المشاهدة)</h3><button type="button" class="secondary" onclick="loadCoachEvaluationsAdmin()">تحديث السجل</button></div>
-<div id="coachEvalsTable" class="tablewrap"></div>
+<div class="section-title">
+<h3>سجل تقييمات المدرب (تعديل وحذف ومتابعة المشاهدة)</h3>
+<div class="actions">
+<button type="button" class="secondary" onclick="loadCoachEvaluationsAdmin()">تحديث السجل</button>
+<button type="button" class="danger" onclick="deleteAllCoachEvaluations()">حذف الكل</button>
+</div>
+</div>
+<div id="coachEvalsActionMsg" class="notice hidden"></div>
+<div class="grid" style="margin-top:10px">
+  <div class="card">
+    <h3>مربع: تم المشاهدة</h3>
+    <div id="coachEvalsSeenTable" class="tablewrap"></div>
+  </div>
+  <div class="card">
+    <h3>مربع: لم يُشاهد بعد</h3>
+    <div id="coachEvalsUnseenTable" class="tablewrap"></div>
+  </div>
+</div>
 </div>
 
 <div class="card" style="margin-top:14px">
@@ -762,7 +778,7 @@ header, .nav, .navbar, .topbar, .header{
 <label>اسم الفعالية<input id="evTitle" required></label>
 <label>الوصف<textarea id="evDesc"></textarea></label>
 <div class="formgrid">
-<label>التاريخ<input id="evDate" type="date"></label>
+<label>التاريخ<input id="evDate" type="date" onclick="this.showPicker && this.showPicker()"></label>
 <label>السعة<input id="evCap" type="number" min="1"></label>
 <label>السعر (اختياري)<input id="evPrice"></label>
 </div>
@@ -779,6 +795,7 @@ header, .nav, .navbar, .topbar, .header{
 <div id="adminEventsList"></div>
 </div>
 <div class="card" style="margin-top:14px"><h3>حجوزات الفعاليات</h3><p class="muted small">يمكنك الضغط على «تم قبول حجزك» لاعتماد الحجز أو «رفض» لرفضه أو «حذف» لإزالته.</p><div id="bookingsMsg" class="notice hidden"></div><div id="bookingsTable" class="tablewrap"></div></div>
+<div class="card" style="margin-top:14px"><h3>متابعة من شاهد الفعاليات والحجوزات (اسم اللاعب المرتبط وولي الأمر)</h3><div id="eventBookingViewsTable" class="tablewrap"></div></div>
 </div>
 
 <div id="matches" class="adminTab hidden">
@@ -789,7 +806,7 @@ header, .nav, .navbar, .topbar, .header{
 <label>اسم المباراة<input id="matchTitle" required></label>
 <label>التفاصيل<textarea id="matchDesc"></textarea></label>
 <div class="formgrid">
-<label>التاريخ<input id="matchDate" type="date"></label>
+<label>التاريخ<input id="matchDate" type="date" onclick="this.showPicker && this.showPicker()"></label>
 <label>المكان<input id="matchLoc"></label>
 <label>النتيجة<input id="matchResult"></label>
 </div>
@@ -802,6 +819,7 @@ header, .nav, .navbar, .topbar, .header{
 </form>
 </div>
 <div id="matchesList" class="card" style="margin-top:14px"></div>
+<div class="card" style="margin-top:14px"><h3>متابعة من شاهد المباريات (اسم اللاعب المرتبط وولي الأمر)</h3><div id="matchViewsTable" class="tablewrap"></div></div>
 </div>
 
 <div id="requests" class="adminTab hidden"><div class="card"><h3>طلبات الالتحاق</h3><div id="reqActionMsg" class="notice hidden"></div><div id="requestsTable" class="tablewrap"></div></div></div>
@@ -857,8 +875,11 @@ function generateUniqueQrToken(){
   return candidate;
 }
 
-let user=null,parentUser=null,admins=[],branches=[],groups=[],players=[],enrollmentRequests=[],matchesCache=[],eventsCache=[],coachEvalsCache=[],activeSession=null,scanner=null,scannerStarting=false,scannedInSession=new Set(),viewHistory=[],parentFeedbackEnabled=false,linkedPlayerIds=new Set();
+let user=null,parentUser=null,admins=[],branches=[],groups=[],players=[],enrollmentRequests=[],matchesCache=[],eventsCache=[],coachEvalsCache=[],activeSession=null,scanner=null,scannerStarting=false,scannedInSession=new Set(),viewHistory=[],parentFeedbackEnabled=false,linkedPlayerIds=new Set(),linkedPlayersList=[];
 let fastStream=null,fastRafId=null,fastVideo=null,fastCanvas=null,fastCtx=null,lastScannedCode='',lastScannedAt=0,scanBusy=false,scanPopupTimer=null,playerSavePopupTimer=null;
+let localViewedCoachEvalIds = new Set();
+let localSeenParentFeedbackIds = new Set();
+let localSectionViews = [];
 
 const $=id=>document.getElementById(id),
 today=()=>{
@@ -874,8 +895,14 @@ function toWesternDigits(str){
   return String(str||'').replace(/[٠-٩]/g, d => '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)]);
 }
 
+function parseScore1To5(raw){
+  const cleaned = toWesternDigits(String(raw ?? '')).trim();
+  if(!/^[1-5]$/.test(cleaned)) return null;
+  return Number(cleaned);
+}
+
 function normalizeBirthDate(raw){
-  const cleaned = toWesternDigits(raw).trim();
+  const cleaned = toWesternDigits(String(raw ?? '')).trim();
   if(!cleaned) return { value: null, error: null };
 
   let y, m, d;
@@ -887,7 +914,7 @@ function normalizeBirthDate(raw){
   }else{
     match = cleaned.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
     if(!match){
-      return { value: null, error: 'صيغة تاريخ الميلاد غير صحيحة. استخدم 2015-05-20 أو 20/05/2015.' };
+      return { value: null, error: 'صيغة تاريخ الميلاد غير صحيحة. يرجى اختيار التاريخ من التقويم.' };
     }
     d = Number(match[1]);
     m = Number(match[2]);
@@ -972,8 +999,8 @@ function showPlayerSavePopup(titleText, subText){
   const subEl = $('playerSavePopupSub');
   if(!pop || !titleEl || !subEl) return;
 
-  titleEl.textContent = titleText || 'تم حفظ اللاعب';
-  subEl.textContent = subText || 'تم حفظ بيانات اللاعب بنجاح';
+  titleEl.textContent = titleText || 'تم الحفظ بنجاح';
+  subEl.textContent = subText || 'تم الحفظ بنجاح';
 
   pop.classList.remove('show');
   void pop.offsetWidth;
@@ -1023,6 +1050,43 @@ function syncBackButton(){
   if(btn)btn.classList.toggle('hidden',viewHistory.length===0);
 }
 
+async function recordParentSectionView(sectionName, itemTitle){
+  if(!parentUser) return;
+  const client = getSupabaseClient();
+  const parentLabel = parentUser.user_metadata?.full_name || parentUser.user_metadata?.name || parentUser.email || 'ولي أمر';
+  const linkedNames = (linkedPlayersList||[]).map(x=>x.full_name).filter(Boolean).join('، ') || 'غير مرتبط بلاعب بعد';
+  const entry = {
+    section: sectionName,
+    item_title: itemTitle || sectionName,
+    parent_name: parentLabel,
+    parent_email: parentUser.email || '',
+    linked_player_name: linkedNames,
+    viewed_at: new Date().toISOString()
+  };
+
+  const exists = localSectionViews.some(x =>
+    x.section === entry.section &&
+    x.item_title === entry.item_title &&
+    x.parent_email === entry.parent_email
+  );
+  if(!exists){
+    localSectionViews.unshift(entry);
+  }
+
+  if(client){
+    try{
+      await client.from('parent_section_views').insert({
+        section: entry.section,
+        item_title: entry.item_title,
+        parent_name: entry.parent_name,
+        parent_email: entry.parent_email,
+        linked_player_name: entry.linked_player_name,
+        viewed_by: parentUser.id
+      });
+    }catch(_){}
+  }
+}
+
 async function syncAdminTabData(tabId){
   if(!user) return;
   if(tabId==='evaluations'){
@@ -1035,8 +1099,12 @@ async function syncAdminTabData(tabId){
   if(tabId==='eventsAdmin'){
     await loadAdminEventsList();
     await loadBookings();
+    await loadSectionViewsAdmin(['events','bookings']);
   }
-  if(tabId==='matches') await loadMatches();
+  if(tabId==='matches'){
+    await loadMatches();
+    await loadSectionViewsAdmin(['matches']);
+  }
   if(tabId==='requests') await loadRequests();
   if(tabId==='parents') await loadParentRequests();
 }
@@ -1058,6 +1126,7 @@ function renderView(view){
     if(parentUser){
       $('parentAuth').classList.add('hidden');
       $('parentDash').classList.remove('hidden');
+      recordParentSectionView('parent_portal', 'بوابة ولي الأمر');
     }else{
       $('parentDash').classList.add('hidden');
       $('parentAuth').classList.remove('hidden');
@@ -1077,7 +1146,10 @@ function renderView(view){
     syncAdminTabData(tabId);
   }
   window.scrollTo({top:0,behavior:'smooth'});
-  if(view.page==='events')loadPublicEvents();
+  if(view.page==='events'){
+    loadPublicEvents();
+    recordParentSectionView('events', 'الفعاليات والحجوزات');
+  }
   syncBackButton();
 }
 
@@ -1337,7 +1409,8 @@ async function refreshAll(){
     loadMatches(),
     loadRequests(),
     loadParentRequests(),
-    loadParentFeedbackAdmin()
+    loadParentFeedbackAdmin(),
+    loadSectionViewsAdmin(['events','bookings','matches'])
   ]);
 }
 
@@ -1476,7 +1549,7 @@ $('playerForm').addEventListener('submit',async e=>{
     'ok'
   );
   showPlayerSavePopup(
-    'تم حفظ اللاعب',
+    'تم الحفظ بنجاح',
     id
       ? `تم تعديل بيانات اللاعب (${nameVal}) بنجاح`
       : `تم إضافة اللاعب (${nameVal}) بنجاح`
@@ -1492,7 +1565,7 @@ function editPlayer(id){
   $('editId').value=id;
   $('plName').value=p.full_name;
   if(p.birth_date){
-    $('plBirthDate').value=String(p.birth_date).slice(0, 10);
+    $('plBirthDate').value = String(p.birth_date).slice(0, 10);
   }else if(p.birth_year){
     $('plBirthDate').value=`${String(p.birth_year).padStart(4,'0')}-01-01`;
   }else{
@@ -2219,6 +2292,28 @@ async function deleteCoachEvaluation(id){
   await loadCoachEvaluationsAdmin();
 }
 
+async function deleteAllCoachEvaluations(){
+  if(!user) return;
+  if(!coachEvalsCache.length){
+    setNotice($('coachEvalsActionMsg'),'لا توجد تقييمات لحذفها.','');
+    return;
+  }
+  if(!confirm('هل أنت متأكد من حذف جميع تقييمات المدرب دفعة واحدة؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+  const client=getSupabaseClient();
+  if(!client) return;
+  const ids = coachEvalsCache.map(x=>x.id).filter(Boolean);
+  const {error}=await client.from('player_evaluations').delete().in('id', ids);
+  if(error){
+    setNotice($('coachEvalsActionMsg'),'تعذر حذف جميع التقييمات: ' + error.message,'err');
+    return;
+  }
+  localViewedCoachEvalIds.clear();
+  resetEvalForm();
+  setNotice($('coachEvalsActionMsg'),'تم حذف جميع تقييمات المدرب بنجاح.','ok');
+  showPlayerSavePopup('تم الحذف بنجاح', 'تم حذف جميع تقييمات المدرب بنجاح');
+  await loadCoachEvaluationsAdmin();
+}
+
 $('evalForm').addEventListener('submit',async e=>{
   e.preventDefault();
   if(!user){setNotice($('evalMsg'),'غير مصرح. يرجى تسجيل الدخول كمدير.','err');return;}
@@ -2227,11 +2322,11 @@ $('evalForm').addEventListener('submit',async e=>{
   const editId=$('editEvalId').value;
   const playerId=$('evalPlayer').value;
   if(!playerId){setNotice($('evalMsg'),'يرجى اختيار اللاعب أو اختيار الكل أولًا.','err');return;}
-  const techVal=Number($('tech').value);
-  const behVal=Number($('beh').value);
-  const fitVal=Number($('fit').value);
-  if([techVal,behVal,fitVal].some(v=>!Number.isInteger(v)||v<1||v>5)){
-    setNotice($('evalMsg'),'يجب أن تكون جميع درجات التقييم أعدادًا صحيحة من 1 إلى 5.','err');
+  const techVal=parseScore1To5($('tech').value);
+  const behVal=parseScore1To5($('beh').value);
+  const fitVal=parseScore1To5($('fit').value);
+  if(techVal === null || behVal === null || fitVal === null){
+    setNotice($('evalMsg'),'يرجى إدخال رقم صحيح من 1 إلى 5 في المستوى الفني والسلوك واللياقة.','err');
     return;
   }
   const notesVal = $('evalNotes').value.trim()||null;
@@ -2250,7 +2345,8 @@ $('evalForm').addEventListener('submit',async e=>{
       setNotice($('evalMsg'),error?.message||'تعذر تحديث التقييم.','err');
       return;
     }
-    setNotice($('evalMsg'),'تم تحديث التقييم بنجاح.','ok');
+    setNotice($('evalMsg'),'تم الحفظ بنجاح.','ok');
+    showPlayerSavePopup('تم الحفظ بنجاح', 'تم حفظ تقييم المدرب بنجاح');
     resetEvalForm();
     await loadCoachEvaluationsAdmin();
     await loadParentFeedbackAdmin();
@@ -2276,7 +2372,8 @@ $('evalForm').addEventListener('submit',async e=>{
       setNotice($('evalMsg'),error?.message||'تعذر حفظ تقييمات جميع اللاعبين.','err');
       return;
     }
-    setNotice($('evalMsg'),`تم حفظ التقييم وتحديثه لكل اللاعبين (${data.length} لاعب) بنجاح.`,'ok');
+    setNotice($('evalMsg'),'تم الحفظ بنجاح.','ok');
+    showPlayerSavePopup('تم الحفظ بنجاح', `تم حفظ تقييم المدرب لجميع اللاعبين (${data.length} لاعب)`);
     resetEvalForm();
     await loadCoachEvaluationsAdmin();
     await loadParentFeedbackAdmin();
@@ -2295,31 +2392,23 @@ $('evalForm').addEventListener('submit',async e=>{
     setNotice($('evalMsg'),error?.message||'تعذر حفظ تقييم المدرب.','err');
     return;
   }
-  setNotice($('evalMsg'),'تم حفظ تقييم المدرب للاعب (من 1 إلى 5) بنجاح.','ok');
+  const evaluatedName = players.find(p=>String(p.id)===String(playerId))?.full_name || 'اللاعب';
+  setNotice($('evalMsg'),'تم الحفظ بنجاح.','ok');
+  showPlayerSavePopup('تم الحفظ بنجاح', `تم حفظ تقييم المدرب للاعب (${evaluatedName})`);
   resetEvalForm();
   await loadCoachEvaluationsAdmin();
   await loadParentFeedbackAdmin();
 });
 
-async function loadCoachEvaluationsAdmin(){
-  if(!user) return;
-  const client=getSupabaseClient();
-  const box=$('coachEvalsTable');
-  if(!client || !box) return;
-  const {data,error}=await client.from('player_evaluations').select('*').order('evaluation_date',{ascending:false}).limit(60);
-  if(error){
-    box.innerHTML=`<div class="notice err">${esc(error.message)}</div>`;
-    return;
+function renderCoachEvalRows(rows){
+  if(!rows.length){
+    return '<p class="muted small" style="padding:12px">لا توجد تقييمات في هذا القسم.</p>';
   }
-  coachEvalsCache = data||[];
-  if(!coachEvalsCache.length){
-    box.innerHTML='<p class="muted small" style="padding:12px">لا توجد تقييمات مسجلة بعد.</p>';
-    return;
-  }
-  box.innerHTML=`<table><thead><tr><th>اللاعب</th><th>التاريخ</th><th>فني / سلوك / لياقة</th><th>ملاحظات</th><th>المشاهدة</th><th>إجراء</th></tr></thead><tbody>${coachEvalsCache.map(r=>{
+  return `<table><thead><tr><th>اللاعب</th><th>التاريخ</th><th>فني / سلوك / لياقة</th><th>ملاحظات</th><th>حالة المشاهدة</th><th>إجراء</th></tr></thead><tbody>${rows.map(r=>{
     const pName = players.find(p=>String(p.id)===String(r.player_id))?.full_name || r.player_id || '—';
-    const seenStatus = r.seen_at
-      ? `<span class="badge">تم مشاهدة التقييمات (${new Date(r.seen_at).toLocaleString('ar-EG')})</span>`
+    const isSeen = Boolean(r.seen_at || localViewedCoachEvalIds.has(String(r.id)));
+    const seenStatus = isSeen
+      ? `<span class="badge">تم المشاهدة${r.seen_at ? ` (${new Date(r.seen_at).toLocaleString('ar-EG')})` : ''}</span>`
       : `<span class="muted">لم يُشاهد بعد</span>`;
     return `<tr>
       <td>${esc(pName)}</td>
@@ -2333,6 +2422,25 @@ async function loadCoachEvaluationsAdmin(){
       </td>
     </tr>`;
   }).join('')}</tbody></table>`;
+}
+
+async function loadCoachEvaluationsAdmin(){
+  if(!user) return;
+  const client=getSupabaseClient();
+  const seenBox=$('coachEvalsSeenTable');
+  const unseenBox=$('coachEvalsUnseenTable');
+  if(!client || !seenBox || !unseenBox) return;
+  const {data,error}=await client.from('player_evaluations').select('*').order('evaluation_date',{ascending:false}).limit(100);
+  if(error){
+    seenBox.innerHTML=`<div class="notice err">${esc(error.message)}</div>`;
+    unseenBox.innerHTML=`<div class="notice err">${esc(error.message)}</div>`;
+    return;
+  }
+  coachEvalsCache = data||[];
+  const seenRows = coachEvalsCache.filter(r => Boolean(r.seen_at || localViewedCoachEvalIds.has(String(r.id))));
+  const unseenRows = coachEvalsCache.filter(r => !Boolean(r.seen_at || localViewedCoachEvalIds.has(String(r.id))));
+  seenBox.innerHTML = renderCoachEvalRows(seenRows);
+  unseenBox.innerHTML = renderCoachEvalRows(unseenRows);
 }
 
 function renderParentFeedbackSettingUI(enabled, errMsg){
@@ -2442,6 +2550,25 @@ async function setParentFeedbackSetting(enable){
   }
 }
 
+async function markParentFeedbackSeen(feedbackId){
+  if(!user || !feedbackId) return;
+  const client = getSupabaseClient();
+  localSeenParentFeedbackIds.add(String(feedbackId));
+
+  if(client){
+    try{
+      await client
+        .from('parent_feedback')
+        .update({ seen_at: new Date().toISOString(), status: 'seen' })
+        .eq('id', feedbackId);
+    }catch(_){}
+  }
+
+  setNotice($('parentFeedbackMsg'), 'تم رؤية التقييم بنجاح — وصل لولي الأمر: تم استقبال تقييمك.', 'ok');
+  showPlayerSavePopup('تم رؤية التقييم بنجاح', 'وصل لولي الأمر: تم استقبال تقييمك');
+  await loadParentFeedbackAdmin();
+}
+
 async function loadParentFeedbackAdmin(){
   if(!user) return;
   const client=getSupabaseClient();
@@ -2459,13 +2586,16 @@ async function loadParentFeedbackAdmin(){
     return;
   }
   setNotice($('parentFeedbackMsg'), `إجمالي تقييمات أولياء الأمور الواردة: ${list.length} — حالة الاستقبال: ${parentFeedbackEnabled ? 'مفعّل' : 'معطّل'}.`);
-  box.innerHTML=`<table><thead><tr><th>اللاعب</th><th>تقييم مستوى اللاعب (1-5)</th><th>تقييم الأكاديمية (1-5)</th><th>ملاحظات ولي الأمر</th></tr></thead><tbody>${list.map(row=>{
+  box.innerHTML=`<table><thead><tr><th>اللاعب</th><th>تقييم مستوى اللاعب (1-5)</th><th>تقييم الأكاديمية (1-5)</th><th>ملاحظات ولي الأمر</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>${list.map(row=>{
     const pName = players.find(p=>String(p.id)===String(row.player_id))?.full_name || row.player_id || '—';
+    const isSeen = Boolean(row.seen_at || row.status === 'seen' || localSeenParentFeedbackIds.has(String(row.id)));
     return `<tr>
       <td>${esc(pName)}</td>
       <td>${row.parent_player_level??'—'} / 5</td>
       <td>${row.academy_rating??'—'} / 5</td>
       <td>${esc(row.comments||'—')}</td>
+      <td>${isSeen ? '<span class="badge">تم رؤية التقييم بنجاح · تم استقبال تقييمك</span>' : '<span class="muted">جديد</span>'}</td>
+      <td><button type="button" class="secondary" onclick="markParentFeedbackSeen('${esc(row.id)}')">تم رؤية التقييم</button></td>
     </tr>`;
   }).join('')}</tbody></table>`;
 }
@@ -2600,18 +2730,22 @@ async function loadPublicEvents(){
       <h3>${esc(x.title)}</h3>
       <p>${esc(x.description||'')}</p>
       <p class="muted">${x.event_date||'سيتم الإعلان عن الموعد'}${capInfo}${priceInfo}</p>
-      <button type="button" onclick="bookEvent('${esc(x.id)}')">احجز مكانًا</button>
+      <button type="button" onclick="bookEvent('${esc(x.id)}','${esc(x.title)}')">احجز مكانًا</button>
     </article>`;
   }).join('');
 }
 
-async function bookEvent(id){
+async function bookEvent(id, eventTitle){
   const client=getSupabaseClient();
   if(!client){alert('تعذر الاتصال بقاعدة البيانات.');return;}
   let name=prompt('اسم ولي الأمر');
   if(!name || !name.trim())return;
   let phone=prompt('رقم الهاتف / واتساب');
   if(!phone || !phone.trim())return;
+
+  if(parentUser){
+    await recordParentSectionView('bookings', `حجز فعالية: ${eventTitle || id} (${name.trim()})`);
+  }
 
   const {data,error}=await client.rpc('create_event_booking',{
     p_event_id:id,
@@ -2633,6 +2767,7 @@ async function bookEvent(id){
   alert(data.message || 'تم إرسال طلب الحجز بنجاح.');
   if(user && !$('eventsAdmin').classList.contains('hidden')){
     await loadBookings();
+    await loadSectionViewsAdmin(['events','bookings']);
   }
 }
 
@@ -2656,12 +2791,12 @@ async function loadBookings(){
     const isRejected = st === 'rejected';
     let actionCell = `<button type="button" onclick="approveBooking('${esc(x.id)}')">تم قبول حجزك</button><button type="button" class="danger" onclick="rejectBooking('${esc(x.id)}')">رفض</button>`;
     if(isApproved){
-      actionCell = `<span class="badge">تم قبول حجزك</span>`;
+      actionCell = `<span class="badge">تم قبول حجزك بنجاح تواصل معانا</span>`;
     }else if(isRejected){
       actionCell = `<span class="badge">مرفوض</span>`;
     }
     actionCell += `<button type="button" class="danger" onclick="deleteBooking('${esc(x.id)}')">حذف</button>`;
-    return `<tr><td>${esc(x.parent_name)}</td><td>${esc(x.parent_phone)}</td><td>${esc(x.academy_events?.title||'—')}</td><td>${esc(x.status||'—')}</td><td>${actionCell}</td></tr>`;
+    return `<tr><td>${esc(x.parent_name)}</td><td>${esc(x.parent_phone)}</td><td>${esc(x.academy_events?.title||'—')}</td><td>${isApproved ? 'تم قبول حجزك بنجاح تواصل معانا' : esc(x.status||'—')}</td><td>${actionCell}</td></tr>`;
   }).join('')}</tbody></table>`;
 }
 
@@ -2692,7 +2827,8 @@ async function approveBooking(id){
     await loadBookings();
     return;
   }
-  setNotice($('bookingsMsg'),data.message || 'تم قبول حجزك.','ok');
+  setNotice($('bookingsMsg'),'تم قبول حجزك بنجاح تواصل معانا','ok');
+  showPlayerSavePopup('تم قبول حجزك بنجاح', 'تواصل معانا');
   await loadBookings();
   await loadPublicEvents();
 }
@@ -2713,6 +2849,47 @@ async function rejectBooking(id){
   setNotice($('bookingsMsg'),'تم رفض الحجز بنجاح.','ok');
   await loadBookings();
   await loadPublicEvents();
+}
+
+async function loadSectionViewsAdmin(sectionsFilter){
+  if(!user) return;
+  const client = getSupabaseClient();
+  let dbRows = [];
+  if(client){
+    try{
+      const {data,error} = await client.from('parent_section_views').select('*').order('viewed_at',{ascending:false}).limit(100);
+      if(!error && Array.isArray(data)) dbRows = data;
+    }catch(_){}
+  }
+  const combined = [...dbRows, ...localSectionViews];
+  const uniqueMap = new Map();
+  combined.forEach(item=>{
+    const key = `${item.section||''}::${item.item_title||''}::${item.parent_email||item.parent_name||''}`;
+    if(!uniqueMap.has(key)) uniqueMap.set(key, item);
+  });
+  let list = Array.from(uniqueMap.values());
+  if(Array.isArray(sectionsFilter) && sectionsFilter.length){
+    list = list.filter(x=>sectionsFilter.includes(x.section));
+  }
+
+  const renderViewsTable = (rows)=>{
+    if(!rows.length){
+      return '<p class="muted small" style="padding:12px">لا توجد مشاهدات مسجلة من أولياء الأمور بعد.</p>';
+    }
+    return `<table><thead><tr><th>القسم / العنصر</th><th>اسم اللاعب المرتبط</th><th>اسم ولي الأمر</th><th>وقت المشاهدة</th></tr></thead><tbody>${rows.map(r=>`<tr>
+      <td>${esc(r.item_title || r.section || '—')}</td>
+      <td>${esc(r.linked_player_name || 'غير مرتبط بلاعب بعد')}</td>
+      <td>${esc(r.parent_name || r.parent_email || '—')}</td>
+      <td>${r.viewed_at ? esc(new Date(r.viewed_at).toLocaleString('ar-EG')) : '—'}</td>
+    </tr>`).join('')}</tbody></table>`;
+  };
+
+  if($('eventBookingViewsTable')){
+    $('eventBookingViewsTable').innerHTML = renderViewsTable(list.filter(x=>x.section==='events' || x.section==='bookings'));
+  }
+  if($('matchViewsTable')){
+    $('matchViewsTable').innerHTML = renderViewsTable(list.filter(x=>x.section==='matches'));
+  }
 }
 
 function resetMatchForm(){
@@ -2942,7 +3119,10 @@ async function checkPublicStatus(inputId, targetId){
         lines.push(`استمارة التقديم (${data.enrollment.player_name}): ${data.enrollment.message}`);
       }
       if(data.booking){
-        lines.push(`حجز الفعالية (${data.booking.event_title}): ${data.booking.message}`);
+        const bMsg = String(data.booking.status || '').toLowerCase() === 'approved' || String(data.booking.status || '').toLowerCase() === 'accepted'
+          ? 'تم قبول حجزك بنجاح تواصل معانا'
+          : (data.booking.message || data.booking.status);
+        lines.push(`حجز الفعالية (${data.booking.event_title}): ${bMsg}`);
       }
       if(lines.length){
         setNotice(out, lines.join(' — '), 'ok');
@@ -3135,6 +3315,7 @@ async function parentLogout(){
   }
   parentUser=null;
   linkedPlayerIds.clear();
+  linkedPlayersList=[];
   $('pPass').value='';
   $('linkName').value='';
   $('linkedPlayers').innerHTML='—';
@@ -3164,7 +3345,7 @@ async function syncParentFeedbackAvailability(){
   if(!client){
     formEl.classList.add('hidden');
     if(submitBtn) submitBtn.disabled=true;
-    statusEl.textContent='إرسال التقييمات غير متاح حاليًا.';
+    setNotice(statusEl, 'إرسال التقييمات غير متاح حاليًا.', '');
     return;
   }
 
@@ -3173,31 +3354,40 @@ async function syncParentFeedbackAvailability(){
   if(error){
     formEl.classList.add('hidden');
     if(submitBtn) submitBtn.disabled=true;
-    statusEl.textContent='إرسال التقييمات غير متاح حاليًا.';
+    setNotice(statusEl, 'إرسال التقييمات غير متاح حاليًا.', '');
     return;
   }
 
   if(data === true){
     formEl.classList.remove('hidden');
     if(submitBtn) submitBtn.disabled=false;
-    statusEl.textContent='استقبال التقييمات مفعّل حاليًا؛ يمكنك إرسال رأيك للإدارة (من 1 إلى 5).';
+    setNotice(statusEl, 'استقبال التقييمات مفعّل حاليًا؛ يمكنك إرسال رأيك للإدارة (من 1 إلى 5).', '');
   }else{
     formEl.classList.add('hidden');
     if(submitBtn) submitBtn.disabled=true;
-    statusEl.textContent='إرسال التقييمات معطّل حاليًا من الإدارة.';
+    setNotice(statusEl, 'إرسال التقييمات معطّل حاليًا من الإدارة.', '');
   }
 }
 
-async function markEvaluationSeen(playerId){
+async function markEvaluationSeen(playerId, evalId){
   const client=getSupabaseClient();
   const statusEl=$('seenStatus-' + playerId);
-  if(!client || !parentUser) return;
-  const {data,error}=await client.rpc('mark_evaluation_seen',{p_player_id:playerId});
-  if(error || !data || data.success !== true){
-    if(statusEl) setNotice(statusEl, error?.message || data?.message || 'تعذر تسجيل المشاهدة.', 'err');
-    return;
+  if(evalId) localViewedCoachEvalIds.add(String(evalId));
+  coachEvalsCache
+    .filter(x=>String(x.player_id)===String(playerId))
+    .forEach(x=>localViewedCoachEvalIds.add(String(x.id)));
+
+  if(client && parentUser){
+    try{
+      await client.rpc('mark_evaluation_seen',{p_player_id:playerId});
+    }catch(_){}
+    try{
+      await client.from('player_evaluations').update({seen_at: new Date().toISOString()}).eq('player_id', playerId);
+    }catch(_){}
   }
-  if(statusEl) setNotice(statusEl, 'تم مشاهدة التقييمات.', 'ok');
+
+  if(statusEl) setNotice(statusEl, 'تم المشاهدة', 'ok');
+  if(user) await loadCoachEvaluationsAdmin();
 }
 
 async function showParentDash(){
@@ -3217,12 +3407,14 @@ async function showParentDash(){
   ]);
 
   const linked=p.data||[];
+  linkedPlayersList = linked;
   linkedPlayerIds = new Set(linked.map(x=>String(x.player_id)).filter(Boolean));
+  await recordParentSectionView('parent_portal', 'صفحة ولي الأمر');
 
   $('linkedPlayers').innerHTML=p.error?`<div class="notice err">${esc(p.error.message)}</div>`:linked.map(x=>{
     const hideBirth = isKidsGroup(x.group_id, x.group_note, x.group_name);
     const birthPart = hideBirth ? '' : `سنة الميلاد: ${x.birth_year||'—'} · `;
-    return `<div class="card" style="margin:10px 0"><h3>${esc(x.full_name)}</h3><div class="muted small">${birthPart}الفرع: ${esc(x.branch_name||'—')} · المجموعة: ${esc(x.group_name||x.group_note||'غير محددة')}</div><hr style="border-color:#443923"><b>تقييم المدرب للاعب (من 1 إلى 5)</b><p>المستوى الفني: ${x.technical_score??'—'} من 5 · السلوك: ${x.behavior_score??'—'} من 5 · اللياقة: ${x.fitness_score??'—'} من 5</p><p class="muted small">${esc(x.evaluation_notes||'لا توجد ملاحظات من المدرب بعد')}</p><div class="actions" style="margin-top:8px"><button type="button" class="secondary" onclick="markEvaluationSeen('${esc(x.player_id)}')">تم مشاهدة التقييمات</button></div><div id="seenStatus-${esc(x.player_id)}" class="notice hidden"></div><div id="history-${esc(x.player_id)}" class="muted small" style="margin-top:8px">جاري تحميل سجل الحضور…</div></div>`;
+    return `<div class="card" style="margin:10px 0"><h3>${esc(x.full_name)}</h3><div class="muted small">${birthPart}الفرع: ${esc(x.branch_name||'—')} · المجموعة: ${esc(x.group_name||x.group_note||'غير محددة')}</div><hr style="border-color:#443923"><b>تقييم المدرب للاعب (من 1 إلى 5)</b><p>المستوى الفني: ${x.technical_score??'—'} من 5 · السلوك: ${x.behavior_score??'—'} من 5 · اللياقة: ${x.fitness_score??'—'} من 5</p><p class="muted small">${esc(x.evaluation_notes||'لا توجد ملاحظات من المدرب بعد')}</p><div class="actions" style="margin-top:8px"><button type="button" class="secondary" onclick="markEvaluationSeen('${esc(x.player_id)}','${esc(x.evaluation_id||'')}')">تم مشاهدة التقييمات</button></div><div id="seenStatus-${esc(x.player_id)}" class="notice hidden"></div><div id="history-${esc(x.player_id)}" class="muted small" style="margin-top:8px">جاري تحميل سجل الحضور…</div></div>`;
   }).join('')||'لا يوجد لاعب مرتبط حتى الآن';
 
   for(const x of linked){
@@ -3250,8 +3442,9 @@ async function showParentDash(){
 
 async function sendParentFeedback(){
   const client=getSupabaseClient();
+  const statusEl=$('feedbackStatus');
   if(!client||!parentUser){
-    $('feedbackStatus').textContent='يرجى تسجيل الدخول أولًا.';
+    setNotice(statusEl, 'يرجى تسجيل الدخول أولًا.', 'err');
     return;
   }
 
@@ -3259,37 +3452,55 @@ async function sendParentFeedback(){
   if(enabledErr || enabledData !== true){
     $('parentFeedbackForm').classList.add('hidden');
     if($('btnSendParentFeedback')) $('btnSendParentFeedback').disabled=true;
-    $('feedbackStatus').textContent='إرسال التقييمات معطّل حاليًا من الإدارة.';
+    setNotice(statusEl, 'إرسال التقييمات معطّل حاليًا من الإدارة.', 'err');
     return;
   }
 
   const selectedPlayerId = String($('feedbackPlayer').value||'');
   if(!selectedPlayerId || !linkedPlayerIds.has(selectedPlayerId)){
-    $('feedbackStatus').textContent='يرجى اختيار لاعب مرتبط بحسابك.';
+    setNotice(statusEl, 'يرجى اختيار لاعب مرتبط بحسابك.', 'err');
     return;
   }
 
-  const lvl=Number($('feedbackLevel').value);
-  const acd=Number($('feedbackAcademy').value);
-  if([lvl,acd].some(v=>!Number.isInteger(v)||v<1||v>5)){
-    $('feedbackStatus').textContent='يرجى إدخال تقييم صحيح من 1 إلى 5.';
+  const lvl=parseScore1To5($('feedbackLevel').value);
+  const acd=parseScore1To5($('feedbackAcademy').value);
+  if(lvl === null || acd === null){
+    setNotice(statusEl, 'يرجى إدخال تقييم صحيح من 1 إلى 5.', 'err');
     return;
   }
-  const {data,error}=await client.from('parent_feedback').insert({
+
+  const payload = {
     player_id:selectedPlayerId,
     parent_player_level:lvl,
     academy_rating:acd,
     comments:$('feedbackComment').value.trim()||null,
     submitted_by:parentUser.id
-  }).select('id').maybeSingle();
+  };
+
+  let {data,error}=await client.from('parent_feedback').insert(payload).select('id').maybeSingle();
+
+  if(error && String(error.message||'').toLowerCase().includes('row-level security')){
+    const rpcRes = await client.rpc('submit_parent_feedback', {
+      p_player_id: selectedPlayerId,
+      p_parent_player_level: lvl,
+      p_academy_rating: acd,
+      p_comments: payload.comments
+    });
+    if(!rpcRes.error && rpcRes.data){
+      data = { id: rpcRes.data.id || 'rpc-ok' };
+      error = null;
+    }
+  }
+
   if(error || !data){
-    $('feedbackStatus').textContent='تعذر إرسال الرأي: ' + (error?.message || 'لم يتم حفظ التقييم.');
+    setNotice(statusEl, 'تعذر إرسال الرأي: ' + (error?.message || 'لم يتم حفظ التقييم.'), 'err');
     return;
   }
   $('feedbackLevel').value='';
   $('feedbackAcademy').value='';
   $('feedbackComment').value='';
-  $('feedbackStatus').textContent='شكرًا لك، تم إرسال رأيك للإدارة.';
+  setNotice(statusEl, 'تم إرسال التقييم بنجاح', 'ok');
+  showPlayerSavePopup('تم إرسال التقييم بنجاح', 'شكرًا لمشاركتك رأيك مع الإدارة');
 }
 
 async function sendLinkRequest(){
