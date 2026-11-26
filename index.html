@@ -480,11 +480,11 @@ header, .nav, .navbar, .topbar, .header{
 <div class="section-title"><h2>طلب التحاق لاعب</h2></div>
 <div class="card">
 <p class="muted">املأ البيانات التالية وسيتواصل معكم فريق الأكاديمية. رقم التليفون هو نفسه رقم الواتساب.</p>
-<form id="enrollForm">
+<form id="enrollForm" novalidate>
 <div class="formgrid">
 <label>اسم اللاعب *<input name="player_name" required></label>
 <label>رقم التليفون *<input name="parent_phone" id="enPhone" required inputmode="tel" placeholder="مثال: 01115099181"></label>
-<label>تاريخ الميلاد<input name="birth_date" type="date"></label>
+<label>تاريخ الميلاد<input name="birth_date" id="enBirthDate" type="text" inputmode="numeric" placeholder="مثال: 2015-05-20 أو 20/05/2015"></label>
 <label>الفرع<select name="branch_id" id="enBranch" required></select></label>
 <label>وظيفة الأب<input name="father_occupation"></label>
 <label>وظيفة الأم<input name="mother_occupation"></label>
@@ -597,7 +597,7 @@ header, .nav, .navbar, .topbar, .header{
 <div id="players" class="adminTab">
 <div class="card">
 <h3>إضافة / تعديل لاعب</h3>
-<form id="playerForm">
+<form id="playerForm" novalidate>
 <input id="editId" type="hidden">
 <div class="formgrid">
 <label>اسم اللاعب *<input id="plName" required></label>
@@ -763,6 +763,7 @@ header, .nav, .navbar, .topbar, .header{
 <script>
 const SUPABASE_URL='https://rjkdgjncxkszleorcave.supabase.co',KEY='sb_publishable_QgNtkC4EwtJAg2rcRdeuVg_yCdHI64y';
 let db=null;
+let qrSeqCounter=0;
 
 function getSupabaseClient(){
   if(db) return db;
@@ -777,9 +778,30 @@ function makeUUID(){
   if(window.crypto && typeof window.crypto.randomUUID === 'function'){
     return window.crypto.randomUUID().replace(/-/g,'');
   }
+  if(window.crypto && typeof window.crypto.getRandomValues === 'function'){
+    const bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+    return Array.from(bytes, b => b.toString(16).padStart(2,'0')).join('');
+  }
   return 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.replace(/x/g, function(){
     return Math.floor(Math.random() * 16).toString(16);
   });
+}
+
+function generateUniqueQrToken(){
+  const existing = new Set(
+    (players || [])
+      .map(p => String(p.attendance_qr_hash || '').trim().toLowerCase())
+      .filter(Boolean)
+  );
+  let candidate = '';
+  do {
+    qrSeqCounter += 1;
+    const ts = Date.now().toString(36);
+    const seq = qrSeqCounter.toString(36);
+    candidate = `BH-${ts}-${seq}-${makeUUID().slice(0, 12)}`.toUpperCase();
+  } while (existing.has(candidate.toLowerCase()));
+  return candidate;
 }
 
 let user=null,parentUser=null,admins=[],branches=[],groups=[],players=[],enrollmentRequests=[],matchesCache=[],eventsCache=[],coachEvalsCache=[],activeSession=null,scanner=null,scannerStarting=false,scannedInSession=new Set(),viewHistory=[],parentFeedbackEnabled=false,linkedPlayerIds=new Set();
@@ -794,6 +816,43 @@ today=()=>{
   return `${y}-${m}-${day}`;
 },
 esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function toWesternDigits(str){
+  return String(str||'').replace(/[٠-٩]/g, d => '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)]);
+}
+
+function normalizeBirthDate(raw){
+  const cleaned = toWesternDigits(raw).trim();
+  if(!cleaned) return { value: null, error: null };
+
+  let y, m, d;
+  let match = cleaned.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if(match){
+    y = Number(match[1]);
+    m = Number(match[2]);
+    d = Number(match[3]);
+  }else{
+    match = cleaned.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if(!match){
+      return { value: null, error: 'صيغة تاريخ الميلاد غير صحيحة. استخدم 2015-05-20 أو 20/05/2015.' };
+    }
+    d = Number(match[1]);
+    m = Number(match[2]);
+    y = Number(match[3]);
+  }
+
+  if(y < 1990 || y > 2030 || m < 1 || m > 12 || d < 1 || d > 31){
+    return { value: null, error: 'تاريخ الميلاد خارج النطاق المسموح أو غير صحيح.' };
+  }
+
+  const check = new Date(Date.UTC(y, m - 1, d));
+  if(check.getUTCFullYear() !== y || check.getUTCMonth() !== m - 1 || check.getUTCDate() !== d){
+    return { value: null, error: 'تاريخ الميلاد غير موجود في التقويم.' };
+  }
+
+  const iso = `${String(y).padStart(4,'0')}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  return { value: iso, error: null };
+}
 
 function hideScanPopup(){
   const pop = $('scanPopup');
@@ -1245,7 +1304,21 @@ $('playerForm').addEventListener('submit',async e=>{
   const client=getSupabaseClient();
   if(!client){setNotice($('plMsg'),'تعذر الاتصال بقاعدة البيانات.','err');return;}
 
-  const rawYear = String($('plYear').value || '').trim().replace(/[٠-٩]/g, d => '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)]);
+  const nameVal = String($('plName').value || '').trim();
+  if(!nameVal){
+    setNotice($('plMsg'),'يرجى إدخال اسم اللاعب.','err');
+    $('plName').focus();
+    return;
+  }
+
+  const branchVal = String($('plBranch').value || '').trim();
+  if(!branchVal){
+    setNotice($('plMsg'),'يرجى اختيار الفرع.','err');
+    $('plBranch').focus();
+    return;
+  }
+
+  const rawYear = toWesternDigits($('plYear').value || '').trim();
   let birthYear = null;
   if(rawYear !== ''){
     if(!/^\d{4}$/.test(rawYear)){
@@ -1262,20 +1335,40 @@ $('playerForm').addEventListener('submit',async e=>{
   }
 
   let id=$('editId').value,obj={
-    full_name:$('plName').value.trim(),
+    full_name:nameVal,
     birth_year:birthYear,
-    branch_id:$('plBranch').value,
+    branch_id:branchVal,
     group_id:$('plGroup').value||null,
     group_note:$('plNote').value.trim()||null
   };
+  const newQrToken = !id ? generateUniqueQrToken() : null;
   let res=id
-    ?await client.from('players').update(obj).eq('id',id).select('id').maybeSingle()
-    :await client.from('players').insert({...obj,attendance_qr_hash:makeUUID(),active:true}).select('id').maybeSingle();
+    ?await client.from('players').update(obj).eq('id',id).select('id,attendance_qr_hash').maybeSingle()
+    :await client.from('players').insert({...obj,attendance_qr_hash:newQrToken,active:true}).select('id,attendance_qr_hash').maybeSingle();
   if(res.error || !res.data){
     setNotice($('plMsg'),res.error?.message||'تعذر حفظ بيانات اللاعب.','err');
     return;
   }
-  setNotice($('plMsg'),id?'تم تحديث بيانات اللاعب بنجاح.':'تم إضافة اللاعب بنجاح.','ok');
+  if(!id){
+    const createdPlayer = {
+      id: res.data.id,
+      full_name: nameVal,
+      birth_year: birthYear,
+      branch_id: branchVal,
+      group_id: obj.group_id,
+      group_note: obj.group_note,
+      attendance_qr_hash: res.data.attendance_qr_hash || newQrToken,
+      active: true
+    };
+    players = [...players.filter(x => String(x.id) !== String(createdPlayer.id)), createdPlayer];
+  }
+  setNotice(
+    $('plMsg'),
+    id
+      ? 'تم تحديث بيانات اللاعب بنجاح.'
+      : `تم إضافة اللاعب وإنشاء رمز QR فريد له (${res.data.attendance_qr_hash || newQrToken}).`,
+    'ok'
+  );
   resetPlayerForm();
   await refreshAll();
 });
@@ -2805,9 +2898,15 @@ $('enrollForm').addEventListener('submit',async e=>{
   const client=getSupabaseClient();
   if(!client){setNotice($('enMsg'),'تعذر الاتصال بقاعدة البيانات.','err');return;}
   const f=new FormData(e.target);
+  const parsedDate = normalizeBirthDate(f.get('birth_date'));
+  if(parsedDate.error){
+    setNotice($('enMsg'), parsedDate.error, 'err');
+    $('enBirthDate')?.focus();
+    return;
+  }
   const obj={
     player_name:String(f.get('player_name')||'').trim(),
-    birth_date:String(f.get('birth_date')||'')||null,
+    birth_date:parsedDate.value,
     branch_id:String(f.get('branch_id')||'')||null,
     parent_phone:String(f.get('parent_phone')||'').trim(),
     father_occupation:String(f.get('father_occupation')||'').trim()||null,
