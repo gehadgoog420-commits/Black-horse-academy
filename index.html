@@ -7,61 +7,53 @@
 <title>BLACK HORSE | Football Academy</title>
 <script>
 (function(){
-  function loadScriptWithFallback(urls){
+  function loadScriptWithFallback(urls, checkFn){
     return new Promise(function(resolve){
       var idx = 0;
       function next(){
-        if(idx >= urls.length){
-          resolve(false);
-          return;
-        }
+        if(checkFn && checkFn()){ resolve(true); return; }
+        if(idx >= urls.length){ resolve(false); return; }
         var s = document.createElement('script');
         s.src = urls[idx++];
-        s.async = false;
-        s.onload = function(){ resolve(true); };
-        s.onerror = next;
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        var timer = setTimeout(function(){
+          s.onload = null;
+          s.onerror = null;
+          next();
+        }, 6000);
+        s.onload = function(){
+          clearTimeout(timer);
+          resolve(checkFn ? Boolean(checkFn()) : true);
+        };
+        s.onerror = function(){
+          clearTimeout(timer);
+          next();
+        };
         document.head.appendChild(s);
       }
       next();
     });
   }
 
-function loadSupabase(){
-  return loadScriptWithFallback([
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-    'https://unpkg.com/@supabase/supabase-js@2'
-  ]).then(async function(loaded){
-    if(loaded && window.supabase &&
-       typeof window.supabase.createClient === 'function') return true;
-
-    try {
-      var mod = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
-      if(mod && typeof mod.createClient === 'function'){
-        window.supabase = mod;
-        return true;
-      }
-    } catch(e) {}
-
-    return Boolean(window.supabase &&
-      typeof window.supabase.createClient === 'function');
-  });
-}
-
   window.__assetsReady = Promise.all([
-    loadSupabase(),
+    loadScriptWithFallback([
+      'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js',
+      'https://unpkg.com/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js'
+    ], function(){ return Boolean(window.supabase && typeof window.supabase.createClient === 'function'); }),
     loadScriptWithFallback([
       'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
       'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'
-    ]),
+    ], function(){ return typeof window.QRCode === 'function'; }),
     loadScriptWithFallback([
-      'https://unpkg.com/html5-qrcode',
-      'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js'
-    ])
+      'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js',
+      'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'
+    ], function(){ return typeof window.Html5Qrcode === 'function'; })
   ]).then(function(res){
     window.__libStatus = {
-      supabase: Boolean(res[0] && window.supabase && typeof window.supabase.createClient === 'function'),
-      qrcode: Boolean(res[1] && typeof window.QRCode === 'function'),
-      html5qrcode: Boolean(res[2] && typeof window.Html5Qrcode === 'function')
+      supabase: Boolean(res[0]),
+      qrcode: Boolean(res[1]),
+      html5qrcode: Boolean(res[2])
     };
     return window.__libStatus;
   });
@@ -79,7 +71,7 @@ button.secondary,.btn.secondary{background:#171d21;color:var(--gold2);border-col
 button.danger{background:#472321;color:#ffe1dc;border-color:#99544d}
 button:disabled{opacity:.5;cursor:not-allowed}
 .wrap{width:min(1160px,94%);margin:auto}
-header{position:sticky;top:0;z-index:10;background:#080a0ceF;border-bottom:1px solid #59482a;backdrop-filter:blur(15px)}
+header{position:sticky;top:0;z-index:10;background:#080a0ceF;border-bottom:1px solid #59482a;-webkit-backdrop-filter:blur(15px);backdrop-filter:blur(15px)}
 .nav{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:12px 0}
 .brand{display:flex;align-items:center;gap:12px}
 .crest-wrap{display:flex;align-items:center;gap:10px}
@@ -695,6 +687,15 @@ function getSupabaseClient(){
   return null;
 }
 
+function makeUUID(){
+  if(window.crypto && typeof window.crypto.randomUUID === 'function'){
+    return window.crypto.randomUUID().replace(/-/g,'');
+  }
+  return 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.replace(/x/g, function(){
+    return Math.floor(Math.random() * 16).toString(16);
+  });
+}
+
 let user=null,parentUser=null,admins=[],branches=[],groups=[],players=[],enrollmentRequests=[],matchesCache=[],eventsCache=[],coachEvalsCache=[],activeSession=null,scanner=null,scannerStarting=false,scannedInSession=new Set(),viewHistory=[],parentFeedbackEnabled=false,linkedPlayerIds=new Set();
 
 const $=id=>document.getElementById(id),
@@ -1088,7 +1089,7 @@ $('playerForm').addEventListener('submit',async e=>{
   };
   let res=id
     ?await client.from('players').update(obj).eq('id',id).select('id').maybeSingle()
-    :await client.from('players').insert({...obj,attendance_qr_hash:crypto.randomUUID().replaceAll('-',''),active:true}).select('id').maybeSingle();
+    :await client.from('players').insert({...obj,attendance_qr_hash:makeUUID(),active:true}).select('id').maybeSingle();
   if(res.error || !res.data){
     setNotice($('plMsg'),res.error?.message||'تعذر حفظ بيانات اللاعب.','err');
     return;
