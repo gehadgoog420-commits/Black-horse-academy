@@ -550,7 +550,7 @@ header, .nav, .navbar, .topbar, .header{
 
 <div class="card" style="margin-top:14px">
 <h3>متابعة حالة طلب التقديم وحجز الفعاليات</h3>
-<p class="muted small">اكتب رقم التليفون المسجل لمعرفة حالة استمارة التقديم وحجز الفعالية.</p>
+<p class="muted small">اكتب رقم الموبايل أو التليفون المسجل لمعرفة حالة الحساب واستمارة التقديم وحجز الفعالية.</p>
 <div class="actions">
 <input id="publicTrackPhone" inputmode="tel" placeholder="مثال: 01115099181" style="max-width:280px" onkeydown="if(event.key==='Enter'){event.preventDefault();checkPublicStatus('publicTrackPhone','publicTrackResult');}">
 <button type="button" class="secondary" onclick="checkPublicStatus('publicTrackPhone','publicTrackResult')">استعلام عن الحالة</button>
@@ -567,9 +567,10 @@ header, .nav, .navbar, .topbar, .header{
 <section id="parent" class="section">
 <div class="section-title"><h2>بوابة ولي الأمر</h2></div>
 <div id="parentAuth" class="card">
-<div class="two">
+<div class="formgrid">
 <label>البريد الإلكتروني<input id="pEmail" type="email" autocomplete="email"></label>
 <label>كلمة المرور<input id="pPass" type="password" autocomplete="current-password"></label>
+<label>رقم الموبايل (مطلوب عند إنشاء حساب)<input id="pPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="مثال: 01115099181"></label>
 </div>
 <div class="actions">
 <button type="button" onclick="parentLogin()">تسجيل الدخول</button>
@@ -604,7 +605,7 @@ header, .nav, .navbar, .topbar, .header{
 <div class="card">
 <h3>متابعة حالة استمارة التقديم وحجز الفعاليات</h3>
 <div class="actions">
-<input id="parentTrackPhone" inputmode="tel" placeholder="أدخل رقم التليفون المسجل" style="max-width:280px" onkeydown="if(event.key==='Enter'){event.preventDefault();checkPublicStatus('parentTrackPhone','parentTrackResult');}">
+<input id="parentTrackPhone" inputmode="tel" placeholder="أدخل رقم الموبايل المسجل" style="max-width:280px" onkeydown="if(event.key==='Enter'){event.preventDefault();checkPublicStatus('parentTrackPhone','parentTrackResult');}">
 <button type="button" class="secondary" onclick="checkPublicStatus('parentTrackPhone','parentTrackResult')">عرض حالة التقديم والحجز</button>
 </div>
 <div id="parentTrackResult" class="notice hidden"></div>
@@ -915,6 +916,7 @@ let localSectionViews = [];
 let localMatchRegistrations = [];
 let localMatchViews = [];
 let localEventBookings = [];
+let localParentProfiles = [];
 let parentBookingsCache = [];
 
 const $=id=>document.getElementById(id),
@@ -929,6 +931,10 @@ esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','
 
 function toWesternDigits(str){
   return String(str||'').replace(/[٠-٩]/g, d => '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)]);
+}
+
+function normalizeMobileInput(raw){
+  return toWesternDigits(String(raw || '')).replace(/[\s\-()]/g, '').trim();
 }
 
 function parseScore1To5(raw){
@@ -2781,9 +2787,9 @@ async function bookEvent(id, eventTitle, prefilledName, prefilledPhone){
   if(!client){alert('تعذر الاتصال بقاعدة البيانات.');return;}
 
   const inputName = ($('parentBookingName')?.value || '').trim();
-  const inputPhone = ($('parentBookingPhone')?.value || '').trim();
+  const inputPhone = normalizeMobileInput($('parentBookingPhone')?.value || '');
   const fallbackParent = parentUser?.user_metadata?.full_name || parentUser?.user_metadata?.name || parentUser?.email || 'ولي أمر';
-  const fallbackPhone = parentBookingsCache[0]?.parent_phone || '01000000000';
+  const fallbackPhone = normalizeMobileInput(parentUser?.user_metadata?.phone || parentBookingsCache[0]?.parent_phone || '');
 
   let name = prefilledName || inputName;
   if(!name && !parentUser){
@@ -2793,11 +2799,11 @@ async function bookEvent(id, eventTitle, prefilledName, prefilledPhone){
     name = fallbackParent;
   }
 
-  let phone = prefilledPhone || inputPhone;
+  let phone = normalizeMobileInput(prefilledPhone || inputPhone);
   if(!phone && !parentUser){
-    phone = prompt('رقم الهاتف / واتساب');
+    phone = normalizeMobileInput(prompt('رقم الهاتف / واتساب') || '');
   }
-  if(!phone || !phone.trim()){
+  if(!phone){
     phone = fallbackPhone;
   }
 
@@ -2811,7 +2817,7 @@ async function bookEvent(id, eventTitle, prefilledName, prefilledPhone){
   const {data,error}=await client.rpc('create_event_booking',{
     p_event_id:id,
     p_parent_name:name.trim(),
-    p_parent_phone:phone.trim(),
+    p_parent_phone:phone,
     p_player_id:linkedPlayersList[0]?.player_id || null
   });
 
@@ -2822,7 +2828,7 @@ async function bookEvent(id, eventTitle, prefilledName, prefilledPhone){
     const directRes = await client.from('event_bookings').insert({
       event_id: id,
       parent_name: name.trim(),
-      parent_phone: phone.trim(),
+      parent_phone: phone,
       player_id: linkedPlayersList[0]?.player_id || null,
       status: 'pending'
     }).select('id').maybeSingle();
@@ -2837,7 +2843,7 @@ async function bookEvent(id, eventTitle, prefilledName, prefilledPhone){
     id: bookingId,
     event_id: id,
     parent_name: name.trim(),
-    parent_phone: phone.trim(),
+    parent_phone: phone,
     status: 'pending',
     created_at: new Date().toISOString(),
     academy_events: { title: eventTitle || 'فعالية' }
@@ -2891,9 +2897,10 @@ async function loadParentEventsAndBookings(){
   parentBookingsCache = Array.from(mergedMap.values());
 
   const defaultParentName = parentUser.user_metadata?.full_name || parentUser.user_metadata?.name || parentUser.email || '';
-  const defaultPhone = parentBookingsCache[0]?.parent_phone || '';
+  const defaultPhone = normalizeMobileInput(parentUser.user_metadata?.phone || parentBookingsCache[0]?.parent_phone || '');
   if($('parentBookingName') && !$('parentBookingName').value) $('parentBookingName').value = defaultParentName;
   if($('parentBookingPhone') && !$('parentBookingPhone').value && defaultPhone) $('parentBookingPhone').value = defaultPhone;
+  if($('parentTrackPhone') && !$('parentTrackPhone').value && defaultPhone) $('parentTrackPhone').value = defaultPhone;
 
   if(!eventsList.length){
     box.innerHTML = '<p class="muted small">لا توجد فعاليات منشورة حاليًا.</p>';
@@ -3531,7 +3538,7 @@ async function decideEnrollment(reqId, action){
 }
 
 function normalizePhoneCandidates(raw){
-  const cleaned = String(raw || '').replace(/[\s\-()]/g, '').trim();
+  const cleaned = normalizeMobileInput(raw);
   if(!cleaned) return [];
   const set = new Set([cleaned]);
   const digits = cleaned.replace(/^\+/, '');
@@ -3548,10 +3555,10 @@ function normalizePhoneCandidates(raw){
 
 async function checkPublicStatus(inputId, targetId){
   const out = $(targetId);
-  const phoneVal = ($(inputId)?.value || '').trim();
+  const phoneVal = normalizeMobileInput($(inputId)?.value || '');
   const client = getSupabaseClient();
   if(!phoneVal){
-    setNotice(out, 'يرجى إدخال رقم التليفون أولًا.', 'err');
+    setNotice(out, 'يرجى إدخال رقم الموبايل أو التليفون أولًا.', 'err');
     $(inputId)?.focus();
     return;
   }
@@ -3580,11 +3587,22 @@ async function checkPublicStatus(inputId, targetId){
           : (data.booking.message || data.booking.status);
         lines.push(`حجز الفعالية (${data.booking.event_title}): ${bMsg}`);
       }
+      if(data.profile && !lines.length){
+        lines.push(data.profile.message || `حساب ولي الأمر مسجل برقم الموبايل (${phoneVal}) — لا توجد طلبات تقديم أو حجوزات مسجلة بعد.`);
+      }
       if(lines.length){
         setNotice(out, lines.join(' — '), 'ok');
         return;
       }
     }
+  }
+
+  const localMatched = localParentProfiles.find(p =>
+    normalizePhoneCandidates(p.phone).some(c => candidates.includes(c))
+  );
+  if(localMatched){
+    setNotice(out, `حساب ولي الأمر مسجل برقم الموبايل (${localMatched.phone}) — لا توجد طلبات تقديم أو حجوزات مسجلة بهذا الرقم بعد.`, 'ok');
+    return;
   }
 
   if(lastError){
@@ -3662,7 +3680,7 @@ $('enrollForm').addEventListener('submit',async e=>{
     player_name:String(f.get('player_name')||'').trim(),
     birth_date:parsedDate.value,
     branch_id:String(f.get('branch_id')||'')||null,
-    parent_phone:String(f.get('parent_phone')||'').trim(),
+    parent_phone:normalizeMobileInput(f.get('parent_phone')||''),
     father_occupation:String(f.get('father_occupation')||'').trim()||null,
     mother_occupation:String(f.get('mother_occupation')||'').trim()||null,
     address:String(f.get('address')||'').trim()||null,
@@ -3681,12 +3699,42 @@ $('enrollForm').addEventListener('submit',async e=>{
   e.target.reset();
 });
 
+async function saveParentPhoneRecord(client, authUser, phone){
+  const cleanPhone = normalizeMobileInput(phone);
+  if(!cleanPhone) return;
+  localParentProfiles = [
+    { user_id: authUser?.id || makeUUID(), email: authUser?.email || '', phone: cleanPhone },
+    ...localParentProfiles.filter(x => x.phone !== cleanPhone)
+  ];
+  if($('publicTrackPhone') && !$('publicTrackPhone').value) $('publicTrackPhone').value = cleanPhone;
+  if($('parentTrackPhone')) $('parentTrackPhone').value = cleanPhone;
+  if($('parentBookingPhone') && !$('parentBookingPhone').value) $('parentBookingPhone').value = cleanPhone;
+
+  if(!client) return;
+  try{
+    if(authUser?.id){
+      await client.rpc('upsert_parent_phone', {
+        p_user_id: authUser.id,
+        p_email: authUser.email || '',
+        p_phone: cleanPhone
+      });
+    }
+  }catch(_){}
+
+  try{
+    if(authUser){
+      await client.auth.updateUser({ data: { phone: cleanPhone } });
+    }
+  }catch(_){}
+}
+
 async function parentLogin(){
   await window.__assetsReady;
   const client=getSupabaseClient();
   if(!client){setNotice($('pMsg'),'تعذر الاتصال بقاعدة البيانات.','err');return;}
   const email=$('pEmail').value.trim();
   const password=$('pPass').value;
+  const phoneInput = normalizeMobileInput($('pPhone')?.value || '');
   if(!email || !password){
     setNotice($('pMsg'),'يرجى إدخال البريد الإلكتروني وكلمة المرور.','err');
     return;
@@ -3706,6 +3754,10 @@ async function parentLogin(){
   }
   user=null;
   parentUser=data.user;
+  const effectivePhone = phoneInput || normalizeMobileInput(data.user.user_metadata?.phone || '');
+  if(effectivePhone){
+    await saveParentPhoneRecord(client, data.user, effectivePhone);
+  }
   setNotice($('pMsg'),'تم تسجيل الدخول.','ok');
   viewHistory=[];
   renderView({page:'parent',tab:null});
@@ -3718,19 +3770,31 @@ async function parentSignup(){
   if(!client){setNotice($('pMsg'),'تعذر الاتصال بقاعدة البيانات.','err');return;}
   const email=$('pEmail').value.trim();
   const password=$('pPass').value;
+  const phoneVal=normalizeMobileInput($('pPhone')?.value || '');
   if(!email || !password){
     setNotice($('pMsg'),'يرجى إدخال البريد الإلكتروني وكلمة المرور لإنشاء الحساب.','err');
     return;
   }
-  let {data,error}=await client.auth.signUp({email,password});
+  if(!phoneVal || phoneVal.length < 8){
+    setNotice($('pMsg'),'يرجى إدخال رقم الموبايل لإنشاء حساب ولي الأمر ومتابعة الحالة به.','err');
+    $('pPhone')?.focus();
+    return;
+  }
+  let {data,error}=await client.auth.signUp({
+    email,
+    password,
+    options:{ data:{ phone: phoneVal } }
+  });
   if(error){
     setNotice($('pMsg'),error.message,'err');
     return;
   }
+  await saveParentPhoneRecord(client, data?.user || null, phoneVal);
+
   if(data?.session && data?.user){
     user=null;
     parentUser=data.user;
-    setNotice($('pMsg'),'تم إنشاء الحساب وتفعيل الجلسة بنجاح.','ok');
+    setNotice($('pMsg'),`تم إنشاء الحساب وحفظ رقم الموبايل (${phoneVal}) بنجاح.`,'ok');
     viewHistory=[];
     renderView({page:'parent',tab:null});
     await showParentDash();
@@ -3738,7 +3802,7 @@ async function parentSignup(){
     parentUser=null;
     $('parentDash').classList.add('hidden');
     $('parentAuth').classList.remove('hidden');
-    setNotice($('pMsg'),'تم تقديم طلب إنشاء الحساب؛ إذا كان تأكيد البريد مفعّلًا في إعدادات Supabase فسيصلك رابط التأكيد قبل فتح الجلسة، وإلا فحاول تسجيل الدخول بعد التأكد من إعدادات المشروع.','ok');
+    setNotice($('pMsg'),`تم إنشاء الحساب وحفظ رقم الموبايل (${phoneVal})؛ إذا كان تأكيد البريد مفعّلًا في إعدادات Supabase فسيصلك رابط التأكيد قبل فتح الجلسة، ويمكنك الاستعلام برقم الموبايل الآن.`,'ok');
   }else{
     parentUser=null;
     $('parentDash').classList.add('hidden');
@@ -3773,6 +3837,7 @@ async function parentLogout(){
   linkedPlayerIds.clear();
   linkedPlayersList=[];
   $('pPass').value='';
+  if($('pPhone')) $('pPhone').value='';
   $('linkName').value='';
   $('linkedPlayers').innerHTML='—';
   $('linkRequests').innerHTML='—';
