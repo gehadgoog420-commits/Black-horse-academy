@@ -225,6 +225,11 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
   .kit-img{height:230px}
   .gallery-media{height:200px}
 }
+
+header, .nav, .navbar, .topbar, .header{
+  position:static !important;
+  top:auto !important;
+}
 </style>
 </head>
 <body>
@@ -494,7 +499,7 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 <h3>متابعة حالة طلب التقديم وحجز الفعاليات</h3>
 <p class="muted small">اكتب رقم التليفون المسجل لمعرفة حالة استمارة التقديم وحجز الفعالية.</p>
 <div class="actions">
-<input id="publicTrackPhone" inputmode="tel" placeholder="مثال: 01115099181" style="max-width:280px">
+<input id="publicTrackPhone" inputmode="tel" placeholder="مثال: 01115099181" style="max-width:280px" onkeydown="if(event.key==='Enter'){event.preventDefault();checkPublicStatus('publicTrackPhone','publicTrackResult');}">
 <button type="button" class="secondary" onclick="checkPublicStatus('publicTrackPhone','publicTrackResult')">استعلام عن الحالة</button>
 </div>
 <div id="publicTrackResult" class="notice hidden"></div>
@@ -531,7 +536,7 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 <div class="card">
 <h3>متابعة حالة استمارة التقديم وحجز الفعاليات</h3>
 <div class="actions">
-<input id="parentTrackPhone" inputmode="tel" placeholder="أدخل رقم التليفون المسجل" style="max-width:280px">
+<input id="parentTrackPhone" inputmode="tel" placeholder="أدخل رقم التليفون المسجل" style="max-width:280px" onkeydown="if(event.key==='Enter'){event.preventDefault();checkPublicStatus('parentTrackPhone','parentTrackResult');}">
 <button type="button" class="secondary" onclick="checkPublicStatus('parentTrackPhone','parentTrackResult')">عرض حالة التقديم والحجز</button>
 </div>
 <div id="parentTrackResult" class="notice hidden"></div>
@@ -1195,8 +1200,43 @@ function renderPlayers(){
   );
   $('playersTable').innerHTML=`<table><thead><tr><th>اللاعب</th><th>الميلاد</th><th>الفرع</th><th>المجموعة</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>${list.map(p=>{
     const birthDisplay = isKidsGroup(p.group_id, p.group_note) ? '—' : (p.birth_year||'—');
-    return `<tr><td>${esc(p.full_name)}</td><td>${birthDisplay}</td><td>${esc(branches.find(x=>x.id===p.branch_id)?.name||'—')}</td><td>${esc(groups.find(x=>x.id===p.group_id)?.name||p.group_note||'غير محددة')}</td><td>${p.active?'نشط':'موقوف'}</td><td><button type="button" onclick="editPlayer('${p.id}')">تعديل</button><button type="button" class="secondary" onclick="showQR('${p.id}')">QR</button><button type="button" class="danger" onclick="togglePlayer('${p.id}',${!p.active})">${p.active?'إيقاف':'تفعيل'}</button></td></tr>`;
+    return `<tr>
+      <td>${esc(p.full_name)}</td>
+      <td>${birthDisplay}</td>
+      <td>${esc(branches.find(x=>x.id===p.branch_id)?.name||'—')}</td>
+      <td>${esc(groups.find(x=>x.id===p.group_id)?.name||p.group_note||'غير محددة')}</td>
+      <td>${p.active?'نشط':'موقوف'}</td>
+      <td>
+        <button type="button" onclick="editPlayer('${p.id}')">تعديل</button>
+        <button type="button" class="secondary" onclick="showQR('${p.id}')">QR</button>
+        <button type="button" class="secondary" onclick="togglePlayer('${p.id}',${!p.active})">${p.active?'إيقاف':'تفعيل'}</button>
+        <button type="button" class="danger" onclick="deletePlayer('${p.id}')">حذف</button>
+      </td>
+    </tr>`;
   }).join('')}</tbody></table>`;
+}
+
+async function deletePlayer(id){
+  if(!user) return;
+  const p = players.find(x=>String(x.id)===String(id));
+  const name = p?.full_name || 'هذا اللاعب';
+  if(!confirm(`هل أنت متأكد من حذف اللاعب (${name}) نهائيًا؟ لا يمكن التراجع عن هذا الإجراء.`)) return;
+
+  const client = getSupabaseClient();
+  if(!client){
+    setNotice($('plMsg'), 'تعذر الاتصال بقاعدة البيانات.', 'err');
+    return;
+  }
+
+  const {error} = await client.from('players').delete().eq('id', id);
+  if(error){
+    setNotice($('plMsg'), 'تعذر حذف اللاعب: ' + error.message, 'err');
+    return;
+  }
+
+  if($('editId').value === String(id)) resetPlayerForm();
+  setNotice($('plMsg'), `تم حذف اللاعب (${name}) بنجاح.`, 'ok');
+  await refreshAll();
 }
 
 $('playerForm').addEventListener('submit',async e=>{
@@ -2628,12 +2668,29 @@ async function decideEnrollment(reqId, action){
   }
 }
 
+function normalizePhoneCandidates(raw){
+  const cleaned = String(raw || '').replace(/[\s\-()]/g, '').trim();
+  if(!cleaned) return [];
+  const set = new Set([cleaned]);
+  const digits = cleaned.replace(/^\+/, '');
+  if(digits) set.add(digits);
+  if(/^01\d{9}$/.test(digits)){
+    set.add('2' + digits);
+    set.add('+2' + digits);
+  }else if(/^201\d{9}$/.test(digits)){
+    set.add('0' + digits.slice(1));
+    set.add('+' + digits);
+  }
+  return Array.from(set);
+}
+
 async function checkPublicStatus(inputId, targetId){
   const out = $(targetId);
   const phoneVal = ($(inputId)?.value || '').trim();
   const client = getSupabaseClient();
   if(!phoneVal){
     setNotice(out, 'يرجى إدخال رقم التليفون أولًا.', 'err');
+    $(inputId)?.focus();
     return;
   }
   if(!client){
@@ -2641,23 +2698,35 @@ async function checkPublicStatus(inputId, targetId){
     return;
   }
   setNotice(out, 'جاري الاستعلام عن الحالة…');
-  const {data, error} = await client.rpc('check_parent_status_by_phone', { p_phone: phoneVal });
-  if(error || !data || data.success !== true){
-    setNotice(out, error?.message || data?.message || 'تعذر جلب الحالة.', 'err');
+  const candidates = normalizePhoneCandidates(phoneVal);
+  let lastError = null;
+
+  for(const candidate of candidates){
+    const {data, error} = await client.rpc('check_parent_status_by_phone', { p_phone: candidate });
+    if(error){
+      lastError = error.message;
+      continue;
+    }
+    if(data && data.success === true){
+      const lines = [];
+      if(data.enrollment){
+        lines.push(`استمارة التقديم (${data.enrollment.player_name}): ${data.enrollment.message}`);
+      }
+      if(data.booking){
+        lines.push(`حجز الفعالية (${data.booking.event_title}): ${data.booking.message}`);
+      }
+      if(lines.length){
+        setNotice(out, lines.join(' — '), 'ok');
+        return;
+      }
+    }
+  }
+
+  if(lastError){
+    setNotice(out, 'تعذر جلب الحالة: ' + lastError, 'err');
     return;
   }
-  const lines = [];
-  if(data.enrollment){
-    lines.push(`استمارة التقديم (${data.enrollment.player_name}): ${data.enrollment.message}`);
-  }
-  if(data.booking){
-    lines.push(`حجز الفعالية (${data.booking.event_title}): ${data.booking.message}`);
-  }
-  if(!lines.length){
-    setNotice(out, 'لا توجد طلبات تقديم أو حجوزات مسجلة بهذا الرقم.', '');
-    return;
-  }
-  setNotice(out, lines.join(' — '), 'ok');
+  setNotice(out, 'لا توجد طلبات تقديم أو حجوزات مسجلة بهذا الرقم.', '');
 }
 
 async function loadParentRequests(){
