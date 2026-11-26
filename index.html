@@ -46,6 +46,10 @@
       'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'
     ], function(){ return typeof window.QRCode === 'function'; }),
     loadScriptWithFallback([
+      'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js',
+      'https://unpkg.com/jsqr@1.4.0/dist/jsQR.min.js'
+    ], function(){ return typeof window.jsQR === 'function'; }),
+    loadScriptWithFallback([
       'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js',
       'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'
     ], function(){ return typeof window.Html5Qrcode === 'function'; })
@@ -53,7 +57,8 @@
     window.__libStatus = {
       supabase: Boolean(res[0]),
       qrcode: Boolean(res[1]),
-      html5qrcode: Boolean(res[2])
+      jsqr: Boolean(res[2]),
+      html5qrcode: Boolean(res[3])
     };
     return window.__libStatus;
   });
@@ -144,6 +149,9 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 .qrbox{display:inline-block;background:white;padding:12px;border-radius:10px;margin:10px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .back-button{position:fixed;bottom:20px;right:18px;z-index:30;min-width:105px;box-shadow:0 5px 22px #0009;border-radius:30px}
+.scanner-box{position:relative;max-width:420px;margin:12px auto;border-radius:14px;overflow:hidden;border:2px solid #59482a;background:#090d0f}
+.scanner-box video{width:100%;display:block;max-height:340px;object-fit:cover}
+.scanner-frame{position:absolute;inset:14%;border:3px solid #5f9c79;border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.38);pointer-events:none}
 @media(max-width:700px){
   .nav{align-items:flex-start;flex-direction:column}
   .navlinks{width:100%}
@@ -503,12 +511,12 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 </div>
 <div class="tabs">
 <button type="button" class="on" onclick="tab('players',this)">اللاعبون</button>
-<button type="button" onclick="tab('attendance',this)">الحضور والغياب</button>
-<button type="button" onclick="tab('evaluations',this)">التقييمات</button>
-<button type="button" onclick="tab('eventsAdmin',this)">الفعاليات والحجوزات</button>
-<button type="button" onclick="tab('matches',this)">المباريات</button>
-<button type="button" onclick="tab('requests',this)">طلبات التقديم</button>
-<button type="button" onclick="tab('parents',this)">طلبات ربط ولي الأمر</button>
+<button type="button" class="on" onclick="tab('attendance',this)">الحضور والغياب</button>
+<button type="button" class="secondary" onclick="tab('evaluations',this)">التقييمات</button>
+<button type="button" class="secondary" onclick="tab('eventsAdmin',this)">الفعاليات والحجوزات</button>
+<button type="button" class="secondary" onclick="tab('matches',this)">المباريات</button>
+<button type="button" class="secondary" onclick="tab('requests',this)">طلبات التقديم</button>
+<button type="button" class="secondary" onclick="tab('parents',this)">طلبات ربط ولي الأمر</button>
 </div>
 
 <div id="players" class="adminTab">
@@ -553,11 +561,11 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 <div class="card" style="margin-top:14px">
 <h3>تسجيل الحضور وتعديل / حذف السجلات</h3>
 <div class="actions">
-<button type="button" onclick="startScanner()">فتح الكاميرا</button>
+<button type="button" onclick="startScanner()">فتح الكاميرا (مسح سريع)</button>
 <button type="button" class="secondary" onclick="stopScanner()">إيقاف الكاميرا</button>
 <button type="button" class="secondary" onclick="manualPresent()">تسجيل رمز QR يدويًا</button>
 </div>
-<label class="small muted" style="margin-top:10px">أو اختر صورة رمز QR مباشرة من الجهاز:
+<label class="small muted" style="margin-top:10px">أو اختر صورة رمز QR مقصوصة من الجهاز للقراءة الفورية:
 <input id="qrImageInput" type="file" accept="image/*" onchange="scanQrFromImageFile(this)" style="margin-top:6px">
 </label>
 <div id="reader"></div>
@@ -700,6 +708,7 @@ function makeUUID(){
 }
 
 let user=null,parentUser=null,admins=[],branches=[],groups=[],players=[],enrollmentRequests=[],matchesCache=[],eventsCache=[],coachEvalsCache=[],activeSession=null,scanner=null,scannerStarting=false,scannedInSession=new Set(),viewHistory=[],parentFeedbackEnabled=false,linkedPlayerIds=new Set();
+let fastStream=null,fastRafId=null,fastVideo=null,fastCanvas=null,fastCtx=null,lastScannedCode='',lastScannedAt=0,scanBusy=false;
 
 const $=id=>document.getElementById(id),
 today=()=>{
@@ -776,7 +785,7 @@ function renderView(view){
     renderView({page:'login',tab:null});
     return;
   }
-  if(view.page!=='admin' && scanner){
+  if(view.page!=='admin' && (scanner || fastStream)){
     stopScanner();
   }
   document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
@@ -794,7 +803,7 @@ function renderView(view){
 
   if(view.page==='admin'){
     const tabId=$(view.tab)?view.tab:'players';
-    if(tabId!=='attendance' && scanner){
+    if(tabId!=='attendance' && (scanner || fastStream)){
       stopScanner();
     }
     document.querySelectorAll('.adminTab').forEach(x=>x.classList.add('hidden'));
@@ -825,7 +834,7 @@ function tab(id,btn,track=true){
   if(!user) return;
   const current=currentView();
   if(track&&current.page==='admin'&&current.tab!==id)viewHistory.push(current);
-  if(id!=='attendance' && scanner){
+  if(id!=='attendance' && (scanner || fastStream)){
     stopScanner();
   }
   document.querySelectorAll('.adminTab').forEach(x=>x.classList.add('hidden'));
@@ -1165,6 +1174,8 @@ async function createSession(){
   if(error){setNotice($('attMsg'),error.message,'err');return}
   activeSession=data;
   scannedInSession.clear();
+  lastScannedCode='';
+  lastScannedAt=0;
   setNotice($('attMsg'),`تم إنشاء حصة فرع (${getBranchName(branch)}) بتاريخ (${date}). ابدأ مسح رموز QR ثم أنهِ الحصة لاعتماد الغياب.`,'ok');
   $('closeSession').classList.remove('hidden');
   if($('deleteSessionBtn')) $('deleteSessionBtn').classList.remove('hidden');
@@ -1417,48 +1428,55 @@ async function submitQrToken(tokenValue){
   if(activeSession.session_closed){setNotice($('scanMsg'),'هذه الحصة مغلقة ولا يمكن تسجيل حضور جديد فيها.','err');return false;}
   if(!client){setNotice($('scanMsg'),'تعذر الاتصال بقاعدة البيانات.','err');return false;}
 
+  const now = Date.now();
+  if(t === lastScannedCode && (now - lastScannedAt) < 1200){
+    return false;
+  }
+  if(scanBusy) return false;
+
   const matchedPlayer = (players||[]).find(p=>String(p.attendance_qr_hash||'').trim() === t);
   const sessionKey = `${activeSession.id}::token:${t}`;
   const playerKey = matchedPlayer?.id ? `${activeSession.id}::player:${String(matchedPlayer.id)}` : null;
 
   if(scannedInSession.has(sessionKey) || (playerKey && scannedInSession.has(playerKey))){
+    lastScannedCode = t;
+    lastScannedAt = now;
     const pName = matchedPlayer?.full_name || 'هذا الطالب';
-    setNotice($('scanMsg'),`تم تسجيل الحضور الطالب ${pName} مسبقًا في هذه الحصة — جاهز لمسح الطالب التالي.`,'ok');
+    setNotice($('scanMsg'),`تم تسجيل الحضور الطالب ${pName} مسبقًا — جاهز للي بعده.`,'ok');
     $('qrToken').value = '';
     return false;
   }
 
-  const {data,error}=await client.rpc('scan_player_qr',{p_session_id:activeSession.id,p_qr_token:t});
-  if(error){
-    setNotice($('scanMsg'),error.message,'err');
-    return false;
-  }
+  scanBusy = true;
+  lastScannedCode = t;
+  lastScannedAt = now;
 
-  if(!data || data.success !== true){
-    setNotice($('scanMsg'),data?.message||'لم يتم تأكيد تسجيل الحضور من قاعدة البيانات.','err');
-    return false;
-  }
+  try{
+    const {data,error}=await client.rpc('scan_player_qr',{p_session_id:activeSession.id,p_qr_token:t});
+    if(error){
+      setNotice($('scanMsg'),error.message,'err');
+      return false;
+    }
 
-  const studentName = matchedPlayer?.full_name || data.player_name || 'غير معروف';
-  const branchLabel = getBranchName(activeSession.branch_id || $('attBranch')?.value || '');
+    if(!data || data.success !== true){
+      setNotice($('scanMsg'),data?.message||'لم يتم تأكيد تسجيل الحضور من قاعدة البيانات.','err');
+      return false;
+    }
 
-  if(data.already_registered === true){
+    const studentName = matchedPlayer?.full_name || data.player_name || 'غير معروف';
+    const branchLabel = getBranchName(activeSession.branch_id || $('attBranch')?.value || '');
+
     scannedInSession.add(sessionKey);
     if(playerKey) scannedInSession.add(playerKey);
     if(data.player_id) scannedInSession.add(`${activeSession.id}::player:${String(data.player_id)}`);
-    setNotice($('scanMsg'),`تم تسجيل الحضور الطالب ${studentName} مسبقًا (${branchLabel}) — جاهز لمسح الطالب التالي.`,'ok');
+
+    setNotice($('scanMsg'),`تم تسجيل الحضور الطالب ${studentName} (${branchLabel}) — جاهز للي بعده.`,'ok');
     $('qrToken').value = '';
-    return false;
+    await showAttendanceLists();
+    return true;
+  }finally{
+    scanBusy = false;
   }
-
-  scannedInSession.add(sessionKey);
-  if(playerKey) scannedInSession.add(playerKey);
-  if(data.player_id) scannedInSession.add(`${activeSession.id}::player:${String(data.player_id)}`);
-
-  setNotice($('scanMsg'),`تم تسجيل الحضور الطالب ${studentName} (${branchLabel}) — جاهز لمسح الطالب التالي.`,'ok');
-  $('qrToken').value = '';
-  await showAttendanceLists();
-  return true;
 }
 
 async function manualPresent(){
@@ -1562,56 +1580,61 @@ async function closeSessionNow(){
   await showAttendanceLists();
 }
 
-async function startScanner(){
-  if(!user){setNotice($('scanMsg'),'غير مصرح.','err');return;}
-  if(!activeSession){setNotice($('scanMsg'),'أنشئي الحصة أو حمّلي حصة مفتوحة أولًا.','err');return}
-  if(activeSession.session_closed){setNotice($('scanMsg'),'الحصة مغلقة ولا يمكن المسح فيها.','err');return}
-  if(scanner || scannerStarting){setNotice($('scanMsg'),'الكاميرا قيد التشغيل بالفعل.','ok');return;}
+async function decodeImageFileFast(file){
+  if(!file) return '';
   await window.__assetsReady;
-  if(typeof window.Html5Qrcode !== 'function'){
-    setNotice($('scanMsg'),'تعذر تحميل مكتبة قراءة QR. يمكنك إدخال الرمز يدويًا أو اختيار صورة.','err');
-    return;
-  }
-  scannerStarting=true;
-  try{
-    const instance=new Html5Qrcode('reader',{
-      experimentalFeatures:{useBarCodeDetectorIfSupported:true},
-      verbose:false
-    });
-    await instance.start(
-      {facingMode:'environment'},
-      {fps:15,qrbox:{width:260,height:260},aspectRatio:1.0},
-      async decoded=>{
-        const code = String(decoded||'').trim();
-        if(!code || !activeSession || activeSession.session_closed)return;
-        $('qrToken').value=code;
-        await submitQrToken(code);
-      },
-      ()=>{}
-    );
-    scanner=instance;
-    setNotice($('scanMsg'),'الكاميرا تعمل. وجّهها نحو رمز QR الخاص بالطالب.','ok');
-  }catch(e){
-    scanner=null;
-    const detail = e?.message || String(e||'خطأ غير معروف');
-    setNotice($('scanMsg'),'تعذر تشغيل الكاميرا: ' + detail + ' — يمكنك اختيار صورة QR أو إدخال الرمز يدويًا.','err');
-  }finally{
-    scannerStarting=false;
-  }
-}
 
-async function scanQrFromImageFile(input){
-  const file = input?.files?.[0];
-  if(!file) return;
-  if(!user){setNotice($('scanMsg'),'غير مصرح.','err');return;}
-  if(!activeSession){setNotice($('scanMsg'),'أنشئي الحصة أو حمّلي حصة مفتوحة أولًا.','err');input.value='';return;}
-  if(activeSession.session_closed){setNotice($('scanMsg'),'الحصة مغلقة ولا يمكن المسح فيها.','err');input.value='';return;}
-  await window.__assetsReady;
-  if(typeof window.Html5Qrcode !== 'function'){
-    setNotice($('scanMsg'),'تعذر تحميل مكتبة قراءة QR.','err');
-    return;
+  if(typeof window.jsQR === 'function'){
+    try{
+      let imgSource = null;
+      let width = 0, height = 0;
+
+      if(typeof createImageBitmap === 'function'){
+        imgSource = await createImageBitmap(file);
+        width = imgSource.width;
+        height = imgSource.height;
+      }else{
+        const dataUrl = await new Promise((resolve, reject)=>{
+          const r = new FileReader();
+          r.onload = ()=> resolve(r.result);
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+        imgSource = await new Promise((resolve, reject)=>{
+          const im = new Image();
+          im.onload = ()=> resolve(im);
+          im.onerror = reject;
+          im.src = dataUrl;
+        });
+        width = imgSource.naturalWidth || imgSource.width;
+        height = imgSource.naturalHeight || imgSource.height;
+      }
+
+      const scales = [1, 1.5, 2.2];
+      for(const sc of scales){
+        const w = Math.min(1200, Math.max(240, Math.round(width * sc)));
+        const h = Math.min(1200, Math.max(240, Math.round(height * sc)));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(imgSource, 0, 0, w, h);
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const code = window.jsQR(imgData.data, imgData.width, imgData.height, {
+          inversionAttempts: 'attemptBoth'
+        });
+        if(code && code.data && String(code.data).trim()){
+          if(typeof imgSource.close === 'function') imgSource.close();
+          return String(code.data).trim();
+        }
+      }
+      if(typeof imgSource.close === 'function') imgSource.close();
+    }catch(e){}
   }
-  try{
+
+  if(typeof window.Html5Qrcode === 'function'){
     const tempId = 'qr-file-temp';
     let host = $(tempId);
     if(!host){
@@ -1620,20 +1643,155 @@ async function scanQrFromImageFile(input){
       host.className = 'hidden';
       document.body.appendChild(host);
     }
-    const fileScanner = new Html5Qrcode(tempId, false);
-    const decoded = await fileScanner.scanFile(file, true);
-    try{await fileScanner.clear();}catch(e){}
-    const code = String(decoded||'').trim();
+    try{
+      const fileScanner = new Html5Qrcode(tempId, false);
+      const decoded = await fileScanner.scanFile(file, true);
+      try{ await fileScanner.clear(); }catch(e){}
+      if(decoded && String(decoded).trim()) return String(decoded).trim();
+    }catch(e){
+      try{ const s = new Html5Qrcode(tempId, false); await s.clear(); }catch(_){}
+    }
+  }
+
+  return '';
+}
+
+async function scanQrFromImageFile(input){
+  const file = input?.files?.[0];
+  if(!file) return;
+  if(!user){setNotice($('scanMsg'),'غير مصرح.','err');input.value='';return;}
+  if(!activeSession){setNotice($('scanMsg'),'أنشئي الحصة أو حمّلي حصة مفتوحة أولًا.','err');input.value='';return;}
+  if(activeSession.session_closed){setNotice($('scanMsg'),'الحصة مغلقة ولا يمكن المسح فيها.','err');input.value='';return;}
+
+  setNotice($('scanMsg'),'جاري القراءة السريعة…','');
+  try{
+    const code = await decodeImageFileFast(file);
+    if(!code){
+      setNotice($('scanMsg'),'لم يتم التعرف على رمز QR في الصورة؛ جرّب صورة مقصوصة للرمز فقط وبوضوح، أو أدخل الرمز يدويًا.','err');
+      return;
+    }
     $('qrToken').value = code;
     await submitQrToken(code);
   }catch(err){
-    setNotice($('scanMsg'),'لم يتم التعرف على رمز QR داخل الصورة، جرّب صورة أوضح أو أدخل الرمز يدويًا.','err');
+    setNotice($('scanMsg'),'خطأ أثناء قراءة الصورة: ' + (err?.message || err),'err');
   }finally{
     input.value = '';
   }
 }
 
+function fastScanLoop(){
+  if(!fastStream || !fastVideo || !fastCtx || !fastCanvas) return;
+  if(fastVideo.readyState >= 2 && typeof window.jsQR === 'function' && activeSession && !activeSession.session_closed){
+    const vw = fastVideo.videoWidth || 640;
+    const vh = fastVideo.videoHeight || 480;
+    const maxDim = 640;
+    const scale = Math.min(1, maxDim / Math.max(vw, vh));
+    const cw = Math.round(vw * scale);
+    const ch = Math.round(vh * scale);
+    if(fastCanvas.width !== cw || fastCanvas.height !== ch){
+      fastCanvas.width = cw;
+      fastCanvas.height = ch;
+    }
+    fastCtx.drawImage(fastVideo, 0, 0, cw, ch);
+    const imgData = fastCtx.getImageData(0, 0, cw, ch);
+    const hit = window.jsQR(imgData.data, imgData.width, imgData.height, {
+      inversionAttempts: 'dontInvert'
+    });
+    if(hit && hit.data && String(hit.data).trim()){
+      const code = String(hit.data).trim();
+      $('qrToken').value = code;
+      submitQrToken(code);
+    }
+  }
+  fastRafId = requestAnimationFrame(fastScanLoop);
+}
+
+async function startScanner(){
+  if(!user){setNotice($('scanMsg'),'غير مصرح.','err');return;}
+  if(!activeSession){setNotice($('scanMsg'),'أنشئي الحصة أو حمّلي حصة مفتوحة أولًا.','err');return;}
+  if(activeSession.session_closed){setNotice($('scanMsg'),'الحصة مغلقة ولا يمكن المسح فيها.','err');return;}
+  if(scanner || fastStream || scannerStarting){setNotice($('scanMsg'),'الكاميرا شغالة بالفعل وجاهزة للمسح السريع.','ok');return;}
+
+  await window.__assetsReady;
+  scannerStarting = true;
+
+  try{
+    if(typeof window.jsQR === 'function' && navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function'){
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      });
+      fastStream = stream;
+      const box = document.createElement('div');
+      box.className = 'scanner-box';
+      const vid = document.createElement('video');
+      vid.setAttribute('playsinline', '');
+      vid.muted = true;
+      vid.autoplay = true;
+      vid.srcObject = stream;
+      const frame = document.createElement('div');
+      frame.className = 'scanner-frame';
+      box.appendChild(vid);
+      box.appendChild(frame);
+      $('reader').innerHTML = '';
+      $('reader').appendChild(box);
+      await vid.play();
+
+      fastVideo = vid;
+      fastCanvas = document.createElement('canvas');
+      fastCtx = fastCanvas.getContext('2d', { willReadFrequently: true });
+      fastRafId = requestAnimationFrame(fastScanLoop);
+      setNotice($('scanMsg'),'الكاميرا شغالة بالوضع السريع — وجّه رمز QR وسيتسجل الطالب فورًا.','ok');
+      return;
+    }
+
+    if(typeof window.Html5Qrcode !== 'function'){
+      setNotice($('scanMsg'),'تعذر تحميل مكتبة الكاميرا. استخدم اختيار صورة أو الإدخال اليدوي.','err');
+      return;
+    }
+    const instance = new Html5Qrcode('reader',{
+      experimentalFeatures:{useBarCodeDetectorIfSupported:true},
+      verbose:false
+    });
+    await instance.start(
+      {facingMode:'environment'},
+      {fps:20,qrbox:{width:280,height:280},aspectRatio:1.0},
+      async decoded=>{
+        const code = String(decoded||'').trim();
+        if(!code || !activeSession || activeSession.session_closed)return;
+        $('qrToken').value = code;
+        await submitQrToken(code);
+      },
+      ()=>{}
+    );
+    scanner = instance;
+    setNotice($('scanMsg'),'الكاميرا شغالة وجاهزة للمسح السريع المتواصل.','ok');
+  }catch(e){
+    await stopScanner();
+    const detail = e?.message || String(e||'خطأ غير معروف');
+    setNotice($('scanMsg'),'تعذر تشغيل الكاميرا: ' + detail + ' — يمكنك اختيار صورة QR أو إدخال الرمز يدويًا.','err');
+  }finally{
+    scannerStarting = false;
+  }
+}
+
 async function stopScanner(){
+  if(fastRafId){
+    cancelAnimationFrame(fastRafId);
+    fastRafId = null;
+  }
+  if(fastStream){
+    try{ fastStream.getTracks().forEach(t=>t.stop()); }catch(e){}
+    fastStream = null;
+  }
+  fastVideo = null;
+  fastCanvas = null;
+  fastCtx = null;
+
   const current=scanner;
   scanner=null;
   scannerStarting=false;
@@ -1641,6 +1799,7 @@ async function stopScanner(){
     try{await current.stop();}catch(e){}
     try{await current.clear();}catch(e){}
   }
+  if($('reader')) $('reader').innerHTML = '';
 }
 
 function resetEvalForm(){
