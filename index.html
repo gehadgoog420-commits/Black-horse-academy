@@ -580,40 +580,33 @@ header, .nav, .navbar, .topbar, .header{
 <p class="muted small">ملاحظة: يعتمد تأكيد البريد الإلكتروني وإرسال رسائل التفعيل أو الاستعادة على إعدادات مشروع Supabase الحالية.</p>
 <div id="pMsg" class="notice">سجّل الدخول أو أنشئ حسابًا لمتابعة لاعبك.</div>
 </div>
+
 <div id="parentDash" class="hidden">
 <div class="card">
-<div class="section-title"><h3>ربط حسابك باللاعب</h3><button type="button" class="danger" onclick="parentLogout()">خروج</button></div>
+<div class="section-title">
+<h3>ربط حسابك باللاعب</h3>
+<button type="button" class="danger" onclick="parentLogout()">خروج</button>
+</div>
 <label>اسم اللاعب بالكامل<input id="linkName"></label>
 <button type="button" onclick="sendLinkRequest()">إرسال طلب الربط</button>
 <div id="linkMsg" class="notice"></div>
+<div id="linkedPlayers" style="margin-top:12px">—</div>
+<div id="linkRequests" style="margin-top:12px">—</div>
 </div>
+
+<div class="tabs" id="parentSectionTabs">
+<button type="button" class="on" onclick="parentTab('pTabEvaluations',this)">التقييمات</button>
+<button type="button" class="secondary" onclick="parentTab('pTabAttendance',this)">الغياب والحضور</button>
+<button type="button" class="secondary" onclick="parentTab('pTabEvents',this)">الفعاليات</button>
+<button type="button" class="secondary" onclick="parentTab('pTabMatches',this)">المباريات</button>
+<button type="button" class="secondary" onclick="parentTab('pTabBookings',this)">الحجوزات</button>
+</div>
+
+<div id="pTabEvaluations" class="parentTab">
 <div class="card">
-<h3>مباراة جديدة</h3>
-<p class="muted small">المباريات المنشورة من الإدارة؛ يمكنك تسجيل اشتراك اللاعب المرتبط بحسابك مباشرة.</p>
-<div id="parentMatchesNotice" class="notice hidden"></div>
-<div id="parentMatchesBox">جاري تحميل المباريات…</div>
-</div>
-<div class="card">
-<h3>فعاليات الأكاديمية وحالة حجوزاتك</h3>
-<div class="formgrid" style="margin-bottom:10px">
-<label>اسم ولي الأمر للحجز<input id="parentBookingName" placeholder="اكتب اسم ولي الأمر"></label>
-<label>رقم الهاتف / واتساب للحجز<input id="parentBookingPhone" inputmode="tel" placeholder="مثال: 01115099181"></label>
-</div>
-<div id="parentEventsNotice" class="notice hidden"></div>
-<div id="parentEventsBox">جاري تحميل الفعاليات وحجوزاتك…</div>
-</div>
-<div class="card">
-<h3>متابعة حالة استمارة التقديم وحجز الفعاليات</h3>
-<div class="actions">
-<input id="parentTrackPhone" inputmode="tel" placeholder="أدخل رقم الموبايل المسجل" style="max-width:280px" onkeydown="if(event.key==='Enter'){event.preventDefault();checkPublicStatus('parentTrackPhone','parentTrackResult');}">
-<button type="button" class="secondary" onclick="checkPublicStatus('parentTrackPhone','parentTrackResult')">عرض حالة التقديم والحجز</button>
-</div>
-<div id="parentTrackResult" class="notice hidden"></div>
-</div>
-<div class="card"><h3>اللاعبون المرتبطون بحسابك</h3><div id="linkedPlayers">—</div></div>
-<div class="card"><h3>طلبات الربط</h3><div id="linkRequests">—</div></div>
-<div class="card">
-<h3>رأي ولي الأمر (من 1 إلى 5)</h3>
+<h3>تقييمات اللاعب ورأي ولي الأمر (من 1 إلى 5)</h3>
+<div id="parentCoachEvaluationsBox">جاري تحميل تقييمات اللاعب…</div>
+<hr class="about-divider">
 <div id="parentFeedbackForm" class="hidden">
 <label>اللاعب<select id="feedbackPlayer"></select></label>
 <div class="formgrid">
@@ -624,6 +617,50 @@ header, .nav, .navbar, .topbar, .header{
 <button id="btnSendParentFeedback" type="button" onclick="sendParentFeedback()">إرسال الرأي</button>
 </div>
 <div id="feedbackStatus" class="notice">نموذج الرأي يظهر عند تفعيله من الإدارة.</div>
+<div id="parentSubmittedFeedbackBox" style="margin-top:12px"></div>
+</div>
+</div>
+
+<div id="pTabAttendance" class="parentTab hidden">
+<div class="card">
+<h3>سجل الغياب والحضور</h3>
+<div id="parentAttendanceBox">جاري تحميل سجل الغياب والحضور…</div>
+</div>
+</div>
+
+<div id="pTabEvents" class="parentTab hidden">
+<div class="card">
+<h3>الفعاليات التي نزلتها الإدارة</h3>
+<div class="formgrid" style="margin-bottom:10px">
+<label>اسم ولي الأمر للحجز<input id="parentBookingName" placeholder="اكتب اسم ولي الأمر"></label>
+<label>رقم الهاتف / واتساب للحجز<input id="parentBookingPhone" inputmode="tel" placeholder="مثال: 01115099181"></label>
+</div>
+<div id="parentEventsNotice" class="notice hidden"></div>
+<div id="parentEventsBox">جاري تحميل الفعاليات…</div>
+</div>
+</div>
+
+<div id="pTabMatches" class="parentTab hidden">
+<div class="card">
+<h3>المباريات</h3>
+<p class="muted small">المباريات المنشورة من الإدارة؛ يمكنك تسجيل اشتراك اللاعب المرتبط بحسابك مباشرة.</p>
+<div id="parentMatchesNotice" class="notice hidden"></div>
+<div id="parentMatchesBox">جاري تحميل المباريات…</div>
+</div>
+</div>
+
+<div id="pTabBookings" class="parentTab hidden">
+<div class="card">
+<h3>الحجوزات ومتابعة حالة التقديم</h3>
+<div id="parentBookingsListBox">جاري تحميل حجوزاتك…</div>
+<hr class="about-divider">
+<h4>متابعة حالة استمارة التقديم وحجز الفعاليات برقم الموبايل</h4>
+<div class="actions">
+<input id="parentTrackPhone" inputmode="tel" placeholder="أدخل رقم الموبايل المسجل" style="max-width:280px" onkeydown="if(event.key==='Enter'){event.preventDefault();checkPublicStatus('parentTrackPhone','parentTrackResult');}">
+<button type="button" class="secondary" onclick="checkPublicStatus('parentTrackPhone','parentTrackResult')">عرض حالة التقديم والحجز</button>
+</div>
+<div id="parentTrackResult" class="notice hidden"></div>
+</div>
 </div>
 </div>
 </section>
@@ -918,6 +955,7 @@ let localMatchViews = [];
 let localEventBookings = [];
 let localParentProfiles = [];
 let parentBookingsCache = [];
+let activeParentTabId = 'pTabEvaluations';
 
 const $=id=>document.getElementById(id),
 today=()=>{
@@ -928,6 +966,26 @@ today=()=>{
   return `${y}-${m}-${day}`;
 },
 esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function parentTab(tabId, btn){
+  activeParentTabId = tabId;
+  document.querySelectorAll('.parentTab').forEach(el => el.classList.add('hidden'));
+  const target = $(tabId);
+  if(target) target.classList.remove('hidden');
+
+  const tabsWrap = $('parentSectionTabs');
+  if(tabsWrap){
+    tabsWrap.querySelectorAll('button').forEach(b => {
+      b.classList.remove('on');
+      b.classList.add('secondary');
+    });
+    const activeBtn = btn || Array.from(tabsWrap.querySelectorAll('button')).find(b => (b.getAttribute('onclick')||'').includes(`'${tabId}'`));
+    if(activeBtn){
+      activeBtn.classList.remove('secondary');
+      activeBtn.classList.add('on');
+    }
+  }
+}
 
 function toWesternDigits(str){
   return String(str||'').replace(/[٠-٩]/g, d => '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)]);
@@ -1170,6 +1228,7 @@ function renderView(view){
     if(parentUser){
       $('parentAuth').classList.add('hidden');
       $('parentDash').classList.remove('hidden');
+      parentTab(activeParentTabId);
       recordParentSectionView('parent_portal', 'بوابة ولي الأمر');
       showParentDash();
     }else{
@@ -2608,12 +2667,20 @@ async function markParentFeedbackSeen(feedbackId){
         .from('parent_feedback')
         .update({ seen_at: new Date().toISOString(), status: 'seen' })
         .eq('id', feedbackId);
-    }catch(_){}
+    }catch(_){
+      try{
+        await client
+          .from('parent_feedback')
+          .update({ seen_at: new Date().toISOString() })
+          .eq('id', feedbackId);
+      }catch(__){}
+    }
   }
 
-  setNotice($('parentFeedbackMsg'), 'تم رؤية التقييم بنجاح — وصل لولي الأمر: تم استقبال تقييمك.', 'ok');
-  showPlayerSavePopup('تم رؤية التقييم بنجاح', 'وصل لولي الأمر: تم استقبال تقييمك');
+  setNotice($('parentFeedbackMsg'), 'تم رؤية التقييم بنجاح — وصل لولي الأمر: تم رؤية تقييمك بنجاح.', 'ok');
+  showPlayerSavePopup('تم رؤية التقييم بنجاح', 'وصل لولي الأمر: تم رؤية تقييمك بنجاح');
   await loadParentFeedbackAdmin();
+  if(parentUser) await loadParentSubmittedFeedbackSection();
 }
 
 async function loadParentFeedbackAdmin(){
@@ -2641,7 +2708,7 @@ async function loadParentFeedbackAdmin(){
       <td>${row.parent_player_level??'—'} / 5</td>
       <td>${row.academy_rating??'—'} / 5</td>
       <td>${esc(row.comments||'—')}</td>
-      <td>${isSeen ? '<span class="badge">تم رؤية التقييم بنجاح · تم استقبال تقييمك</span>' : '<span class="muted">جديد</span>'}</td>
+      <td>${isSeen ? '<span class="badge">تم رؤية تقييمك بنجاح</span>' : '<span class="muted">جديد</span>'}</td>
       <td><button type="button" class="secondary" onclick="markParentFeedbackSeen('${esc(row.id)}')">تم رؤية التقييم</button></td>
     </tr>`;
   }).join('')}</tbody></table>`;
@@ -2876,6 +2943,7 @@ async function loadParentEventsAndBookings(){
   if(!parentUser) return;
   const client = getSupabaseClient();
   const box = $('parentEventsBox');
+  const bookingsListBox = $('parentBookingsListBox');
   if(!client || !box) return;
 
   const [evRes, bkRes] = await Promise.all([
@@ -2928,6 +2996,30 @@ async function loadParentEventsAndBookings(){
         ${statusBadge}
       </article>`;
     }).join('')}</div>`;
+  }
+
+  if(bookingsListBox){
+    const myPhoneCandidates = normalizePhoneCandidates(defaultPhone || ($('parentBookingPhone')?.value || ''));
+    const myBookings = parentBookingsCache.filter(b => {
+      if(localEventBookings.some(lb => String(lb.id) === String(b.id))) return true;
+      if(!myPhoneCandidates.length) return true;
+      return normalizePhoneCandidates(b.parent_phone).some(c => myPhoneCandidates.includes(c));
+    });
+    if(!myBookings.length){
+      bookingsListBox.innerHTML = '<p class="muted small">لا توجد حجوزات مسجلة حتى الآن.</p>';
+    }else{
+      bookingsListBox.innerHTML = myBookings.map(b => {
+        const evTitle = b.academy_events?.title || eventsList.find(e => String(e.id) === String(b.event_id))?.title || 'فعالية الأكاديمية';
+        const st = String(b.status || 'pending').trim().toLowerCase();
+        const stLabel = (st === 'approved' || st === 'accepted')
+          ? 'تم قبول حجزك بنجاح تواصل معانا'
+          : (st === 'rejected' ? 'تم رفض الحجز' : 'قيد المراجعة / بانتظار قبول الإدارة');
+        return `<div class="playerline">
+          <span><b>${esc(evTitle)}</b><br><small class="muted">الاسم: ${esc(b.parent_name || '—')} · الهاتف: ${esc(b.parent_phone || '—')}</small></span>
+          <span class="badge">${esc(stLabel)}</span>
+        </div>`;
+      }).join('');
+    }
   }
 }
 
@@ -3890,6 +3982,40 @@ async function syncParentFeedbackAvailability(){
   }
 }
 
+async function loadParentSubmittedFeedbackSection(){
+  const box = $('parentSubmittedFeedbackBox');
+  if(!box || !parentUser) return;
+  const client = getSupabaseClient();
+  if(!client) return;
+
+  let rows = [];
+  try{
+    let q = client.from('parent_feedback').select('*').order('created_at',{ascending:false}).limit(20);
+    if(linkedPlayerIds.size > 0){
+      q = q.in('player_id', Array.from(linkedPlayerIds));
+    }
+    const {data, error} = await q;
+    if(!error && Array.isArray(data)) rows = data;
+  }catch(_){}
+
+  if(!rows.length){
+    box.innerHTML = '';
+    return;
+  }
+
+  box.innerHTML = '<h4>حالة تقييماتك المرسلة</h4>' + rows.map(r => {
+    const pName = linkedPlayersList.find(p => String(p.player_id) === String(r.player_id))?.full_name || 'اللاعب';
+    const isSeen = Boolean(r.seen_at || r.status === 'seen' || localSeenParentFeedbackIds.has(String(r.id)));
+    return `<div class="playerline">
+      <span>
+        <b>${esc(pName)}</b> · مستوى اللاعب: ${r.parent_player_level ?? '—'}/5 · الأكاديمية: ${r.academy_rating ?? '—'}/5
+        ${r.comments ? `<br><small class="muted">${esc(r.comments)}</small>` : ''}
+      </span>
+      <span class="badge">${isSeen ? 'تم رؤية تقييمك بنجاح' : 'قيد المراجعة'}</span>
+    </div>`;
+  }).join('');
+}
+
 async function markEvaluationSeen(playerId, evalId){
   const client=getSupabaseClient();
   const statusEl=$('seenStatus-' + playerId);
@@ -3921,6 +4047,7 @@ async function showParentDash(){
   if(!client)return;
   $('parentAuth').classList.add('hidden');
   $('parentDash').classList.remove('hidden');
+  parentTab(activeParentTabId);
 
   let [p,r]=await Promise.all([
     client.rpc('get_my_linked_players'),
@@ -3932,34 +4059,50 @@ async function showParentDash(){
   linkedPlayerIds = new Set(linked.map(x=>String(x.player_id)).filter(Boolean));
   await recordParentSectionView('parent_portal', 'صفحة ولي الأمر');
 
-  $('linkedPlayers').innerHTML=p.error?`<div class="notice err">${esc(p.error.message)}</div>`:linked.map(x=>{
-    const hideBirth = isKidsGroup(x.group_id, x.group_note, x.group_name);
-    const birthPart = hideBirth ? '' : `سنة الميلاد: ${x.birth_year||'—'} · `;
-    return `<div class="card" style="margin:10px 0"><h3>${esc(x.full_name)}</h3><div class="muted small">${birthPart}الفرع: ${esc(x.branch_name||'—')} · المجموعة: ${esc(x.group_name||x.group_note||'غير محددة')}</div><hr style="border-color:#443923"><b>تقييم المدرب للاعب (من 1 إلى 5)</b><p>المستوى الفني: ${x.technical_score??'—'} من 5 · السلوك: ${x.behavior_score??'—'} من 5 · اللياقة: ${x.fitness_score??'—'} من 5</p><p class="muted small">${esc(x.evaluation_notes||'لا توجد ملاحظات من المدرب بعد')}</p><div class="actions" style="margin-top:8px"><button type="button" class="secondary" onclick="markEvaluationSeen('${esc(x.player_id)}','${esc(x.evaluation_id||'')}')">تم مشاهدة التقييمات</button></div><div id="seenStatus-${esc(x.player_id)}" class="notice hidden"></div><div id="history-${esc(x.player_id)}" class="muted small" style="margin-top:8px">جاري تحميل سجل الحضور…</div></div>`;
-  }).join('')||'لا يوجد لاعب مرتبط حتى الآن';
+  $('linkedPlayers').innerHTML=p.error?`<div class="notice err">${esc(p.error.message)}</div>`:(linked.length ? `<b>اللاعبون المرتبطون بحسابك:</b> ` + linked.map(x=>`<span class="badge">${esc(x.full_name)}</span>`).join(' ') : '<span class="muted small">لا يوجد لاعب مرتبط حتى الآن</span>');
+  $('linkRequests').innerHTML=r.error?`<div class="notice err">${esc(r.error.message)}</div>`:((r.data||[]).length ? `<b>طلبات الربط:</b> ` + (r.data||[]).map(x=>`<span class="badge">${esc(x.requested_name)} (${esc(x.status)})</span>`).join(' ') : '');
 
-  for(const x of linked){
-    const h=await client.from('attendance_records').select('attendance_status,attendance_sessions(session_date,session_closed)').eq('player_id',x.player_id).order('attended_at',{ascending:false}).limit(20);
-    const el=$('history-'+x.player_id);
-    if(el){
-      if(h.error){
-        el.innerHTML=`<b>سجل الحضور</b><br><span class="small">${esc(h.error.message)}</span>`;
-      }else{
-        const rows = h.data||[];
-        el.innerHTML='<b>سجل الحضور</b><br>'+(rows.length ? rows.map(z=>{
-          const stLabel = formatAttendanceLabel(z.attendance_status);
-          return `${esc(z.attendance_sessions?.session_date||'—')} · ${esc(stLabel)}`;
-        }).join('<br>') : 'لا يوجد سجل حضور بعد');
+  const evalsBox = $('parentCoachEvaluationsBox');
+  const attBox = $('parentAttendanceBox');
+
+  if(evalsBox){
+    evalsBox.innerHTML = p.error
+      ? `<div class="notice err">${esc(p.error.message)}</div>`
+      : (linked.map(x=>{
+          const hideBirth = isKidsGroup(x.group_id, x.group_note, x.group_name);
+          const birthPart = hideBirth ? '' : `سنة الميلاد: ${x.birth_year||'—'} · `;
+          return `<div class="card" style="margin:10px 0"><h3>${esc(x.full_name)}</h3><div class="muted small">${birthPart}الفرع: ${esc(x.branch_name||'—')} · المجموعة: ${esc(x.group_name||x.group_note||'غير محددة')}</div><hr style="border-color:#443923"><b>تقييم المدرب للاعب (من 1 إلى 5)</b><p>المستوى الفني: ${x.technical_score??'—'} من 5 · السلوك: ${x.behavior_score??'—'} من 5 · اللياقة: ${x.fitness_score??'—'} من 5</p><p class="muted small">${esc(x.evaluation_notes||'لا توجد ملاحظات من المدرب بعد')}</p><div class="actions" style="margin-top:8px"><button type="button" class="secondary" onclick="markEvaluationSeen('${esc(x.player_id)}','${esc(x.evaluation_id||'')}')">تم مشاهدة التقييمات</button></div><div id="seenStatus-${esc(x.player_id)}" class="notice hidden"></div></div>`;
+        }).join('') || '<p class="muted small">لا يوجد لاعب مرتبط حتى الآن لعرض تقييماته.</p>');
+  }
+
+  if(attBox){
+    if(!linked.length){
+      attBox.innerHTML = '<p class="muted small">لا يوجد لاعب مرتبط حتى الآن لعرض سجل الحضور والغياب.</p>';
+    }else{
+      attBox.innerHTML = linked.map(x => `<div class="card" style="margin:10px 0"><h3>${esc(x.full_name)}</h3><div id="history-${esc(x.player_id)}" class="muted small">جاري تحميل سجل الحضور…</div></div>`).join('');
+      for(const x of linked){
+        const h=await client.from('attendance_records').select('attendance_status,attendance_sessions(session_date,session_closed)').eq('player_id',x.player_id).order('attended_at',{ascending:false}).limit(20);
+        const el=$('history-'+x.player_id);
+        if(el){
+          if(h.error){
+            el.innerHTML=`<b>سجل الحضور</b><br><span class="small">${esc(h.error.message)}</span>`;
+          }else{
+            const rows = h.data||[];
+            el.innerHTML='<b>سجل الحضور</b><br>'+(rows.length ? rows.map(z=>{
+              const stLabel = formatAttendanceLabel(z.attendance_status);
+              return `${esc(z.attendance_sessions?.session_date||'—')} · ${esc(stLabel)}`;
+            }).join('<br>') : 'لا يوجد سجل حضور بعد');
+          }
+        }
       }
     }
   }
-
-  $('linkRequests').innerHTML=r.error?`<div class="notice err">${esc(r.error.message)}</div>`:(r.data||[]).map(x=>`<div class="playerline">${esc(x.requested_name)} <span class="badge">${esc(x.status)}</span></div>`).join('')||'لا توجد طلبات';
 
   fill('feedbackPlayer',linked.map(x=>({id:x.player_id,name:x.full_name})),'اختاري اللاعب');
 
   await Promise.all([
     syncParentFeedbackAvailability(),
+    loadParentSubmittedFeedbackSection(),
     loadParentMatchesSection(),
     loadParentEventsAndBookings()
   ]);
@@ -4028,6 +4171,7 @@ async function sendParentFeedback(){
   $('feedbackComment').value='';
   setNotice(statusEl, 'تم إرسال التقييم بنجاح', 'ok');
   showPlayerSavePopup('تم إرسال التقييم بنجاح', 'شكرًا لمشاركتك رأيك مع الإدارة');
+  await loadParentSubmittedFeedbackSection();
 }
 
 async function sendLinkRequest(){
