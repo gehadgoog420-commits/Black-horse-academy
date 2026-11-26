@@ -116,7 +116,7 @@ header{position:static;z-index:10;background:#080a0ceF;border-bottom:1px solid #
 .gallery-media{position:relative;height:230px;background:radial-gradient(circle at 50% 35%,#2b2213,#0a0d0f 75%);border-bottom:1px solid #453a25;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .gallery-media img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s ease}
 .gallery-card:hover .gallery-media img{transform:scale(1.03)}
-.gallery-missing{padding:18px;text-align:center;color:var(--muted);font-size:12px;line-height:1.6}
+.gallery-missing{padding:18px;text-center;color:var(--muted);font-size:12px;line-height:1.6}
 .gallery-body{padding:16px;display:flex;flex-direction:column;gap:6px;flex:1}
 .gallery-tag{align-self:flex-start;font-size:11px;color:var(--gold2);border:1px solid #66532e;background:#151a1d;padding:2px 10px;border-radius:20px}
 .gallery-body h3{margin:2px 0 0;color:var(--gold2);font-size:16px}
@@ -587,6 +587,17 @@ header, .nav, .navbar, .topbar, .header{
 <div id="linkMsg" class="notice"></div>
 </div>
 <div class="card">
+<h3>مباراة جديدة</h3>
+<p class="muted small">المباريات المنشورة من الإدارة؛ يمكنك تسجيل اشتراك اللاعب المرتبط بحسابك مباشرة.</p>
+<div id="parentMatchesNotice" class="notice hidden"></div>
+<div id="parentMatchesBox">جاري تحميل المباريات…</div>
+</div>
+<div class="card">
+<h3>فعاليات الأكاديمية وحالة حجوزاتك</h3>
+<div id="parentEventsNotice" class="notice hidden"></div>
+<div id="parentEventsBox">جاري تحميل الفعاليات وحجوزاتك…</div>
+</div>
+<div class="card">
 <h3>متابعة حالة استمارة التقديم وحجز الفعاليات</h3>
 <div class="actions">
 <input id="parentTrackPhone" inputmode="tel" placeholder="أدخل رقم التليفون المسجل" style="max-width:280px" onkeydown="if(event.key==='Enter'){event.preventDefault();checkPublicStatus('parentTrackPhone','parentTrackResult');}">
@@ -791,7 +802,7 @@ header, .nav, .navbar, .topbar, .header{
 </form>
 </div>
 <div class="card" style="margin-top:14px">
-<div class="section-title"><h3>الفعاليات المسجلة</h3><button type="button" class="secondary" onclick="loadAdminEventsList()">تحديث الفعاليات</button></div>
+<div class="section-title"><h3>الفعاليات المسجلة</h3><button type="button" onclick="loadAdminEventsList()" class="secondary">تحديث الفعاليات</button></div>
 <div id="adminEventsList"></div>
 </div>
 <div class="card" style="margin-top:14px"><h3>حجوزات الفعاليات</h3><p class="muted small">يمكنك الضغط على «تم قبول حجزك» لاعتماد الحجز أو «رفض» لرفضه أو «حذف» لإزالته.</p><div id="bookingsMsg" class="notice hidden"></div><div id="bookingsTable" class="tablewrap"></div></div>
@@ -819,7 +830,24 @@ header, .nav, .navbar, .topbar, .header{
 </form>
 </div>
 <div id="matchesList" class="card" style="margin-top:14px"></div>
-<div class="card" style="margin-top:14px"><h3>متابعة من شاهد المباريات (اسم اللاعب المرتبط وولي الأمر)</h3><div id="matchViewsTable" class="tablewrap"></div></div>
+<div class="card" style="margin-top:14px">
+<div class="section-title"><h3>اشتراكات اللاعبين في المباريات</h3><button type="button" class="secondary" onclick="loadMatchRegistrationsAdmin()">تحديث الاشتراكات</button></div>
+<div id="matchRegMsg" class="notice hidden"></div>
+<div id="matchRegistrationsTable" class="tablewrap"></div>
+</div>
+<div class="card" style="margin-top:14px">
+<h3>متابعة مشاهدة المباريات (مربع من شاهد ومربع من لم يشاهد)</h3>
+<div class="grid" style="margin-top:10px">
+  <div class="card">
+    <h3>مربع: من شاهد المباراة</h3>
+    <div id="matchSeenBox" class="tablewrap"></div>
+  </div>
+  <div class="card">
+    <h3>مربع: من لم يشاهد المباراة بعد</h3>
+    <div id="matchUnseenBox" class="tablewrap"></div>
+  </div>
+</div>
+</div>
 </div>
 
 <div id="requests" class="adminTab hidden"><div class="card"><h3>طلبات الالتحاق</h3><div id="reqActionMsg" class="notice hidden"></div><div id="requestsTable" class="tablewrap"></div></div></div>
@@ -880,6 +908,9 @@ let fastStream=null,fastRafId=null,fastVideo=null,fastCanvas=null,fastCtx=null,l
 let localViewedCoachEvalIds = new Set();
 let localSeenParentFeedbackIds = new Set();
 let localSectionViews = [];
+let localMatchRegistrations = [];
+let localMatchViews = [];
+let parentBookingsCache = [];
 
 const $=id=>document.getElementById(id),
 today=()=>{
@@ -1103,6 +1134,8 @@ async function syncAdminTabData(tabId){
   }
   if(tabId==='matches'){
     await loadMatches();
+    await loadMatchRegistrationsAdmin();
+    await loadMatchViewsAdmin();
     await loadSectionViewsAdmin(['matches']);
   }
   if(tabId==='requests') await loadRequests();
@@ -1127,6 +1160,7 @@ function renderView(view){
       $('parentAuth').classList.add('hidden');
       $('parentDash').classList.remove('hidden');
       recordParentSectionView('parent_portal', 'بوابة ولي الأمر');
+      showParentDash();
     }else{
       $('parentDash').classList.add('hidden');
       $('parentAuth').classList.remove('hidden');
@@ -1407,6 +1441,8 @@ async function refreshAll(){
     loadCoachEvaluationsAdmin(),
     loadBookings(),
     loadMatches(),
+    loadMatchRegistrationsAdmin(),
+    loadMatchViewsAdmin(),
     loadRequests(),
     loadParentRequests(),
     loadParentFeedbackAdmin(),
@@ -2730,17 +2766,24 @@ async function loadPublicEvents(){
       <h3>${esc(x.title)}</h3>
       <p>${esc(x.description||'')}</p>
       <p class="muted">${x.event_date||'سيتم الإعلان عن الموعد'}${capInfo}${priceInfo}</p>
-      <button type="button" onclick="bookEvent('${esc(x.id)}','${esc(x.title)}')">احجز مكانًا</button>
+      <button type="button" onclick="bookEvent('${esc(x.id)}','${esc(x.title)}')">احجز مكانك</button>
     </article>`;
   }).join('');
 }
 
-async function bookEvent(id, eventTitle){
+async function bookEvent(id, eventTitle, prefilledName, prefilledPhone){
   const client=getSupabaseClient();
   if(!client){alert('تعذر الاتصال بقاعدة البيانات.');return;}
-  let name=prompt('اسم ولي الأمر');
+  let name = prefilledName;
+  if(!name){
+    name = prompt('اسم ولي الأمر');
+  }
   if(!name || !name.trim())return;
-  let phone=prompt('رقم الهاتف / واتساب');
+
+  let phone = prefilledPhone;
+  if(!phone){
+    phone = prompt('رقم الهاتف / واتساب');
+  }
   if(!phone || !phone.trim())return;
 
   if(parentUser){
@@ -2755,20 +2798,91 @@ async function bookEvent(id, eventTitle){
   });
 
   if(error){
-    alert('تعذر إتمام الحجز: ' + error.message);
+    if(parentUser){
+      setNotice($('parentEventsNotice'), 'تعذر إتمام الحجز: ' + error.message, 'err');
+    }else{
+      alert('تعذر إتمام الحجز: ' + error.message);
+    }
     return;
   }
 
   if(!data || data.success !== true){
-    alert(data?.message || 'تعذر إتمام الحجز.');
+    const errText = data?.message || 'تعذر إتمام الحجز.';
+    if(parentUser){
+      setNotice($('parentEventsNotice'), errText, 'err');
+    }else{
+      alert(errText);
+    }
     return;
   }
 
-  alert(data.message || 'تم إرسال طلب الحجز بنجاح.');
+  const okText = data.message || 'تم إرسال طلب الحجز بنجاح.';
+  if(parentUser){
+    setNotice($('parentEventsNotice'), okText, 'ok');
+    showPlayerSavePopup('تم إرسال طلب الحجز', okText);
+    await loadParentEventsAndBookings();
+  }else{
+    alert(okText);
+  }
   if(user && !$('eventsAdmin').classList.contains('hidden')){
     await loadBookings();
     await loadSectionViewsAdmin(['events','bookings']);
   }
+}
+
+async function loadParentEventsAndBookings(){
+  if(!parentUser) return;
+  const client = getSupabaseClient();
+  const box = $('parentEventsBox');
+  if(!client || !box) return;
+
+  const [evRes, bkRes] = await Promise.all([
+    client.from('academy_events').select('id,title,description,event_date,capacity,price,published').eq('published',true).order('event_date'),
+    client.from('event_bookings').select('id,event_id,parent_name,parent_phone,status,created_at,academy_events(title)').order('created_at',{ascending:false})
+  ]);
+
+  if(evRes.error){
+    box.innerHTML = `<div class="notice err">${esc(evRes.error.message)}</div>`;
+    return;
+  }
+
+  const eventsList = evRes.data || [];
+  parentBookingsCache = bkRes.data || [];
+
+  const defaultParentName = parentUser.user_metadata?.full_name || parentUser.user_metadata?.name || parentUser.email || '';
+  const defaultPhone = parentBookingsCache[0]?.parent_phone || '';
+
+  if(!eventsList.length){
+    box.innerHTML = '<p class="muted small">لا توجد فعاليات منشورة حاليًا.</p>';
+  }else{
+    box.innerHTML = `<div class="grid">${eventsList.map(ev=>{
+      const matchedBooking = parentBookingsCache.find(b => String(b.event_id) === String(ev.id));
+      const bStatus = String(matchedBooking?.status || '').trim().toLowerCase();
+      let statusBadge = '';
+      if(matchedBooking){
+        if(bStatus === 'approved' || bStatus === 'accepted'){
+          statusBadge = `<div class="notice ok" style="margin-top:8px">تم قبول حجزك بنجاح تواصل معانا</div>`;
+        }else if(bStatus === 'rejected'){
+          statusBadge = `<div class="notice err" style="margin-top:8px">تم رفض الحجز</div>`;
+        }else{
+          statusBadge = `<div class="notice" style="margin-top:8px">تم إرسال طلب الحجز — قيد المراجعة من الإدارة</div>`;
+        }
+      }
+      const priceInfo = ev.price ? ` · السعر: ${esc(ev.price)}` : '';
+      const capInfo = ev.capacity ? ` · السعة: ${esc(ev.capacity)}` : '';
+      return `<article class="card">
+        <h3>${esc(ev.title)}</h3>
+        <p>${esc(ev.description||'')}</p>
+        <p class="muted small">${esc(ev.event_date||'سيتم الإعلان عن الموعد')}${capInfo}${priceInfo}</p>
+        <button type="button" onclick="parentBookEvent('${esc(ev.id)}','${esc(ev.title)}','${esc(defaultParentName)}','${esc(defaultPhone)}')">احجز مكانك</button>
+        ${statusBadge}
+      </article>`;
+    }).join('')}</div>`;
+  }
+}
+
+async function parentBookEvent(eventId, eventTitle, prefilledName, prefilledPhone){
+  await bookEvent(eventId, eventTitle, prefilledName, prefilledPhone);
 }
 
 async function loadBookings(){
@@ -2789,7 +2903,7 @@ async function loadBookings(){
     const st = String(x.status||'pending').trim().toLowerCase();
     const isApproved = st === 'approved' || st === 'accepted';
     const isRejected = st === 'rejected';
-    let actionCell = `<button type="button" onclick="approveBooking('${esc(x.id)}')">تم قبول حجزك</button><button type="button" class="danger" onclick="rejectBooking('${esc(x.id)}')">رفض</button>`;
+    let actionCell = `<button type="button" onclick="approveBooking('${esc(x.id)}')">قبول الحجز</button><button type="button" class="danger" onclick="rejectBooking('${esc(x.id)}')">رفض</button>`;
     if(isApproved){
       actionCell = `<span class="badge">تم قبول حجزك بنجاح تواصل معانا</span>`;
     }else if(isRejected){
@@ -2925,6 +3039,8 @@ async function deleteMatch(id){
   if($('editMatchId').value === String(id)) resetMatchForm();
   setNotice($('matchMsg'),'تم حذف المباراة بنجاح.','ok');
   await loadMatches();
+  await loadMatchRegistrationsAdmin();
+  await loadMatchViewsAdmin();
 }
 
 $('matchForm').addEventListener('submit',async e=>{
@@ -2949,21 +3065,302 @@ $('matchForm').addEventListener('submit',async e=>{
     return;
   }
   setNotice($('matchMsg'),editId?'تم تحديث المباراة بنجاح.':'تم حفظ المباراة بنجاح.','ok');
+  showPlayerSavePopup('تم الحفظ بنجاح', editId ? 'تم تحديث المباراة بنجاح' : 'تم نشر المباراة الجديدة');
   resetMatchForm();
   await loadMatches();
+  await loadMatchRegistrationsAdmin();
+  await loadMatchViewsAdmin();
 });
 
 async function loadMatches(){
-  if(!user) return;
   const client=getSupabaseClient();
   if(!client)return;
   let {data,error}=await client.from('academy_matches').select('*').order('match_date',{ascending:false});
   if(error){
-    $('matchesList').innerHTML=`<div class="notice err">${esc(error.message)}</div>`;
+    if($('matchesList')) $('matchesList').innerHTML=`<div class="notice err">${esc(error.message)}</div>`;
     return;
   }
   matchesCache = data || [];
-  $('matchesList').innerHTML='<h3>المباريات المسجلة</h3>'+(matchesCache.map(x=>`<div class="playerline"><span><b>${esc(x.title)}</b>${x.result?` <span class="badge">${esc(x.result)}</span>`:''}<br><small>${x.match_date||'—'} · ${esc(x.location||'')}</small></span><span class="actions"><span class="badge">${x.published?'منشورة':'مسودة'}</span><button type="button" class="secondary" onclick="editMatch('${x.id}')">تعديل</button><button type="button" class="danger" onclick="deleteMatch('${x.id}')">حذف</button></span></div>`).join('')||'لا توجد مباريات');
+  if($('matchesList')){
+    $('matchesList').innerHTML='<h3>المباريات المسجلة</h3>'+(matchesCache.map(x=>`<div class="playerline"><span><b>${esc(x.title)}</b>${x.result?` <span class="badge">${esc(x.result)}</span>`:''}<br><small>${x.match_date||'—'} · ${esc(x.location||'')}</small></span><span class="actions"><span class="badge">${x.published?'منشورة':'مسودة'}</span><button type="button" class="secondary" onclick="editMatch('${x.id}')">تعديل</button><button type="button" class="danger" onclick="deleteMatch('${x.id}')">حذف</button></span></div>`).join('')||'لا توجد مباريات');
+  }
+}
+
+async function fetchAllMatchRegistrations(client){
+  let dbRegs = [];
+  if(client){
+    try{
+      const {data,error} = await client.from('match_registrations').select('*').order('created_at',{ascending:false});
+      if(!error && Array.isArray(data)) dbRegs = data;
+    }catch(_){}
+  }
+  const mergedMap = new Map();
+  [...dbRegs, ...localMatchRegistrations].forEach(r=>{
+    const key = `${r.match_id}::${r.player_id}`;
+    mergedMap.set(key, r);
+  });
+  return Array.from(mergedMap.values());
+}
+
+async function fetchAllMatchViews(client){
+  let dbViews = [];
+  if(client){
+    try{
+      const {data,error} = await client.from('match_views').select('*').order('viewed_at',{ascending:false});
+      if(!error && Array.isArray(data)) dbViews = data;
+    }catch(_){}
+  }
+  const mergedMap = new Map();
+  [...dbViews, ...localMatchViews].forEach(v=>{
+    const key = `${v.match_id}::${v.parent_user_id || v.parent_email || ''}`;
+    mergedMap.set(key, v);
+  });
+  return Array.from(mergedMap.values());
+}
+
+async function recordParentMatchView(matchId, matchTitle){
+  if(!parentUser || !matchId) return;
+  const client = getSupabaseClient();
+  const linkedNames = (linkedPlayersList||[]).map(x=>x.full_name).filter(Boolean).join('، ') || 'غير مرتبط بلاعب بعد';
+  const entry = {
+    match_id: matchId,
+    match_title: matchTitle || 'مباراة جديدة',
+    player_id: linkedPlayersList[0]?.player_id || null,
+    linked_player_name: linkedNames,
+    parent_user_id: parentUser.id,
+    parent_email: parentUser.email || '',
+    viewed_at: new Date().toISOString()
+  };
+
+  const idx = localMatchViews.findIndex(x => String(x.match_id) === String(matchId) && String(x.parent_user_id) === String(parentUser.id));
+  if(idx >= 0){
+    localMatchViews[idx] = entry;
+  }else{
+    localMatchViews.unshift(entry);
+  }
+
+  if(client){
+    try{
+      await client.from('match_views').upsert({
+        match_id: matchId,
+        player_id: linkedPlayersList[0]?.player_id || null,
+        parent_user_id: parentUser.id,
+        parent_email: parentUser.email || '',
+        viewed_at: entry.viewed_at
+      }, { onConflict: 'match_id,parent_user_id' });
+    }catch(_){}
+  }
+}
+
+async function loadParentMatchesSection(){
+  if(!parentUser) return;
+  const client = getSupabaseClient();
+  const box = $('parentMatchesBox');
+  if(!client || !box) return;
+
+  const [mRes, allRegs] = await Promise.all([
+    client.from('academy_matches').select('*').eq('published',true).order('match_date',{ascending:false}),
+    fetchAllMatchRegistrations(client)
+  ]);
+
+  if(mRes.error){
+    box.innerHTML = `<div class="notice err">${esc(mRes.error.message)}</div>`;
+    return;
+  }
+
+  const pubMatches = mRes.data || [];
+  if(!pubMatches.length){
+    box.innerHTML = '<p class="muted small">لا توجد مباريات منشورة حاليًا.</p>';
+    return;
+  }
+
+  const myRegs = allRegs.filter(r =>
+    String(r.parent_user_id) === String(parentUser.id) ||
+    linkedPlayerIds.has(String(r.player_id))
+  );
+
+  box.innerHTML = `<div class="grid">${pubMatches.map(m=>{
+    const playerButtons = (linkedPlayersList||[]).map(pl=>{
+      const reg = myRegs.find(r => String(r.match_id) === String(m.id) && String(r.player_id) === String(pl.player_id));
+      if(!reg){
+        return `<button type="button" onclick="registerPlayerForMatch('${esc(m.id)}','${esc(m.title)}','${esc(pl.player_id)}','${esc(pl.full_name)}')">اشتراك (${esc(pl.full_name)})</button>`;
+      }
+      if(String(reg.status).toLowerCase() === 'approved'){
+        return `<div class="notice ok" style="margin-top:6px">اللاعب (${esc(pl.full_name)}): تم قبول اشتراكك بنجاح تواصل معانا</div>`;
+      }
+      return `<div class="notice" style="margin-top:6px">اللاعب (${esc(pl.full_name)}): تم إرسال طلب الاشتراك — بانتظار قبول الإدارة</div>`;
+    }).join('');
+
+    const fallbackBtn = !(linkedPlayersList||[]).length
+      ? '<p class="muted small">اربط حسابك بلاعب أولًا لتفعيل زر الاشتراك.</p>'
+      : '';
+
+    return `<article class="card">
+      <span class="badge">مباراة جديدة</span>
+      <h3 style="margin-top:8px">${esc(m.title)}</h3>
+      <p>${esc(m.description||'')}</p>
+      <p class="muted small">التاريخ: ${esc(m.match_date||'سيتم تحديده')} · المكان: ${esc(m.location||'غير محدد')}${m.result ? ` · النتيجة: ${esc(m.result)}` : ''}</p>
+      <div class="actions" style="margin-top:8px">
+        ${playerButtons}
+        <button type="button" class="secondary" onclick="markMatchSeenByParent('${esc(m.id)}','${esc(m.title)}')">تأكيد مشاهدة المباراة</button>
+      </div>
+      ${fallbackBtn}
+    </article>`;
+  }).join('')}</div>`;
+}
+
+async function markMatchSeenByParent(matchId, matchTitle){
+  if(!parentUser || !matchId) return;
+  await recordParentMatchView(matchId, matchTitle);
+  setNotice($('parentMatchesNotice'), `تم تسجيل مشاهدة مباراة (${matchTitle || 'مباراة جديدة'}) بنجاح.`, 'ok');
+  if(user) await loadMatchViewsAdmin();
+}
+
+async function registerPlayerForMatch(matchId, matchTitle, playerId, playerName){
+  if(!parentUser || !matchId || !playerId) return;
+  const client = getSupabaseClient();
+  if(!client){
+    setNotice($('parentMatchesNotice'), 'تعذر الاتصال بقاعدة البيانات.', 'err');
+    return;
+  }
+
+  await recordParentMatchView(matchId, matchTitle);
+
+  const newReg = {
+    id: makeUUID(),
+    match_id: matchId,
+    match_title: matchTitle,
+    player_id: playerId,
+    player_name: playerName,
+    parent_user_id: parentUser.id,
+    parent_email: parentUser.email || '',
+    status: 'pending',
+    created_at: new Date().toISOString()
+  };
+
+  localMatchRegistrations = [
+    ...localMatchRegistrations.filter(x => !(String(x.match_id) === String(matchId) && String(x.player_id) === String(playerId))),
+    newReg
+  ];
+
+  try{
+    await client.from('match_registrations').upsert({
+      match_id: matchId,
+      player_id: playerId,
+      parent_user_id: parentUser.id,
+      parent_email: parentUser.email || '',
+      status: 'pending',
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'match_id,player_id' });
+  }catch(_){}
+
+  setNotice($('parentMatchesNotice'), `تم إرسال اشتراك اللاعب (${playerName}) في مباراة (${matchTitle}) بنجاح.`, 'ok');
+  showPlayerSavePopup('تم إرسال الاشتراك', `اللاعب ${playerName} · ${matchTitle}`);
+  await loadParentMatchesSection();
+  if(user) await loadMatchRegistrationsAdmin();
+}
+
+async function loadMatchRegistrationsAdmin(){
+  if(!user) return;
+  const client = getSupabaseClient();
+  const box = $('matchRegistrationsTable');
+  if(!box) return;
+
+  const regs = await fetchAllMatchRegistrations(client);
+  if(!regs.length){
+    box.innerHTML = '<p class="muted small" style="padding:12px">لا توجد اشتراكات في المباريات بعد.</p>';
+    return;
+  }
+
+  box.innerHTML = `<table><thead><tr><th>المباراة</th><th>اللاعب</th><th>ولي الأمر</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>${regs.map(r=>{
+    const mTitle = matchesCache.find(m=>String(m.id)===String(r.match_id))?.title || r.match_title || r.match_id || '—';
+    const pName = players.find(p=>String(p.id)===String(r.player_id))?.full_name || r.player_name || r.player_id || '—';
+    const isApproved = String(r.status||'pending').toLowerCase() === 'approved';
+    const statusText = isApproved ? 'تم قبول اشتراكك بنجاح تواصل معانا' : 'قيد المراجعة';
+    const actionBtn = isApproved
+      ? '<span class="badge">تم قبول الاشتراك</span>'
+      : `<button type="button" onclick="approveMatchRegistration('${esc(r.match_id)}','${esc(r.player_id)}','${esc(pName)}')">تم قبول اشتراك</button>`;
+    return `<tr>
+      <td>${esc(mTitle)}</td>
+      <td>${esc(pName)}</td>
+      <td>${esc(r.parent_email || 'ولي أمر')}</td>
+      <td>${esc(statusText)}</td>
+      <td>${actionBtn}</td>
+    </tr>`;
+  }).join('')}</tbody></table>`;
+}
+
+async function approveMatchRegistration(matchId, playerId, playerName){
+  if(!user) return;
+  const client = getSupabaseClient();
+
+  localMatchRegistrations = localMatchRegistrations.map(r => {
+    if(String(r.match_id) === String(matchId) && String(r.player_id) === String(playerId)){
+      return { ...r, status: 'approved', updated_at: new Date().toISOString() };
+    }
+    return r;
+  });
+
+  if(client){
+    try{
+      await client
+        .from('match_registrations')
+        .update({ status: 'approved', updated_at: new Date().toISOString() })
+        .eq('match_id', matchId)
+        .eq('player_id', playerId);
+    }catch(_){}
+  }
+
+  setNotice($('matchRegMsg'), `تم قبول اشتراك اللاعب (${playerName}) بنجاح — سيظهر لولي الأمر: تم قبول اشتراكك بنجاح تواصل معانا.`, 'ok');
+  showPlayerSavePopup('تم قبول الاشتراك', `اللاعب ${playerName}`);
+  await loadMatchRegistrationsAdmin();
+}
+
+async function loadMatchViewsAdmin(){
+  if(!user) return;
+  const client = getSupabaseClient();
+  const seenBox = $('matchSeenBox');
+  const unseenBox = $('matchUnseenBox');
+  if(!seenBox || !unseenBox) return;
+
+  const views = await fetchAllMatchViews(client);
+  const pubMatches = matchesCache.filter(m => m.published !== false);
+
+  const seenRows = views.map(v=>{
+    const mTitle = matchesCache.find(m=>String(m.id)===String(v.match_id))?.title || v.match_title || 'مباراة';
+    const pName = v.linked_player_name || players.find(p=>String(p.id)===String(v.player_id))?.full_name || '—';
+    return `<tr>
+      <td>${esc(mTitle)}</td>
+      <td>${esc(pName)}</td>
+      <td>${esc(v.parent_email || 'ولي أمر')}</td>
+      <td>${v.viewed_at ? esc(new Date(v.viewed_at).toLocaleString('ar-EG')) : '—'}</td>
+    </tr>`;
+  });
+
+  const unseenItems = [];
+  pubMatches.forEach(m=>{
+    (players||[]).filter(pl=>pl.active !== false).forEach(pl=>{
+      const hasViewed = views.some(v =>
+        String(v.match_id) === String(m.id) &&
+        (String(v.player_id) === String(pl.id) || String(v.linked_player_name||'').includes(String(pl.full_name||'')))
+      );
+      if(!hasViewed){
+        unseenItems.push(`<tr>
+          <td>${esc(m.title)}</td>
+          <td>${esc(pl.full_name)}</td>
+          <td><span class="muted">لم يشاهد بعد</span></td>
+        </tr>`);
+      }
+    });
+  });
+
+  seenBox.innerHTML = seenRows.length
+    ? `<table><thead><tr><th>المباراة</th><th>اللاعب</th><th>ولي الأمر</th><th>وقت المشاهدة</th></tr></thead><tbody>${seenRows.join('')}</tbody></table>`
+    : '<p class="muted small" style="padding:12px">لا يوجد مشاهدون للمباريات بعد.</p>';
+
+  unseenBox.innerHTML = unseenItems.length
+    ? `<table><thead><tr><th>المباراة</th><th>اللاعب</th><th>الحالة</th></tr></thead><tbody>${unseenItems.join('')}</tbody></table>`
+    : '<p class="muted small" style="padding:12px">الجميع شاهد المباريات المنشورة.</p>';
 }
 
 function renderEnrollmentRequests(){
@@ -3437,7 +3834,11 @@ async function showParentDash(){
 
   fill('feedbackPlayer',linked.map(x=>({id:x.player_id,name:x.full_name})),'اختاري اللاعب');
 
-  await syncParentFeedbackAvailability();
+  await Promise.all([
+    syncParentFeedbackAvailability(),
+    loadParentMatchesSection(),
+    loadParentEventsAndBookings()
+  ]);
 }
 
 async function sendParentFeedback(){
@@ -3469,24 +3870,25 @@ async function sendParentFeedback(){
     return;
   }
 
+  const commentsVal = $('feedbackComment').value.trim()||null;
   const payload = {
     player_id:selectedPlayerId,
     parent_player_level:lvl,
     academy_rating:acd,
-    comments:$('feedbackComment').value.trim()||null,
+    comments:commentsVal,
     submitted_by:parentUser.id
   };
 
   let {data,error}=await client.from('parent_feedback').insert(payload).select('id').maybeSingle();
 
-  if(error && String(error.message||'').toLowerCase().includes('row-level security')){
+  if(error){
     const rpcRes = await client.rpc('submit_parent_feedback', {
       p_player_id: selectedPlayerId,
       p_parent_player_level: lvl,
       p_academy_rating: acd,
-      p_comments: payload.comments
+      p_comments: commentsVal
     });
-    if(!rpcRes.error && rpcRes.data){
+    if(!rpcRes.error && rpcRes.data && rpcRes.data.success !== false){
       data = { id: rpcRes.data.id || 'rpc-ok' };
       error = null;
     }
@@ -3496,6 +3898,7 @@ async function sendParentFeedback(){
     setNotice(statusEl, 'تعذر إرسال الرأي: ' + (error?.message || 'لم يتم حفظ التقييم.'), 'err');
     return;
   }
+
   $('feedbackLevel').value='';
   $('feedbackAcademy').value='';
   $('feedbackComment').value='';
