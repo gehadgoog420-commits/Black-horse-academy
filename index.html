@@ -127,6 +127,7 @@ header{position:static;z-index:10;background:#080a0ceF;border-bottom:1px solid #
 .formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
 label{display:grid;gap:6px;color:#e0d5bb;font-size:13px}
 input,select,textarea{width:100%;background:#090d0f;border:1px solid #41494b;border-radius:10px;padding:12px;color:#fff;min-width:0}
+input[type="date"]{color-scheme:dark}
 textarea{min-height:90px}
 input[type=checkbox]{width:auto;accent-color:var(--gold)}
 .notice{padding:12px;border:1px solid #4b402c;background:#101618;border-radius:10px;color:#d6c9a9;margin-top:12px;overflow-wrap:anywhere}
@@ -210,6 +211,52 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 .scan-popup-toast.dup .scan-popup-sub{
   color:#e6d39c
 }
+
+.player-save-popup{
+  position:fixed;
+  top:84px;
+  left:50%;
+  transform:translateX(-50%) scale(.82);
+  z-index:70;
+  min-width:min(360px,90vw);
+  background:linear-gradient(145deg,#132b20,#0c1812);
+  border:2px solid #5f9c79;
+  color:#e9fff2;
+  border-radius:18px;
+  padding:16px 22px;
+  box-shadow:0 18px 45px rgba(0,0,0,.65),0 0 0 6px rgba(95,156,121,.18);
+  text-align:center;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s ease,transform .24s cubic-bezier(.22,1.45,.36,1)
+}
+.player-save-popup.show{
+  opacity:1;
+  pointer-events:auto;
+  transform:translateX(-50%) scale(1.03);
+  animation:popBump .36s cubic-bezier(.22,1.45,.36,1)
+}
+.player-save-popup-badge{
+  display:inline-block;
+  background:#5f9c79;
+  color:#08130d;
+  font-weight:900;
+  font-size:13px;
+  padding:3px 12px;
+  border-radius:999px;
+  margin-bottom:6px
+}
+.player-save-popup-title{
+  font-size:21px;
+  font-weight:900;
+  margin:2px 0;
+  color:#ffffff
+}
+.player-save-popup-sub{
+  font-size:13px;
+  color:#b9e5cc
+}
+
 @keyframes popBump{
   0%{transform:translateX(-50%) scale(.72)}
   65%{transform:translateX(-50%) scale(1.07)}
@@ -238,6 +285,12 @@ header, .nav, .navbar, .topbar, .header{
   <div id="scanPopupBadge" class="scan-popup-badge">تم التسجيل</div>
   <div id="scanPopupName" class="scan-popup-name">—</div>
   <div id="scanPopupSub" class="scan-popup-sub">جاهز للي بعده</div>
+</div>
+
+<div id="playerSavePopup" class="player-save-popup" role="status" aria-live="polite" onclick="hidePlayerSavePopup()">
+  <div class="player-save-popup-badge">✓ تم الحفظ</div>
+  <div id="playerSavePopupTitle" class="player-save-popup-title">تم حفظ اللاعب</div>
+  <div id="playerSavePopupSub" class="player-save-popup-sub">تم حفظ بيانات اللاعب بنجاح</div>
 </div>
 
 <header>
@@ -601,7 +654,7 @@ header, .nav, .navbar, .topbar, .header{
 <input id="editId" type="hidden">
 <div class="formgrid">
 <label>اسم اللاعب *<input id="plName" required></label>
-<label>سنة الميلاد<input id="plYear" type="text" inputmode="numeric" maxlength="4" placeholder="مثال: 2015"></label>
+<label>تاريخ الميلاد (يوم / شهر / سنة)<input id="plBirthDate" type="date" min="1990-01-01" max="2030-12-31"></label>
 <label>الفرع<select id="plBranch" required></select></label>
 <label>المجموعة<select id="plGroup"></select></label>
 <label>ملاحظة المجموعة<input id="plNote"></label>
@@ -805,7 +858,7 @@ function generateUniqueQrToken(){
 }
 
 let user=null,parentUser=null,admins=[],branches=[],groups=[],players=[],enrollmentRequests=[],matchesCache=[],eventsCache=[],coachEvalsCache=[],activeSession=null,scanner=null,scannerStarting=false,scannedInSession=new Set(),viewHistory=[],parentFeedbackEnabled=false,linkedPlayerIds=new Set();
-let fastStream=null,fastRafId=null,fastVideo=null,fastCanvas=null,fastCtx=null,lastScannedCode='',lastScannedAt=0,scanBusy=false,scanPopupTimer=null;
+let fastStream=null,fastRafId=null,fastVideo=null,fastCanvas=null,fastCtx=null,lastScannedCode='',lastScannedAt=0,scanBusy=false,scanPopupTimer=null,playerSavePopupTimer=null;
 
 const $=id=>document.getElementById(id),
 today=()=>{
@@ -854,6 +907,19 @@ function normalizeBirthDate(raw){
   return { value: iso, error: null };
 }
 
+function formatPlayerBirthDisplay(player){
+  if(isKidsGroup(player?.group_id, player?.group_note)) return '—';
+  if(player?.birth_date){
+    const raw = String(player.birth_date).slice(0, 10);
+    const parts = raw.split('-');
+    if(parts.length === 3){
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return raw;
+  }
+  return player?.birth_year || '—';
+}
+
 function hideScanPopup(){
   const pop = $('scanPopup');
   if(!pop) return;
@@ -888,6 +954,33 @@ function showScanPopup(playerName, branchName, isDuplicate){
   pop.classList.add('show');
   if(scanPopupTimer) clearTimeout(scanPopupTimer);
   scanPopupTimer = setTimeout(hideScanPopup, 2200);
+}
+
+function hidePlayerSavePopup(){
+  const pop = $('playerSavePopup');
+  if(!pop) return;
+  pop.classList.remove('show');
+  if(playerSavePopupTimer){
+    clearTimeout(playerSavePopupTimer);
+    playerSavePopupTimer = null;
+  }
+}
+
+function showPlayerSavePopup(titleText, subText){
+  const pop = $('playerSavePopup');
+  const titleEl = $('playerSavePopupTitle');
+  const subEl = $('playerSavePopupSub');
+  if(!pop || !titleEl || !subEl) return;
+
+  titleEl.textContent = titleText || 'تم حفظ اللاعب';
+  subEl.textContent = subText || 'تم حفظ بيانات اللاعب بنجاح';
+
+  pop.classList.remove('show');
+  void pop.offsetWidth;
+  pop.classList.add('show');
+
+  if(playerSavePopupTimer) clearTimeout(playerSavePopupTimer);
+  playerSavePopupTimer = setTimeout(hidePlayerSavePopup, 2400);
 }
 
 function getBranchName(branchId){
@@ -1184,6 +1277,7 @@ $('loginForm').addEventListener('submit',async e=>{
 async function adminLogout(){
   await stopScanner();
   hideScanPopup();
+  hidePlayerSavePopup();
   const client=getSupabaseClient();
   if(client){
     const {error}=await client.auth.signOut();
@@ -1257,11 +1351,11 @@ function renderPlayers(){
     (p.full_name||'').toLowerCase().includes(q) ||
     (p.attendance_qr_hash||'').toLowerCase().includes(q)
   );
-  $('playersTable').innerHTML=`<table><thead><tr><th>اللاعب</th><th>الميلاد</th><th>الفرع</th><th>المجموعة</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>${list.map(p=>{
-    const birthDisplay = isKidsGroup(p.group_id, p.group_note) ? '—' : (p.birth_year||'—');
+  $('playersTable').innerHTML=`<table><thead><tr><th>اللاعب</th><th>تاريخ الميلاد</th><th>الفرع</th><th>المجموعة</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>${list.map(p=>{
+    const birthDisplay = formatPlayerBirthDisplay(p);
     return `<tr>
       <td>${esc(p.full_name)}</td>
-      <td>${birthDisplay}</td>
+      <td>${esc(birthDisplay)}</td>
       <td>${esc(branches.find(x=>x.id===p.branch_id)?.name||'—')}</td>
       <td>${esc(groups.find(x=>x.id===p.group_id)?.name||p.group_note||'غير محددة')}</td>
       <td>${p.active?'نشط':'موقوف'}</td>
@@ -1318,56 +1412,74 @@ $('playerForm').addEventListener('submit',async e=>{
     return;
   }
 
-  const rawYear = toWesternDigits($('plYear').value || '').trim();
-  let birthYear = null;
-  if(rawYear !== ''){
-    if(!/^\d{4}$/.test(rawYear)){
-      setNotice($('plMsg'),'سنة الميلاد يجب أن تكون 4 أرقام صحيحة (مثال: 2015).','err');
-      $('plYear').focus();
-      return;
-    }
-    birthYear = Number(rawYear);
-    if(birthYear < 1990 || birthYear > 2030){
-      setNotice($('plMsg'),'سنة الميلاد يجب أن تكون بين 1990 و 2030.','err');
-      $('plYear').focus();
-      return;
-    }
+  const rawBirthDate = String($('plBirthDate').value || '').trim();
+  const parsedBirth = normalizeBirthDate(rawBirthDate);
+  if(parsedBirth.error){
+    setNotice($('plMsg'), parsedBirth.error, 'err');
+    $('plBirthDate').focus();
+    return;
   }
+  const birthDateVal = parsedBirth.value;
+  const birthYear = birthDateVal ? Number(birthDateVal.slice(0, 4)) : null;
 
-  let id=$('editId').value,obj={
+  let id=$('editId').value;
+  const obj={
     full_name:nameVal,
+    birth_date:birthDateVal,
     birth_year:birthYear,
     branch_id:branchVal,
     group_id:$('plGroup').value||null,
     group_note:$('plNote').value.trim()||null
   };
-  const newQrToken = !id ? generateUniqueQrToken() : null;
-  let res=id
-    ?await client.from('players').update(obj).eq('id',id).select('id,attendance_qr_hash').maybeSingle()
-    :await client.from('players').insert({...obj,attendance_qr_hash:newQrToken,active:true}).select('id,attendance_qr_hash').maybeSingle();
+
+  let res;
+  if(id){
+    res = await client.from('players').update(obj).eq('id',id).select('id,birth_date,birth_year,attendance_qr_hash').maybeSingle();
+    if(res.error && String(res.error.message||'').toLowerCase().includes('birth_date')){
+      const { birth_date, ...fallbackObj } = obj;
+      res = await client.from('players').update(fallbackObj).eq('id',id).select('id,birth_year,attendance_qr_hash').maybeSingle();
+    }
+  }else{
+    const newQrToken = generateUniqueQrToken();
+    const insertObj = {...obj, attendance_qr_hash:newQrToken, active:true};
+    res = await client.from('players').insert(insertObj).select('id,birth_date,birth_year,attendance_qr_hash').maybeSingle();
+    if(res.error && String(res.error.message||'').toLowerCase().includes('birth_date')){
+      const { birth_date, ...fallbackInsert } = insertObj;
+      res = await client.from('players').insert(fallbackInsert).select('id,birth_year,attendance_qr_hash').maybeSingle();
+    }
+    if(!res.error && res.data){
+      const createdPlayer = {
+        id: res.data.id,
+        full_name: nameVal,
+        birth_date: res.data.birth_date || birthDateVal,
+        birth_year: res.data.birth_year ?? birthYear,
+        branch_id: branchVal,
+        group_id: obj.group_id,
+        group_note: obj.group_note,
+        attendance_qr_hash: res.data.attendance_qr_hash || newQrToken,
+        active: true
+      };
+      players = [...players.filter(x => String(x.id) !== String(createdPlayer.id)), createdPlayer];
+    }
+  }
+
   if(res.error || !res.data){
     setNotice($('plMsg'),res.error?.message||'تعذر حفظ بيانات اللاعب.','err');
     return;
   }
-  if(!id){
-    const createdPlayer = {
-      id: res.data.id,
-      full_name: nameVal,
-      birth_year: birthYear,
-      branch_id: branchVal,
-      group_id: obj.group_id,
-      group_note: obj.group_note,
-      attendance_qr_hash: res.data.attendance_qr_hash || newQrToken,
-      active: true
-    };
-    players = [...players.filter(x => String(x.id) !== String(createdPlayer.id)), createdPlayer];
-  }
+
   setNotice(
     $('plMsg'),
     id
-      ? 'تم تحديث بيانات اللاعب بنجاح.'
-      : `تم إضافة اللاعب وإنشاء رمز QR فريد له (${res.data.attendance_qr_hash || newQrToken}).`,
+      ? 'تم تحديث بيانات اللاعب وتاريخ الميلاد بنجاح.'
+      : `تم إضافة اللاعب وحفظ تاريخ الميلاد وتوليد رمز QR جديد (${res.data.attendance_qr_hash}).`,
     'ok'
+  );
+  showPlayerSavePopup(
+    'تم حفظ اللاعب',
+    id
+      ? `تم تعديل بيانات اللاعب (${nameVal}) بنجاح`
+      : `تم إضافة اللاعب (${nameVal}) بنجاح`
   );
   resetPlayerForm();
   await refreshAll();
@@ -1379,7 +1491,13 @@ function editPlayer(id){
   if(!p) return;
   $('editId').value=id;
   $('plName').value=p.full_name;
-  $('plYear').value=p.birth_year||'';
+  if(p.birth_date){
+    $('plBirthDate').value=String(p.birth_date).slice(0, 10);
+  }else if(p.birth_year){
+    $('plBirthDate').value=`${String(p.birth_year).padStart(4,'0')}-01-01`;
+  }else{
+    $('plBirthDate').value='';
+  }
   $('plBranch').value=p.branch_id;
   $('plGroup').value=p.group_id||'';
   $('plNote').value=p.group_note||'';
@@ -1389,7 +1507,7 @@ function editPlayer(id){
 function resetPlayerForm(){
   $('playerForm').reset();
   $('editId').value='';
-  if($('plYear')) $('plYear').value='';
+  if($('plBirthDate')) $('plBirthDate').value='';
 }
 
 async function togglePlayer(id,v){
