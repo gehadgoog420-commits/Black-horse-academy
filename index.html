@@ -145,7 +145,7 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
 .tabs button{background:#1a2022;color:var(--gold2)}
 .tabs button.on{background:var(--gold);color:#17130b}
-.playerline{padding:12px;border-bottom:1px solid #343b3c;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.playerline{padding:12px;border-bottom:1px solid #343b3c;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .playerline:last-child{border:0}
 .badge{display:inline-block;border:1px solid #66532e;color:var(--gold2);border-radius:30px;padding:3px 9px;font-size:11px}
 .footer{text-align:center;padding:35px 10px;color:#887c61;font:11px Cinzel,serif;letter-spacing:2px}
@@ -419,6 +419,16 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 <div id="enMsg" class="notice">جاري الاتصال بقاعدة البيانات…</div>
 </form>
 </div>
+
+<div class="card" style="margin-top:14px">
+<h3>متابعة حالة طلب التقديم وحجز الفعاليات</h3>
+<p class="muted small">اكتب رقم التليفون المسجل لمعرفة حالة استمارة التقديم وحجز الفعالية.</p>
+<div class="actions">
+<input id="publicTrackPhone" inputmode="tel" placeholder="مثال: 01115099181" style="max-width:280px">
+<button type="button" class="secondary" onclick="checkPublicStatus('publicTrackPhone','publicTrackResult')">استعلام عن الحالة</button>
+</div>
+<div id="publicTrackResult" class="notice hidden"></div>
+</div>
 </section>
 
 <section id="events" class="section">
@@ -447,6 +457,14 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 <label>اسم اللاعب بالكامل<input id="linkName"></label>
 <button type="button" onclick="sendLinkRequest()">إرسال طلب الربط</button>
 <div id="linkMsg" class="notice"></div>
+</div>
+<div class="card">
+<h3>متابعة حالة استمارة التقديم وحجز الفعاليات</h3>
+<div class="actions">
+<input id="parentTrackPhone" inputmode="tel" placeholder="أدخل رقم التليفون المسجل" style="max-width:280px">
+<button type="button" class="secondary" onclick="checkPublicStatus('parentTrackPhone','parentTrackResult')">عرض حالة التقديم والحجز</button>
+</div>
+<div id="parentTrackResult" class="notice hidden"></div>
 </div>
 <div class="card"><h3>اللاعبون المرتبطون بحسابك</h3><div id="linkedPlayers">—</div></div>
 <div class="card"><h3>طلبات الربط</h3><div id="linkRequests">—</div></div>
@@ -536,11 +554,12 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 <div class="actions" style="margin-top:10px">
 <button type="button" onclick="createSession()">إنشاء الحصة</button>
 <button type="button" class="secondary" onclick="loadAttendanceReportByFilter()">عرض تقرير الحضور والغياب</button>
+<button id="deleteSessionBtn" type="button" class="danger hidden" onclick="deleteCurrentSession()">حذف الحصة</button>
 </div>
 <div id="attMsg" class="notice">اختاري الفرع والتاريخ.</div>
 </div>
 <div class="card" style="margin-top:14px">
-<h3>تسجيل الحضور</h3>
+<h3>تسجيل الحضور وتعديل / حذف السجلات</h3>
 <div class="actions">
 <button type="button" onclick="startScanner()">فتح الكاميرا</button>
 <button type="button" class="secondary" onclick="stopScanner()">إيقاف الكاميرا</button>
@@ -570,18 +589,31 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 </div>
 
 <div class="card" style="margin-top:14px">
-<h3>تقييم المدرب للاعب (من 1 إلى 5)</h3>
+<h3>إضافة / تعديل تقييم المدرب للاعب (من 1 إلى 5)</h3>
 <form id="evalForm">
+<input id="editEvalId" type="hidden">
+<div class="formgrid">
+<label>بحث سريع عن لاعب<input id="evalPlayerSearch" type="text" placeholder="اكتبي اسم اللاعب للبحث الفوري…" oninput="populateEvalPlayers()"></label>
 <label>اللاعب<select id="evalPlayer"></select></label>
+<label>تاريخ التقييم<input id="evalDate" type="date"></label>
+</div>
 <div class="formgrid">
 <label>المستوى الفني (من 1 إلى 5)<input id="tech" type="number" min="1" max="5" step="1" required></label>
 <label>السلوك (من 1 إلى 5)<input id="beh" type="number" min="1" max="5" step="1" required></label>
 <label>اللياقة / البدني (من 1 إلى 5)<input id="fit" type="number" min="1" max="5" step="1" required></label>
 </div>
 <label>ملاحظات المدرب<textarea id="evalNotes"></textarea></label>
+<div class="actions">
 <button type="submit">حفظ تقييم المدرب</button>
+<button type="button" class="secondary" onclick="resetEvalForm()">إلغاء التعديل</button>
+</div>
 <div id="evalMsg" class="notice"></div>
 </form>
+</div>
+
+<div class="card" style="margin-top:14px">
+<div class="section-title"><h3>سجل تقييمات المدرب (تعديل وحذف ومتابعة المشاهدة)</h3><button type="button" class="secondary" onclick="loadCoachEvaluationsAdmin()">تحديث السجل</button></div>
+<div id="coachEvalsTable" class="tablewrap"></div>
 </div>
 
 <div class="card" style="margin-top:14px">
@@ -593,8 +625,9 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 
 <div id="eventsAdmin" class="adminTab hidden">
 <div class="card">
-<h3>إضافة فعالية</h3>
+<h3>إضافة / تعديل فعالية</h3>
 <form id="eventForm">
+<input id="editEventId" type="hidden">
 <label>اسم الفعالية<input id="evTitle" required></label>
 <label>الوصف<textarea id="evDesc"></textarea></label>
 <div class="formgrid">
@@ -603,11 +636,18 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 <label>السعر (اختياري)<input id="evPrice"></label>
 </div>
 <label><span><input id="evPub" type="checkbox" checked> نشر الفعالية</span></label>
+<div class="actions">
 <button type="submit">حفظ الفعالية</button>
+<button type="button" class="secondary" onclick="resetEventForm()">إلغاء التعديل</button>
+</div>
 <div id="evMsg" class="notice"></div>
 </form>
 </div>
-<div class="card" style="margin-top:14px"><h3>حجوزات الفعاليات</h3><p class="muted small">إجراء الموافقة المباشرة معطّل مؤقتًا لعدم توفر إجراء آمن لفحص السعة عند الاعتماد؛ يمكن رفض الحجوزات غير المناسبة لحين توفر إجراء الاعتماد الآمن.</p><div id="bookingsMsg" class="notice hidden"></div><div id="bookingsTable" class="tablewrap"></div></div>
+<div class="card" style="margin-top:14px">
+<div class="section-title"><h3>الفعاليات المسجلة</h3><button type="button" class="secondary" onclick="loadAdminEventsList()">تحديث الفعاليات</button></div>
+<div id="adminEventsList"></div>
+</div>
+<div class="card" style="margin-top:14px"><h3>حجوزات الفعاليات</h3><p class="muted small">يمكنك الضغط على «تم قبول حجزك» لاعتماد الحجز أو «رفض» لرفضه أو «حذف» لإزالته.</p><div id="bookingsMsg" class="notice hidden"></div><div id="bookingsTable" class="tablewrap"></div></div>
 </div>
 
 <div id="matches" class="adminTab hidden">
@@ -655,7 +695,7 @@ function getSupabaseClient(){
   return null;
 }
 
-let user=null,parentUser=null,admins=[],branches=[],groups=[],players=[],enrollmentRequests=[],matchesCache=[],activeSession=null,scanner=null,scannerStarting=false,scannedInSession=new Set(),viewHistory=[],parentFeedbackEnabled=false,linkedPlayerIds=new Set();
+let user=null,parentUser=null,admins=[],branches=[],groups=[],players=[],enrollmentRequests=[],matchesCache=[],eventsCache=[],coachEvalsCache=[],activeSession=null,scanner=null,scannerStarting=false,scannedInSession=new Set(),viewHistory=[],parentFeedbackEnabled=false,linkedPlayerIds=new Set();
 
 const $=id=>document.getElementById(id),
 today=()=>{
@@ -705,10 +745,16 @@ function syncBackButton(){
 async function syncAdminTabData(tabId){
   if(!user) return;
   if(tabId==='evaluations'){
+    populateEvalPlayers();
+    if($('evalDate') && !$('evalDate').value) $('evalDate').value = today();
     await loadParentFeedbackSetting();
+    await loadCoachEvaluationsAdmin();
     await loadParentFeedbackAdmin();
   }
-  if(tabId==='eventsAdmin') await loadBookings();
+  if(tabId==='eventsAdmin'){
+    await loadAdminEventsList();
+    await loadBookings();
+  }
   if(tabId==='matches') await loadMatches();
   if(tabId==='requests') await loadRequests();
   if(tabId==='parents') await loadParentRequests();
@@ -798,6 +844,28 @@ function fill(id,arr,first='اختاري'){
   e.innerHTML=`<option value="">${first}</option>`+arr.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');
 }
 
+function populateEvalPlayers(){
+  const sel=$('evalPlayer');
+  if(!sel) return;
+  const prevVal = sel.value;
+  const isEditing = Boolean($('editEvalId')?.value);
+  const q = String($('evalPlayerSearch')?.value||'').trim().toLowerCase();
+  const activeList = (players||[]).filter(x=>x.active);
+  const filtered = q
+    ? activeList.filter(x=>String(x.full_name||'').toLowerCase().includes(q))
+    : activeList;
+
+  const opts = filtered.map(x=>`<option value="${x.id}">${esc(x.full_name)}</option>`);
+  if(activeList.length > 0 && !isEditing){
+    opts.push('<option value="__ALL__">الكل (جميع اللاعبين النشطين)</option>');
+  }
+
+  sel.innerHTML = `<option value="">اختاري اللاعب</option>` + opts.join('');
+  if(prevVal && Array.from(sel.options).some(o=>o.value === prevVal)){
+    sel.value = prevVal;
+  }
+}
+
 async function init(){
   const status = await window.__assetsReady;
   const client = getSupabaseClient();
@@ -825,6 +893,7 @@ async function init(){
     ['enBranch','plBranch','attBranch'].forEach(id=>fill(id,branches));
     fill('plGroup',groups,'كل المجموعات / غير محدد');
     if($('attDate') && !$('attDate').value) $('attDate').value = today();
+    if($('evalDate') && !$('evalDate').value) $('evalDate').value = today();
     await loadPublicEvents();
 
     const {data,error:sessErr}=await client.auth.getSession();
@@ -963,6 +1032,7 @@ async function refreshAll(){
 
   players=p.data||[];
   enrollmentRequests=r.data||[];
+  eventsCache=ev.data||[];
 
   const pendingCount=enrollmentRequests.filter(
     x=>(x.status||'pending')==='pending'
@@ -970,21 +1040,16 @@ async function refreshAll(){
 
   $('countPlayers').textContent=players.filter(x=>x.active).length;
   $('countRequests').textContent=pendingCount;
-  $('countEvents').textContent=(ev.data||[]).filter(x=>x.published).length;
+  $('countEvents').textContent=eventsCache.filter(x=>x.published).length;
 
   renderPlayers();
   renderEnrollmentRequests();
-
-  fill(
-    'evalPlayer',
-    players.filter(x=>x.active).map(x=>({
-      id:x.id,
-      name:x.full_name
-    }))
-  );
+  populateEvalPlayers();
+  renderAdminEventsList();
 
   await Promise.all([
     loadParentFeedbackSetting(),
+    loadCoachEvaluationsAdmin(),
     loadBookings(),
     loadMatches(),
     loadRequests(),
@@ -1093,6 +1158,87 @@ async function createSession(){
   scannedInSession.clear();
   setNotice($('attMsg'),'تم إنشاء الحصة. سجّلي اللاعبين بالـ QR ثم أنهي الحصة لاعتماد الغياب.','ok');
   $('closeSession').classList.remove('hidden');
+  if($('deleteSessionBtn')) $('deleteSessionBtn').classList.remove('hidden');
+  await showAttendanceLists();
+}
+
+async function deleteCurrentSession(){
+  if(!user || !activeSession) return;
+  if(!confirm('هل أنت متأكد من حذف هذه الحصة وكل سجلات الحضور والغياب المرتبطة بها؟')) return;
+  const client=getSupabaseClient();
+  if(!client) return;
+  const targetId = activeSession.id;
+  await client.from('attendance_records').delete().eq('session_id', targetId);
+  const {error}=await client.from('attendance_sessions').delete().eq('id', targetId);
+  if(error){
+    setNotice($('attMsg'),'تعذر حذف الحصة: ' + error.message,'err');
+    return;
+  }
+  activeSession=null;
+  scannedInSession.clear();
+  $('closeSession').classList.add('hidden');
+  if($('deleteSessionBtn')) $('deleteSessionBtn').classList.add('hidden');
+  $('attendanceLists').innerHTML='';
+  setNotice($('attMsg'),'تم حذف الحصة وسجلاتها بنجاح.','ok');
+}
+
+async function setPlayerAttendanceStatus(playerId, newStatus){
+  if(!user || !activeSession || !playerId) return;
+  const client=getSupabaseClient();
+  if(!client) return;
+  const sessionId = activeSession.id;
+  const {data:existing} = await client
+    .from('attendance_records')
+    .select('id')
+    .eq('session_id', sessionId)
+    .eq('player_id', playerId)
+    .maybeSingle();
+
+  let res;
+  if(existing?.id){
+    res = await client
+      .from('attendance_records')
+      .update({attendance_status: newStatus})
+      .eq('id', existing.id)
+      .select('id')
+      .maybeSingle();
+  }else{
+    res = await client
+      .from('attendance_records')
+      .insert({
+        session_id: sessionId,
+        player_id: playerId,
+        attendance_status: newStatus,
+        attended_at: new Date().toISOString()
+      })
+      .select('id')
+      .maybeSingle();
+  }
+
+  if(res.error || !res.data){
+    setNotice($('attMsg'),'تعذر تحديث حالة الحضور: ' + (res.error?.message || 'لم يتم الحفظ.'),'err');
+    return;
+  }
+  setNotice($('attMsg'),'تم تحديث حالة اللاعب بنجاح.','ok');
+  await showAttendanceLists();
+}
+
+async function deletePlayerAttendanceRecord(playerId){
+  if(!user || !activeSession || !playerId) return;
+  if(!confirm('حذف سجل حضور هذا اللاعب من الحصة؟')) return;
+  const client=getSupabaseClient();
+  if(!client) return;
+  const {error}=await client
+    .from('attendance_records')
+    .delete()
+    .eq('session_id', activeSession.id)
+    .eq('player_id', playerId);
+  if(error){
+    setNotice($('attMsg'),'تعذر حذف السجل: ' + error.message,'err');
+    return;
+  }
+  scannedInSession.delete(`${activeSession.id}::player:${String(playerId)}`);
+  setNotice($('attMsg'),'تم حذف سجل اللاعب من الحصة.','ok');
   await showAttendanceLists();
 }
 
@@ -1223,6 +1369,7 @@ async function loadAttendanceReportByFilter(){
     activeSession = null;
     scannedInSession.clear();
     $('closeSession').classList.add('hidden');
+    if($('deleteSessionBtn')) $('deleteSessionBtn').classList.add('hidden');
     $('attendanceLists').innerHTML='<div class="card muted">لا توجد حصة مطابقة للفرع أو التاريخ المحدد.</div>';
     setNotice($('attMsg'),'لم يتم العثور على حصة مطابقة للفرع أو التاريخ المحدد.');
     return;
@@ -1235,6 +1382,7 @@ async function loadAttendanceReportByFilter(){
 
   if(targetSession.session_closed) $('closeSession').classList.add('hidden');
   else $('closeSession').classList.remove('hidden');
+  if($('deleteSessionBtn')) $('deleteSessionBtn').classList.remove('hidden');
 
   const { rows: repRows, error: repErr } = await fetchSessionAttendanceRows(client, targetSession.id);
   if(repErr){
@@ -1299,6 +1447,19 @@ async function manualPresent(){
   await submitQrToken($('qrToken').value);
 }
 
+function renderAttendanceRow(x){
+  const pid = esc(x.player_id||'');
+  const statusBadge = x.status==='present' ? 'حاضر' : (x.status==='absent' ? 'غائب' : 'بانتظار التسجيل');
+  const actions = x.player_id ? `
+    <span class="actions">
+      <button type="button" class="secondary" onclick="setPlayerAttendanceStatus('${pid}','present')">حاضر</button>
+      <button type="button" class="secondary" onclick="setPlayerAttendanceStatus('${pid}','absent')">غائب</button>
+      <button type="button" class="danger" onclick="deletePlayerAttendanceRecord('${pid}')">حذف</button>
+    </span>
+  ` : '';
+  return `<div class="playerline"><span>${esc(x.player_name)} <small class="muted">${esc(x.session_date||'')}</small> <span class="badge">${statusBadge}</span></span>${actions}</div>`;
+}
+
 function renderGroupedAttendance(items, isClosed, titleLabel){
   const present = items.filter(x=>x.status==='present');
   const waiting = items.filter(x=>x.status==='waiting');
@@ -1308,22 +1469,22 @@ function renderGroupedAttendance(items, isClosed, titleLabel){
     $('attendanceLists').innerHTML=`
       <div class="card">
         <h3>قائمة الحاضرين (${present.length})</h3>
-        ${present.map(x=>`<div class="playerline"><span>${esc(x.player_name)} <small class="muted">${esc(x.session_date||'')}</small></span><span class="badge">حاضر</span></div>`).join('')||'لا يوجد حاضرون'}
+        ${present.map(renderAttendanceRow).join('')||'لا يوجد حاضرون'}
       </div>
       <div class="card">
         <h3>قائمة الغائبين (${absent.length})</h3>
-        ${absent.map(x=>`<div class="playerline"><span>${esc(x.player_name)} <small class="muted">${esc(x.session_date||'')}</small></span><span class="badge">غائب</span></div>`).join('')||'لا يوجد غائبون'}
+        ${absent.map(renderAttendanceRow).join('')||'لا يوجد غائبون'}
       </div>
     `;
   }else{
     $('attendanceLists').innerHTML=`
       <div class="card">
         <h3>قائمة الحاضرين (${present.length})</h3>
-        ${present.map(x=>`<div class="playerline"><span>${esc(x.player_name)} <small class="muted">${esc(x.session_date||'')}</small></span><span class="badge">حاضر</span></div>`).join('')||'—'}
+        ${present.map(renderAttendanceRow).join('')||'—'}
       </div>
       <div class="card">
         <h3>بانتظار التسجيل قبل الإغلاق (${waiting.length})</h3>
-        ${waiting.map(x=>`<div class="playerline"><span>${esc(x.player_name)} <small class="muted">${esc(x.session_date||'')}</small></span><span class="badge">بانتظار التسجيل</span></div>`).join('')||'—'}
+        ${waiting.map(renderAttendanceRow).join('')||'—'}
       </div>
     `;
   }
@@ -1356,6 +1517,7 @@ async function showAttendanceLists(){
   }
   if(closed) $('closeSession').classList.add('hidden');
   else $('closeSession').classList.remove('hidden');
+  if($('deleteSessionBtn')) $('deleteSessionBtn').classList.remove('hidden');
 
   const roster = getRosterForSessions([sessMeta], $('attBranch')?.value || '');
   const items = buildAttendanceFromReport(repRes.rows||[], roster, sessMeta, sessMeta?.session_date || $('attDate')?.value || '');
@@ -1429,13 +1591,53 @@ async function stopScanner(){
   }
 }
 
+function resetEvalForm(){
+  $('evalForm').reset();
+  $('editEvalId').value='';
+  if($('evalDate')) $('evalDate').value = today();
+  populateEvalPlayers();
+}
+
+function editCoachEvaluation(id){
+  if(!user) return;
+  const ev = coachEvalsCache.find(x=>String(x.id)===String(id));
+  if(!ev) return;
+  $('editEvalId').value = ev.id;
+  if($('evalPlayerSearch')) $('evalPlayerSearch').value = '';
+  populateEvalPlayers();
+  $('evalPlayer').value = ev.player_id || '';
+  if($('evalDate')) $('evalDate').value = ev.evaluation_date || today();
+  $('tech').value = ev.technical_score ?? '';
+  $('beh').value = ev.behavior_score ?? '';
+  $('fit').value = ev.fitness_score ?? '';
+  $('evalNotes').value = ev.notes || '';
+  setNotice($('evalMsg'), 'جاري تعديل التقييم المحدد…');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function deleteCoachEvaluation(id){
+  if(!user) return;
+  if(!confirm('هل أنت متأكد من حذف هذا التقييم؟')) return;
+  const client=getSupabaseClient();
+  if(!client) return;
+  const {error}=await client.from('player_evaluations').delete().eq('id',id);
+  if(error){
+    setNotice($('evalMsg'),'تعذر حذف التقييم: ' + error.message,'err');
+    return;
+  }
+  if($('editEvalId').value === String(id)) resetEvalForm();
+  setNotice($('evalMsg'),'تم حذف التقييم بنجاح.','ok');
+  await loadCoachEvaluationsAdmin();
+}
+
 $('evalForm').addEventListener('submit',async e=>{
   e.preventDefault();
   if(!user){setNotice($('evalMsg'),'غير مصرح. يرجى تسجيل الدخول كمدير.','err');return;}
   const client=getSupabaseClient();
   if(!client){setNotice($('evalMsg'),'تعذر الاتصال بقاعدة البيانات.','err');return;}
+  const editId=$('editEvalId').value;
   const playerId=$('evalPlayer').value;
-  if(!playerId){setNotice($('evalMsg'),'يرجى اختيار اللاعب أولًا.','err');return;}
+  if(!playerId){setNotice($('evalMsg'),'يرجى اختيار اللاعب أو اختيار الكل أولًا.','err');return;}
   const techVal=Number($('tech').value);
   const behVal=Number($('beh').value);
   const fitVal=Number($('fit').value);
@@ -1443,21 +1645,106 @@ $('evalForm').addEventListener('submit',async e=>{
     setNotice($('evalMsg'),'يجب أن تكون جميع درجات التقييم أعدادًا صحيحة من 1 إلى 5.','err');
     return;
   }
+  const notesVal = $('evalNotes').value.trim()||null;
+  const evalDate = $('evalDate')?.value || today();
+
+  if(editId){
+    const {data,error}=await client.from('player_evaluations').update({
+      player_id:playerId,
+      evaluation_date:evalDate,
+      technical_score:techVal,
+      behavior_score:behVal,
+      fitness_score:fitVal,
+      notes:notesVal
+    }).eq('id',editId).select('id').maybeSingle();
+    if(error || !data){
+      setNotice($('evalMsg'),error?.message||'تعذر تحديث التقييم.','err');
+      return;
+    }
+    setNotice($('evalMsg'),'تم تحديث التقييم بنجاح.','ok');
+    resetEvalForm();
+    await loadCoachEvaluationsAdmin();
+    await loadParentFeedbackAdmin();
+    return;
+  }
+
+  if(playerId === '__ALL__'){
+    const activePlayers = (players||[]).filter(x=>x.active);
+    if(!activePlayers.length){
+      setNotice($('evalMsg'),'لا يوجد لاعبون نشطون لتطبيق التقييم عليهم.','err');
+      return;
+    }
+    const batchRows = activePlayers.map(pl=>({
+      player_id:pl.id,
+      evaluation_date:evalDate,
+      technical_score:techVal,
+      behavior_score:behVal,
+      fitness_score:fitVal,
+      notes:notesVal
+    }));
+    const {data,error}=await client.from('player_evaluations').insert(batchRows).select('id');
+    if(error || !data || !data.length){
+      setNotice($('evalMsg'),error?.message||'تعذر حفظ تقييمات جميع اللاعبين.','err');
+      return;
+    }
+    setNotice($('evalMsg'),`تم حفظ التقييم وتحديثه لكل اللاعبين (${data.length} لاعب) بنجاح.`,'ok');
+    resetEvalForm();
+    await loadCoachEvaluationsAdmin();
+    await loadParentFeedbackAdmin();
+    return;
+  }
+
   let {data,error}=await client.from('player_evaluations').insert({
     player_id:playerId,
-    evaluation_date:today(),
+    evaluation_date:evalDate,
     technical_score:techVal,
     behavior_score:behVal,
     fitness_score:fitVal,
-    notes:$('evalNotes').value.trim()||null
+    notes:notesVal
   }).select('id').maybeSingle();
   if(error || !data){
     setNotice($('evalMsg'),error?.message||'تعذر حفظ تقييم المدرب.','err');
     return;
   }
   setNotice($('evalMsg'),'تم حفظ تقييم المدرب للاعب (من 1 إلى 5) بنجاح.','ok');
-  e.target.reset();
+  resetEvalForm();
+  await loadCoachEvaluationsAdmin();
+  await loadParentFeedbackAdmin();
 });
+
+async function loadCoachEvaluationsAdmin(){
+  if(!user) return;
+  const client=getSupabaseClient();
+  const box=$('coachEvalsTable');
+  if(!client || !box) return;
+  const {data,error}=await client.from('player_evaluations').select('*').order('evaluation_date',{ascending:false}).limit(60);
+  if(error){
+    box.innerHTML=`<div class="notice err">${esc(error.message)}</div>`;
+    return;
+  }
+  coachEvalsCache = data||[];
+  if(!coachEvalsCache.length){
+    box.innerHTML='<p class="muted small" style="padding:12px">لا توجد تقييمات مسجلة بعد.</p>';
+    return;
+  }
+  box.innerHTML=`<table><thead><tr><th>اللاعب</th><th>التاريخ</th><th>فني / سلوك / لياقة</th><th>ملاحظات</th><th>المشاهدة</th><th>إجراء</th></tr></thead><tbody>${coachEvalsCache.map(r=>{
+    const pName = players.find(p=>String(p.id)===String(r.player_id))?.full_name || r.player_id || '—';
+    const seenStatus = r.seen_at
+      ? `<span class="badge">تم مشاهدة التقييمات (${new Date(r.seen_at).toLocaleString('ar-EG')})</span>`
+      : `<span class="muted">لم يُشاهد بعد</span>`;
+    return `<tr>
+      <td>${esc(pName)}</td>
+      <td>${esc(r.evaluation_date||'—')}</td>
+      <td>${r.technical_score??'—'} / ${r.behavior_score??'—'} / ${r.fitness_score??'—'}</td>
+      <td>${esc(r.notes||'—')}</td>
+      <td>${seenStatus}</td>
+      <td>
+        <button type="button" class="secondary" onclick="editCoachEvaluation('${esc(r.id)}')">تعديل</button>
+        <button type="button" class="danger" onclick="deleteCoachEvaluation('${esc(r.id)}')">حذف</button>
+      </td>
+    </tr>`;
+  }).join('')}</tbody></table>`;
+}
 
 function renderParentFeedbackSettingUI(enabled, errMsg){
   const badge=$('parentFeedbackSettingBadge');
@@ -1594,31 +1881,107 @@ async function loadParentFeedbackAdmin(){
   }).join('')}</tbody></table>`;
 }
 
+function resetEventForm(){
+  $('eventForm').reset();
+  $('editEventId').value='';
+  $('evPub').checked = true;
+}
+
+function editEvent(id){
+  if(!user) return;
+  const ev = eventsCache.find(x=>String(x.id)===String(id));
+  if(!ev) return;
+  $('editEventId').value = ev.id;
+  $('evTitle').value = ev.title || '';
+  $('evDesc').value = ev.description || '';
+  $('evDate').value = ev.event_date || '';
+  $('evCap').value = ev.capacity || '';
+  $('evPrice').value = ev.price || '';
+  $('evPub').checked = Boolean(ev.published);
+  setNotice($('evMsg'), 'جاري تعديل الفعالية المحددة…');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function deleteEvent(id){
+  if(!user) return;
+  if(!confirm('هل أنت متأكد من حذف هذه الفعالية؟')) return;
+  const client=getSupabaseClient();
+  if(!client) return;
+  const {error}=await client.from('academy_events').delete().eq('id',id);
+  if(error){
+    setNotice($('evMsg'),'تعذر حذف الفعالية: ' + error.message,'err');
+    return;
+  }
+  if($('editEventId').value === String(id)) resetEventForm();
+  setNotice($('evMsg'),'تم حذف الفعالية بنجاح.','ok');
+  await loadAdminEventsList();
+  await loadPublicEvents();
+  await refreshAll();
+}
+
+function renderAdminEventsList(){
+  const box=$('adminEventsList');
+  if(!box) return;
+  if(!eventsCache.length){
+    box.innerHTML='<p class="muted small">لا توجد فعاليات مسجلة بعد.</p>';
+    return;
+  }
+  box.innerHTML = eventsCache.map(x=>`<div class="playerline">
+    <span>
+      <b>${esc(x.title)}</b>
+      <br>
+      <small class="muted">${esc(x.event_date||'—')}${x.capacity ? ` · السعة: ${esc(x.capacity)}` : ''}${x.price ? ` · السعر: ${esc(x.price)}` : ''}</small>
+      ${x.description ? `<br><small>${esc(x.description)}</small>` : ''}
+    </span>
+    <span class="actions">
+      <span class="badge">${x.published?'منشورة':'مسودة'}</span>
+      <button type="button" class="secondary" onclick="editEvent('${esc(x.id)}')">تعديل</button>
+      <button type="button" class="danger" onclick="deleteEvent('${esc(x.id)}')">حذف</button>
+    </span>
+  </div>`).join('');
+}
+
+async function loadAdminEventsList(){
+  if(!user) return;
+  const client=getSupabaseClient();
+  if(!client) return;
+  const {data,error}=await client.from('academy_events').select('*').order('created_at',{ascending:false});
+  if(error){
+    $('adminEventsList').innerHTML=`<div class="notice err">${esc(error.message)}</div>`;
+    return;
+  }
+  eventsCache = data||[];
+  renderAdminEventsList();
+}
+
 $('eventForm').addEventListener('submit',async e=>{
   e.preventDefault();
   if(!user){setNotice($('evMsg'),'غير مصرح. يرجى تسجيل الدخول كمدير.','err');return;}
   const client=getSupabaseClient();
   if(!client){setNotice($('evMsg'),'تعذر الاتصال بقاعدة البيانات.','err');return;}
+  const editId=$('editEventId').value;
   const capRaw = $('evCap').value ? Number($('evCap').value) : null;
   if(capRaw !== null && (!Number.isInteger(capRaw) || capRaw < 1)){
     setNotice($('evMsg'),'يجب أن تكون السعة رقمًا صحيحًا أكبر من 0.','err');
     return;
   }
-  let {data,error}=await client.from('academy_events').insert({
+  const payload={
     title:$('evTitle').value.trim(),
     description:$('evDesc').value.trim()||null,
     event_date:$('evDate').value||null,
     capacity:capRaw,
     price:$('evPrice').value.trim()||null,
     published:$('evPub').checked
-  }).select('id').maybeSingle();
-  if(error || !data){
-    setNotice($('evMsg'),error?.message||'تعذر حفظ الفعالية.','err');
+  };
+  let res=editId
+    ?await client.from('academy_events').update(payload).eq('id',editId).select('id').maybeSingle()
+    :await client.from('academy_events').insert(payload).select('id').maybeSingle();
+  if(res.error || !res.data){
+    setNotice($('evMsg'),res.error?.message||'تعذر حفظ الفعالية.','err');
     return;
   }
-  setNotice($('evMsg'),'تم حفظ الفعالية بنجاح.','ok');
-  e.target.reset();
-  $('evPub').checked = true;
+  setNotice($('evMsg'),editId?'تم تحديث الفعالية بنجاح.':'تم حفظ الفعالية بنجاح.','ok');
+  resetEventForm();
   await loadPublicEvents();
   await refreshAll();
 });
@@ -1699,12 +2062,50 @@ async function loadBookings(){
     return;
   }
   $('bookingsTable').innerHTML=`<table><thead><tr><th>ولي الأمر</th><th>الهاتف</th><th>الفعالية</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>${rows.map(x=>{
-    const isRejected = String(x.status||'').toLowerCase() === 'rejected';
-    const actionCell = isRejected
-      ? `<span class="badge">مرفوض</span>`
-      : `<button type="button" class="danger" onclick="rejectBooking('${esc(x.id)}')">رفض</button>`;
+    const st = String(x.status||'pending').trim().toLowerCase();
+    const isApproved = st === 'approved' || st === 'accepted';
+    const isRejected = st === 'rejected';
+    let actionCell = `<button type="button" onclick="approveBooking('${esc(x.id)}')">تم قبول حجزك</button><button type="button" class="danger" onclick="rejectBooking('${esc(x.id)}')">رفض</button>`;
+    if(isApproved){
+      actionCell = `<span class="badge">تم قبول حجزك</span>`;
+    }else if(isRejected){
+      actionCell = `<span class="badge">مرفوض</span>`;
+    }
+    actionCell += `<button type="button" class="danger" onclick="deleteBooking('${esc(x.id)}')">حذف</button>`;
     return `<tr><td>${esc(x.parent_name)}</td><td>${esc(x.parent_phone)}</td><td>${esc(x.academy_events?.title||'—')}</td><td>${esc(x.status||'—')}</td><td>${actionCell}</td></tr>`;
   }).join('')}</tbody></table>`;
+}
+
+async function deleteBooking(id){
+  if(!user) return;
+  if(!confirm('هل أنت متأكد من حذف هذا الحجز؟')) return;
+  const client=getSupabaseClient();
+  if(!client) return;
+  const {error}=await client.from('event_bookings').delete().eq('id',id);
+  if(error){
+    setNotice($('bookingsMsg'),'تعذر حذف الحجز: ' + error.message,'err');
+    return;
+  }
+  setNotice($('bookingsMsg'),'تم حذف الحجز بنجاح.','ok');
+  await loadBookings();
+}
+
+async function approveBooking(id){
+  if(!user){
+    setNotice($('bookingsMsg'),'غير مصرح. اعتماد الحجوزات متاح للإدارة فقط.','err');
+    return;
+  }
+  const client=getSupabaseClient();
+  if(!client)return;
+  const {data,error}=await client.rpc('approve_event_booking',{p_booking_id:id});
+  if(error || !data || data.success !== true){
+    setNotice($('bookingsMsg'),'تعذر قبول الحجز: ' + (error?.message || data?.message || 'لم يتم اعتماد الحجز.'),'err');
+    await loadBookings();
+    return;
+  }
+  setNotice($('bookingsMsg'),data.message || 'تم قبول حجزك.','ok');
+  await loadBookings();
+  await loadPublicEvents();
 }
 
 async function rejectBooking(id){
@@ -1801,10 +2202,17 @@ async function loadMatches(){
 
 function renderEnrollmentRequests(){
   const rows = (enrollmentRequests||[]).map(x=>{
-    const isPending = (x.status||'pending') === 'pending';
-    const actionsHtml = isPending
-      ? `<button type="button" onclick="decideEnrollment('${x.id}','approve')">قبول</button><button type="button" class="danger" onclick="decideEnrollment('${x.id}','reject')">رفض</button>`
-      : `<span class="badge">${esc(x.status||'تمت المعالجة')}</span>`;
+    const st = String(x.status||'pending').trim().toLowerCase();
+    const isResolved = st === 'approved' || st === 'accepted' || st === 'rejected';
+    let actionsHtml = `<button type="button" onclick="acknowledgeEnrollment('${x.id}')">تم استقبال طلبك</button><button type="button" class="secondary" onclick="decideEnrollment('${x.id}','approve')">قبول</button><button type="button" class="danger" onclick="decideEnrollment('${x.id}','reject')">رفض</button>`;
+    if(st === 'accepted' || st === 'approved'){
+      actionsHtml = `<span class="badge">تم استقبال طلبك</span>`;
+    }else if(st === 'rejected'){
+      actionsHtml = `<span class="badge">مرفوض</span>`;
+    }else if(isResolved){
+      actionsHtml = `<span class="badge">${esc(x.status)}</span>`;
+    }
+    actionsHtml += `<button type="button" class="danger" onclick="deleteEnrollmentRequest('${x.id}')">حذف</button>`;
     return [
       esc(x.player_name),
       esc(x.parent_phone),
@@ -1815,6 +2223,40 @@ function renderEnrollmentRequests(){
     ];
   });
   $('requestsTable').innerHTML = table(rows, ['اللاعب','الهاتف','الفرع','الحالة','التاريخ','إجراء']);
+}
+
+async function deleteEnrollmentRequest(reqId){
+  if(!user) return;
+  if(!confirm('هل أنت متأكد من حذف طلب الالتحاق هذا؟')) return;
+  const client=getSupabaseClient();
+  if(!client) return;
+  const {error}=await client.from('enrollment_requests').delete().eq('id',reqId);
+  if(error){
+    setNotice($('reqActionMsg'),'تعذر حذف الطلب: ' + error.message,'err');
+    return;
+  }
+  setNotice($('reqActionMsg'),'تم حذف طلب الالتحاق بنجاح.','ok');
+  await refreshAll();
+  await loadRequests();
+}
+
+async function acknowledgeEnrollment(reqId){
+  if(!user) return;
+  const client=getSupabaseClient();
+  if(!client)return;
+  try{
+    const {data,error} = await client.rpc('acknowledge_enrollment_request', { p_request_id: reqId });
+    if(error) throw error;
+    if(!data || data.success !== true){
+      throw new Error(data?.message || 'تعذر تحديث حالة الاستمارة.');
+    }
+    setNotice($('reqActionMsg'), data.message || 'تم قبول استمارة التقديم من قبل الإدارة، يرجى التواصل معانا.', 'ok');
+    await refreshAll();
+    await loadRequests();
+  }catch(err){
+    console.error('Acknowledge enrollment error:', err);
+    setNotice($('reqActionMsg'), 'تعذر تأكيد الاستمارة: ' + (err.message||err), 'err');
+  }
 }
 
 async function loadRequests(){
@@ -1857,7 +2299,7 @@ async function decideEnrollment(reqId, action){
       throw new Error((data && data.message) || 'لم تؤكد دالة قاعدة البيانات إتمام العملية.');
     }
 
-    setNotice($('reqActionMsg'), (data && data.message) || (action === 'approve' ? 'تم قبول طلب الالتحاق بنجاح.' : 'تم رفض طلب الالتحاق بنجاح.'), 'ok');
+    setNotice($('reqActionMsg'), (data && data.message) || (action === 'approve' ? 'تم قبول استمارة التقديم من قبل الإدارة، يرجى التواصل معانا.' : 'تم رفض طلب الالتحاق بنجاح.'), 'ok');
     await refreshAll();
     await loadRequests();
   }catch(err){
@@ -1866,18 +2308,66 @@ async function decideEnrollment(reqId, action){
   }
 }
 
+async function checkPublicStatus(inputId, targetId){
+  const out = $(targetId);
+  const phoneVal = ($(inputId)?.value || '').trim();
+  const client = getSupabaseClient();
+  if(!phoneVal){
+    setNotice(out, 'يرجى إدخال رقم التليفون أولًا.', 'err');
+    return;
+  }
+  if(!client){
+    setNotice(out, 'تعذر الاتصال بقاعدة البيانات.', 'err');
+    return;
+  }
+  setNotice(out, 'جاري الاستعلام عن الحالة…');
+  const {data, error} = await client.rpc('check_parent_status_by_phone', { p_phone: phoneVal });
+  if(error || !data || data.success !== true){
+    setNotice(out, error?.message || data?.message || 'تعذر جلب الحالة.', 'err');
+    return;
+  }
+  const lines = [];
+  if(data.enrollment){
+    lines.push(`استمارة التقديم (${data.enrollment.player_name}): ${data.enrollment.message}`);
+  }
+  if(data.booking){
+    lines.push(`حجز الفعالية (${data.booking.event_title}): ${data.booking.message}`);
+  }
+  if(!lines.length){
+    setNotice(out, 'لا توجد طلبات تقديم أو حجوزات مسجلة بهذا الرقم.', '');
+    return;
+  }
+  setNotice(out, lines.join(' — '), 'ok');
+}
+
 async function loadParentRequests(){
   if(!user) return;
   const client=getSupabaseClient();
   if(!client)return;
   let {data,error}=await client.from('parent_link_requests').select('id,requested_name,status,created_at').order('created_at',{ascending:false});
   $('parentRequestsTable').innerHTML=error?`<div class="notice err">${esc(error.message)}</div>`:`<table><thead><tr><th>اسم اللاعب المطلوب</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>${(data||[]).map(x=>{
-    const isPending = (x.status||'pending') === 'pending';
-    const actionsHtml = isPending
+    const st = String(x.status||'pending').trim().toLowerCase();
+    const isResolved = st === 'approved' || st === 'rejected';
+    let actionsHtml = !isResolved
       ? `<button type="button" onclick="reviewParent('${x.id}',true)">موافقة</button><button type="button" class="danger" onclick="reviewParent('${x.id}',false)">رفض</button>`
-      : `<span class="badge">${esc(x.status||'تمت المعالجة')}</span>`;
-    return `<tr><td>${esc(x.requested_name)}</td><td>${esc(x.status)}</td><td>${actionsHtml}</td></tr>`;
+      : `<span class="badge">${st === 'approved' ? 'تمت الموافقة' : 'مرفوض'}</span>`;
+    actionsHtml += `<button type="button" class="danger" onclick="deleteParentLinkRequest('${x.id}')">حذف</button>`;
+    return `<tr><td>${esc(x.requested_name)}</td><td>${esc(st)}</td><td>${actionsHtml}</td></tr>`;
   }).join('')}</tbody></table>`;
+}
+
+async function deleteParentLinkRequest(id){
+  if(!user) return;
+  if(!confirm('هل أنت متأكد من حذف طلب الربط هذا؟')) return;
+  const client=getSupabaseClient();
+  if(!client) return;
+  const {error}=await client.from('parent_link_requests').delete().eq('id',id);
+  if(error){
+    setNotice($('parentReqMsg'),'تعذر حذف طلب الربط: ' + error.message,'err');
+    return;
+  }
+  setNotice($('parentReqMsg'),'تم حذف طلب الربط بنجاح.','ok');
+  await loadParentRequests();
 }
 
 async function reviewParent(id, approve){
@@ -2074,6 +2564,18 @@ async function syncParentFeedbackAvailability(){
   }
 }
 
+async function markEvaluationSeen(playerId){
+  const client=getSupabaseClient();
+  const statusEl=$('seenStatus-' + playerId);
+  if(!client || !parentUser) return;
+  const {data,error}=await client.rpc('mark_evaluation_seen',{p_player_id:playerId});
+  if(error || !data || data.success !== true){
+    if(statusEl) setNotice(statusEl, error?.message || data?.message || 'تعذر تسجيل المشاهدة.', 'err');
+    return;
+  }
+  if(statusEl) setNotice(statusEl, 'تم مشاهدة التقييمات.', 'ok');
+}
+
 async function showParentDash(){
   if(!parentUser){
     $('parentDash').classList.add('hidden');
@@ -2096,7 +2598,7 @@ async function showParentDash(){
   $('linkedPlayers').innerHTML=p.error?`<div class="notice err">${esc(p.error.message)}</div>`:linked.map(x=>{
     const hideBirth = isKidsGroup(x.group_id, x.group_note, x.group_name);
     const birthPart = hideBirth ? '' : `سنة الميلاد: ${x.birth_year||'—'} · `;
-    return `<div class="card" style="margin:10px 0"><h3>${esc(x.full_name)}</h3><div class="muted small">${birthPart}الفرع: ${esc(x.branch_name||'—')} · المجموعة: ${esc(x.group_name||x.group_note||'غير محددة')}</div><hr style="border-color:#443923"><b>تقييم المدرب للاعب (من 1 إلى 5)</b><p>المستوى الفني: ${x.technical_score??'—'} من 5 · السلوك: ${x.behavior_score??'—'} من 5 · اللياقة: ${x.fitness_score??'—'} من 5</p><p class="muted small">${esc(x.evaluation_notes||'لا توجد ملاحظات من المدرب بعد')}</p><div id="history-${esc(x.player_id)}" class="muted small">جاري تحميل سجل الحضور…</div></div>`;
+    return `<div class="card" style="margin:10px 0"><h3>${esc(x.full_name)}</h3><div class="muted small">${birthPart}الفرع: ${esc(x.branch_name||'—')} · المجموعة: ${esc(x.group_name||x.group_note||'غير محددة')}</div><hr style="border-color:#443923"><b>تقييم المدرب للاعب (من 1 إلى 5)</b><p>المستوى الفني: ${x.technical_score??'—'} من 5 · السلوك: ${x.behavior_score??'—'} من 5 · اللياقة: ${x.fitness_score??'—'} من 5</p><p class="muted small">${esc(x.evaluation_notes||'لا توجد ملاحظات من المدرب بعد')}</p><div class="actions" style="margin-top:8px"><button type="button" class="secondary" onclick="markEvaluationSeen('${esc(x.player_id)}')">تم مشاهدة التقييمات</button></div><div id="seenStatus-${esc(x.player_id)}" class="notice hidden"></div><div id="history-${esc(x.player_id)}" class="muted small" style="margin-top:8px">جاري تحميل سجل الحضور…</div></div>`;
   }).join('')||'لا يوجد لاعب مرتبط حتى الآن';
 
   for(const x of linked){
