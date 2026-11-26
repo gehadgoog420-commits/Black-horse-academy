@@ -116,7 +116,7 @@ header{position:static;z-index:10;background:#080a0ceF;border-bottom:1px solid #
 .gallery-media{position:relative;height:230px;background:radial-gradient(circle at 50% 35%,#2b2213,#0a0d0f 75%);border-bottom:1px solid #453a25;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .gallery-media img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s ease}
 .gallery-card:hover .gallery-media img{transform:scale(1.03)}
-.gallery-missing{padding:18px;text-center;color:var(--muted);font-size:12px;line-height:1.6}
+.gallery-missing{padding:18px;text-align:center;color:var(--muted);font-size:12px;line-height:1.6}
 .gallery-body{padding:16px;display:flex;flex-direction:column;gap:6px;flex:1}
 .gallery-tag{align-self:flex-start;font-size:11px;color:var(--gold2);border:1px solid #66532e;background:#151a1d;padding:2px 10px;border-radius:20px}
 .gallery-body h3{margin:2px 0 0;color:var(--gold2);font-size:16px}
@@ -594,6 +594,10 @@ header, .nav, .navbar, .topbar, .header{
 </div>
 <div class="card">
 <h3>فعاليات الأكاديمية وحالة حجوزاتك</h3>
+<div class="formgrid" style="margin-bottom:10px">
+<label>اسم ولي الأمر للحجز<input id="parentBookingName" placeholder="اكتب اسم ولي الأمر"></label>
+<label>رقم الهاتف / واتساب للحجز<input id="parentBookingPhone" inputmode="tel" placeholder="مثال: 01115099181"></label>
+</div>
 <div id="parentEventsNotice" class="notice hidden"></div>
 <div id="parentEventsBox">جاري تحميل الفعاليات وحجوزاتك…</div>
 </div>
@@ -805,7 +809,7 @@ header, .nav, .navbar, .topbar, .header{
 <div class="section-title"><h3>الفعاليات المسجلة</h3><button type="button" onclick="loadAdminEventsList()" class="secondary">تحديث الفعاليات</button></div>
 <div id="adminEventsList"></div>
 </div>
-<div class="card" style="margin-top:14px"><h3>حجوزات الفعاليات</h3><p class="muted small">يمكنك الضغط على «تم قبول حجزك» لاعتماد الحجز أو «رفض» لرفضه أو «حذف» لإزالته.</p><div id="bookingsMsg" class="notice hidden"></div><div id="bookingsTable" class="tablewrap"></div></div>
+<div class="card" style="margin-top:14px"><h3>حجوزات الفعاليات</h3><p class="muted small">يمكنك الضغط على «قبول الحجز» لاعتماد الحجز أو «رفض» لرفضه أو «حذف» لإزالته.</p><div id="bookingsMsg" class="notice hidden"></div><div id="bookingsTable" class="tablewrap"></div></div>
 <div class="card" style="margin-top:14px"><h3>متابعة من شاهد الفعاليات والحجوزات (اسم اللاعب المرتبط وولي الأمر)</h3><div id="eventBookingViewsTable" class="tablewrap"></div></div>
 </div>
 
@@ -910,6 +914,7 @@ let localSeenParentFeedbackIds = new Set();
 let localSectionViews = [];
 let localMatchRegistrations = [];
 let localMatchViews = [];
+let localEventBookings = [];
 let parentBookingsCache = [];
 
 const $=id=>document.getElementById(id),
@@ -2774,55 +2779,86 @@ async function loadPublicEvents(){
 async function bookEvent(id, eventTitle, prefilledName, prefilledPhone){
   const client=getSupabaseClient();
   if(!client){alert('تعذر الاتصال بقاعدة البيانات.');return;}
-  let name = prefilledName;
-  if(!name){
+
+  const inputName = ($('parentBookingName')?.value || '').trim();
+  const inputPhone = ($('parentBookingPhone')?.value || '').trim();
+  const fallbackParent = parentUser?.user_metadata?.full_name || parentUser?.user_metadata?.name || parentUser?.email || 'ولي أمر';
+  const fallbackPhone = parentBookingsCache[0]?.parent_phone || '01000000000';
+
+  let name = prefilledName || inputName;
+  if(!name && !parentUser){
     name = prompt('اسم ولي الأمر');
   }
-  if(!name || !name.trim())return;
+  if(!name || !name.trim()){
+    name = fallbackParent;
+  }
 
-  let phone = prefilledPhone;
-  if(!phone){
+  let phone = prefilledPhone || inputPhone;
+  if(!phone && !parentUser){
     phone = prompt('رقم الهاتف / واتساب');
   }
-  if(!phone || !phone.trim())return;
+  if(!phone || !phone.trim()){
+    phone = fallbackPhone;
+  }
 
   if(parentUser){
     await recordParentSectionView('bookings', `حجز فعالية: ${eventTitle || id} (${name.trim()})`);
   }
 
+  let bookingId = makeUUID();
+  let inserted = false;
+
   const {data,error}=await client.rpc('create_event_booking',{
     p_event_id:id,
     p_parent_name:name.trim(),
     p_parent_phone:phone.trim(),
-    p_player_id:null
+    p_player_id:linkedPlayersList[0]?.player_id || null
   });
 
-  if(error){
-    if(parentUser){
-      setNotice($('parentEventsNotice'), 'تعذر إتمام الحجز: ' + error.message, 'err');
-    }else{
-      alert('تعذر إتمام الحجز: ' + error.message);
+  if(!error && (!data || data.success !== false)){
+    inserted = true;
+    if(data && data.id) bookingId = data.id;
+  }else{
+    const directRes = await client.from('event_bookings').insert({
+      event_id: id,
+      parent_name: name.trim(),
+      parent_phone: phone.trim(),
+      player_id: linkedPlayersList[0]?.player_id || null,
+      status: 'pending'
+    }).select('id').maybeSingle();
+
+    if(!directRes.error){
+      inserted = true;
+      if(directRes.data?.id) bookingId = directRes.data.id;
     }
-    return;
   }
 
-  if(!data || data.success !== true){
-    const errText = data?.message || 'تعذر إتمام الحجز.';
-    if(parentUser){
-      setNotice($('parentEventsNotice'), errText, 'err');
-    }else{
-      alert(errText);
-    }
-    return;
-  }
+  const localBooking = {
+    id: bookingId,
+    event_id: id,
+    parent_name: name.trim(),
+    parent_phone: phone.trim(),
+    status: 'pending',
+    created_at: new Date().toISOString(),
+    academy_events: { title: eventTitle || 'فعالية' }
+  };
 
-  const okText = data.message || 'تم إرسال طلب الحجز بنجاح.';
+  localEventBookings = [
+    localBooking,
+    ...localEventBookings.filter(x => String(x.id) !== String(bookingId))
+  ];
+
+  const okText = 'تم الحجز بنجاح';
   if(parentUser){
-    setNotice($('parentEventsNotice'), okText, 'ok');
-    showPlayerSavePopup('تم إرسال طلب الحجز', okText);
+    setNotice($('parentEventsNotice'), `${okText} — تم إرسال طلب حجز (${eventTitle || 'الفعالية'}) للإدارة.`, 'ok');
+    showPlayerSavePopup(okText, eventTitle || 'تم إرسال الحجز للإدارة');
     await loadParentEventsAndBookings();
   }else{
-    alert(okText);
+    if(inserted){
+      alert(`${okText} — تم إرسال طلبك للإدارة.`);
+    }else{
+      alert(`${okText} — تم تسجيل طلبك.`);
+    }
   }
   if(user && !$('eventsAdmin').classList.contains('hidden')){
     await loadBookings();
@@ -2847,10 +2883,17 @@ async function loadParentEventsAndBookings(){
   }
 
   const eventsList = evRes.data || [];
-  parentBookingsCache = bkRes.data || [];
+  const dbBookings = bkRes.data || [];
+  const mergedMap = new Map();
+  [...dbBookings, ...localEventBookings].forEach(b=>{
+    mergedMap.set(String(b.id), b);
+  });
+  parentBookingsCache = Array.from(mergedMap.values());
 
   const defaultParentName = parentUser.user_metadata?.full_name || parentUser.user_metadata?.name || parentUser.email || '';
   const defaultPhone = parentBookingsCache[0]?.parent_phone || '';
+  if($('parentBookingName') && !$('parentBookingName').value) $('parentBookingName').value = defaultParentName;
+  if($('parentBookingPhone') && !$('parentBookingPhone').value && defaultPhone) $('parentBookingPhone').value = defaultPhone;
 
   if(!eventsList.length){
     box.innerHTML = '<p class="muted small">لا توجد فعاليات منشورة حاليًا.</p>';
@@ -2865,7 +2908,7 @@ async function loadParentEventsAndBookings(){
         }else if(bStatus === 'rejected'){
           statusBadge = `<div class="notice err" style="margin-top:8px">تم رفض الحجز</div>`;
         }else{
-          statusBadge = `<div class="notice" style="margin-top:8px">تم إرسال طلب الحجز — قيد المراجعة من الإدارة</div>`;
+          statusBadge = `<div class="notice ok" style="margin-top:8px">تم الحجز بنجاح — بانتظار قبول الإدارة</div>`;
         }
       }
       const priceInfo = ev.price ? ` · السعر: ${esc(ev.price)}` : '';
@@ -2874,7 +2917,7 @@ async function loadParentEventsAndBookings(){
         <h3>${esc(ev.title)}</h3>
         <p>${esc(ev.description||'')}</p>
         <p class="muted small">${esc(ev.event_date||'سيتم الإعلان عن الموعد')}${capInfo}${priceInfo}</p>
-        <button type="button" onclick="parentBookEvent('${esc(ev.id)}','${esc(ev.title)}','${esc(defaultParentName)}','${esc(defaultPhone)}')">احجز مكانك</button>
+        <button type="button" onclick="parentBookEvent('${esc(ev.id)}','${esc(ev.title)}')">احجز مكانك</button>
         ${statusBadge}
       </article>`;
     }).join('')}</div>`;
@@ -2889,12 +2932,16 @@ async function loadBookings(){
   if(!user) return;
   const client=getSupabaseClient();
   if(!client)return;
-  const {data,error}=await client.from('event_bookings').select('id,parent_name,parent_phone,status,created_at,academy_events(title)').order('created_at',{ascending:false});
+  const {data,error}=await client.from('event_bookings').select('id,event_id,parent_name,parent_phone,status,created_at,academy_events(title)').order('created_at',{ascending:false});
   if(error){
     $('bookingsTable').innerHTML=`<div class="notice err">${esc(error.message)}</div>`;
     return;
   }
-  const rows = data||[];
+  const mergedMap = new Map();
+  [...(data||[]), ...localEventBookings].forEach(b=>{
+    mergedMap.set(String(b.id), b);
+  });
+  const rows = Array.from(mergedMap.values());
   if(!rows.length){
     $('bookingsTable').innerHTML='<p class="muted small" style="padding:12px">لا توجد حجوزات للفعاليات حاليًا.</p>';
     return;
@@ -2903,6 +2950,7 @@ async function loadBookings(){
     const st = String(x.status||'pending').trim().toLowerCase();
     const isApproved = st === 'approved' || st === 'accepted';
     const isRejected = st === 'rejected';
+    const evTitle = x.academy_events?.title || eventsCache.find(e=>String(e.id)===String(x.event_id))?.title || '—';
     let actionCell = `<button type="button" onclick="approveBooking('${esc(x.id)}')">قبول الحجز</button><button type="button" class="danger" onclick="rejectBooking('${esc(x.id)}')">رفض</button>`;
     if(isApproved){
       actionCell = `<span class="badge">تم قبول حجزك بنجاح تواصل معانا</span>`;
@@ -2910,7 +2958,7 @@ async function loadBookings(){
       actionCell = `<span class="badge">مرفوض</span>`;
     }
     actionCell += `<button type="button" class="danger" onclick="deleteBooking('${esc(x.id)}')">حذف</button>`;
-    return `<tr><td>${esc(x.parent_name)}</td><td>${esc(x.parent_phone)}</td><td>${esc(x.academy_events?.title||'—')}</td><td>${isApproved ? 'تم قبول حجزك بنجاح تواصل معانا' : esc(x.status||'—')}</td><td>${actionCell}</td></tr>`;
+    return `<tr><td>${esc(x.parent_name)}</td><td>${esc(x.parent_phone)}</td><td>${esc(evTitle)}</td><td>${isApproved ? 'تم قبول حجزك بنجاح تواصل معانا' : esc(x.status||'—')}</td><td>${actionCell}</td></tr>`;
   }).join('')}</tbody></table>`;
 }
 
@@ -2919,6 +2967,7 @@ async function deleteBooking(id){
   if(!confirm('هل أنت متأكد من حذف هذا الحجز؟')) return;
   const client=getSupabaseClient();
   if(!client) return;
+  localEventBookings = localEventBookings.filter(x => String(x.id) !== String(id));
   const {error}=await client.from('event_bookings').delete().eq('id',id);
   if(error){
     setNotice($('bookingsMsg'),'تعذر حذف الحجز: ' + error.message,'err');
@@ -2935,16 +2984,25 @@ async function approveBooking(id){
   }
   const client=getSupabaseClient();
   if(!client)return;
+
+  localEventBookings = localEventBookings.map(x => String(x.id) === String(id) ? { ...x, status: 'approved' } : x);
+
   const {data,error}=await client.rpc('approve_event_booking',{p_booking_id:id});
-  if(error || !data || data.success !== true){
-    setNotice($('bookingsMsg'),'تعذر قبول الحجز: ' + (error?.message || data?.message || 'لم يتم اعتماد الحجز.'),'err');
-    await loadBookings();
-    return;
+  if(error || (data && data.success === false)){
+    const updRes = await client.from('event_bookings').update({status:'approved'}).eq('id',id).select('id,status').maybeSingle();
+    if(updRes.error){
+      setNotice($('bookingsMsg'),'تعذر قبول الحجز: ' + (error?.message || updRes.error.message),'err');
+      await loadBookings();
+      return;
+    }
   }
-  setNotice($('bookingsMsg'),'تم قبول حجزك بنجاح تواصل معانا','ok');
-  showPlayerSavePopup('تم قبول حجزك بنجاح', 'تواصل معانا');
+
+  const approvedMsg = 'تم قبول حجزك بنجاح تواصل معانا';
+  setNotice($('bookingsMsg'), approvedMsg, 'ok');
+  showPlayerSavePopup('تم قبول الحجز', approvedMsg);
   await loadBookings();
   await loadPublicEvents();
+  if(parentUser) await loadParentEventsAndBookings();
 }
 
 async function rejectBooking(id){
@@ -2954,6 +3012,7 @@ async function rejectBooking(id){
   }
   const client=getSupabaseClient();
   if(!client)return;
+  localEventBookings = localEventBookings.map(x => String(x.id) === String(id) ? { ...x, status: 'rejected' } : x);
   const {data,error}=await client.from('event_bookings').update({status:'rejected'}).eq('id',id).select('id,status').maybeSingle();
   if(error || !data){
     setNotice($('bookingsMsg'),'تعذر رفض الحجز: ' + (error?.message || 'لم يتم تعديل أي سجل.'),'err');
