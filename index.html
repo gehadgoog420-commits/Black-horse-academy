@@ -152,6 +152,70 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 .scanner-box{position:relative;max-width:420px;margin:12px auto;border-radius:14px;overflow:hidden;border:2px solid #59482a;background:#090d0f}
 .scanner-box video{width:100%;display:block;max-height:340px;object-fit:cover}
 .scanner-frame{position:absolute;inset:14%;border:3px solid #5f9c79;border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.38);pointer-events:none}
+
+.scan-popup-toast{
+  position:fixed;
+  top:82px;
+  left:50%;
+  transform:translateX(-50%) scale(.82);
+  z-index:60;
+  min-width:min(360px,90vw);
+  background:linear-gradient(145deg,#132b20,#0c1812);
+  border:2px solid #5f9c79;
+  color:#e9fff2;
+  border-radius:18px;
+  padding:16px 20px;
+  box-shadow:0 18px 45px rgba(0,0,0,.65),0 0 0 6px rgba(95,156,121,.18);
+  text-align:center;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s ease,transform .24s cubic-bezier(.22,1.45,.36,1)
+}
+.scan-popup-toast.show{
+  opacity:1;
+  pointer-events:auto;
+  transform:translateX(-50%) scale(1.03);
+  animation:popBump .36s cubic-bezier(.22,1.45,.36,1)
+}
+.scan-popup-toast.dup{
+  background:linear-gradient(145deg,#2b2413,#18140c);
+  border-color:#d5ad55;
+  color:#fff4d2;
+  box-shadow:0 18px 45px rgba(0,0,0,.65),0 0 0 6px rgba(213,173,85,.18)
+}
+.scan-popup-badge{
+  display:inline-block;
+  background:#5f9c79;
+  color:#08130d;
+  font-weight:900;
+  font-size:13px;
+  padding:3px 12px;
+  border-radius:999px;
+  margin-bottom:6px
+}
+.scan-popup-toast.dup .scan-popup-badge{
+  background:#d5ad55;
+  color:#17130b
+}
+.scan-popup-name{
+  font-size:21px;
+  font-weight:900;
+  margin:2px 0;
+  color:#ffffff
+}
+.scan-popup-sub{
+  font-size:13px;
+  color:#b9e5cc
+}
+.scan-popup-toast.dup .scan-popup-sub{
+  color:#e6d39c
+}
+@keyframes popBump{
+  0%{transform:translateX(-50%) scale(.72)}
+  65%{transform:translateX(-50%) scale(1.07)}
+  100%{transform:translateX(-50%) scale(1)}
+}
+
 @media(max-width:700px){
   .nav{align-items:flex-start;flex-direction:column}
   .navlinks{width:100%}
@@ -164,6 +228,12 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 </style>
 </head>
 <body>
+
+<div id="scanPopup" class="scan-popup-toast" role="status" aria-live="polite" onclick="hideScanPopup()">
+  <div id="scanPopupBadge" class="scan-popup-badge">تم التسجيل</div>
+  <div id="scanPopupName" class="scan-popup-name">—</div>
+  <div id="scanPopupSub" class="scan-popup-sub">جاهز للي بعده</div>
+</div>
 
 <header>
 <div class="wrap nav">
@@ -708,7 +778,7 @@ function makeUUID(){
 }
 
 let user=null,parentUser=null,admins=[],branches=[],groups=[],players=[],enrollmentRequests=[],matchesCache=[],eventsCache=[],coachEvalsCache=[],activeSession=null,scanner=null,scannerStarting=false,scannedInSession=new Set(),viewHistory=[],parentFeedbackEnabled=false,linkedPlayerIds=new Set();
-let fastStream=null,fastRafId=null,fastVideo=null,fastCanvas=null,fastCtx=null,lastScannedCode='',lastScannedAt=0,scanBusy=false;
+let fastStream=null,fastRafId=null,fastVideo=null,fastCanvas=null,fastCtx=null,lastScannedCode='',lastScannedAt=0,scanBusy=false,scanPopupTimer=null;
 
 const $=id=>document.getElementById(id),
 today=()=>{
@@ -719,6 +789,42 @@ today=()=>{
   return `${y}-${m}-${day}`;
 },
 esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function hideScanPopup(){
+  const pop = $('scanPopup');
+  if(!pop) return;
+  pop.classList.remove('show','dup');
+  if(scanPopupTimer){
+    clearTimeout(scanPopupTimer);
+    scanPopupTimer = null;
+  }
+}
+
+function showScanPopup(playerName, branchName, isDuplicate){
+  const pop = $('scanPopup');
+  const badge = $('scanPopupBadge');
+  const nameEl = $('scanPopupName');
+  const subEl = $('scanPopupSub');
+  if(!pop || !badge || !nameEl || !subEl) return;
+
+  pop.classList.remove('show','dup');
+  void pop.offsetWidth;
+
+  if(isDuplicate){
+    pop.classList.add('dup');
+    badge.textContent = 'مسجل مسبقًا';
+    nameEl.textContent = playerName || 'لاعب';
+    subEl.textContent = `تم تسجيل حضوره في هذه الحصة (${branchName || ''}) — جاهز للي بعده`;
+  }else{
+    badge.textContent = '✓ تم التسجيل';
+    nameEl.textContent = playerName || 'لاعب';
+    subEl.textContent = `حاضر · ${branchName || ''} — جاهز للي بعده`;
+  }
+
+  pop.classList.add('show');
+  if(scanPopupTimer) clearTimeout(scanPopupTimer);
+  scanPopupTimer = setTimeout(hideScanPopup, 2200);
+}
 
 function getBranchName(branchId){
   if(!branchId) return 'غير محدد';
@@ -1013,6 +1119,7 @@ $('loginForm').addEventListener('submit',async e=>{
 
 async function adminLogout(){
   await stopScanner();
+  hideScanPopup();
   const client=getSupabaseClient();
   if(client){
     const {error}=await client.auth.signOut();
@@ -1434,6 +1541,7 @@ async function submitQrToken(tokenValue){
   }
   if(scanBusy) return false;
 
+  const branchLabel = getBranchName(activeSession.branch_id || $('attBranch')?.value || '');
   const matchedPlayer = (players||[]).find(p=>String(p.attendance_qr_hash||'').trim() === t);
   const sessionKey = `${activeSession.id}::token:${t}`;
   const playerKey = matchedPlayer?.id ? `${activeSession.id}::player:${String(matchedPlayer.id)}` : null;
@@ -1443,6 +1551,7 @@ async function submitQrToken(tokenValue){
     lastScannedAt = now;
     const pName = matchedPlayer?.full_name || 'هذا الطالب';
     setNotice($('scanMsg'),`تم تسجيل الحضور الطالب ${pName} مسبقًا — جاهز للي بعده.`,'ok');
+    showScanPopup(pName, branchLabel, true);
     $('qrToken').value = '';
     return false;
   }
@@ -1464,13 +1573,13 @@ async function submitQrToken(tokenValue){
     }
 
     const studentName = matchedPlayer?.full_name || data.player_name || 'غير معروف';
-    const branchLabel = getBranchName(activeSession.branch_id || $('attBranch')?.value || '');
 
     scannedInSession.add(sessionKey);
     if(playerKey) scannedInSession.add(playerKey);
     if(data.player_id) scannedInSession.add(`${activeSession.id}::player:${String(data.player_id)}`);
 
     setNotice($('scanMsg'),`تم تسجيل الحضور الطالب ${studentName} (${branchLabel}) — جاهز للي بعده.`,'ok');
+    showScanPopup(studentName, branchLabel, false);
     $('qrToken').value = '';
     await showAttendanceLists();
     return true;
