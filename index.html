@@ -601,7 +601,7 @@ header, .nav, .navbar, .topbar, .header{
 <input id="editId" type="hidden">
 <div class="formgrid">
 <label>اسم اللاعب *<input id="plName" required></label>
-<label>سنة الميلاد<input id="plYear" type="number" min="2000" max="2030"></label>
+<label>سنة الميلاد<input id="plYear" type="text" inputmode="numeric" maxlength="4" placeholder="مثال: 2015"></label>
 <label>الفرع<select id="plBranch" required></select></label>
 <label>المجموعة<select id="plGroup"></select></label>
 <label>ملاحظة المجموعة<input id="plNote"></label>
@@ -1244,9 +1244,26 @@ $('playerForm').addEventListener('submit',async e=>{
   if(!user){setNotice($('plMsg'),'غير مصرح. يرجى تسجيل الدخول كمدير.','err');return;}
   const client=getSupabaseClient();
   if(!client){setNotice($('plMsg'),'تعذر الاتصال بقاعدة البيانات.','err');return;}
+
+  const rawYear = String($('plYear').value || '').trim().replace(/[٠-٩]/g, d => '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)]);
+  let birthYear = null;
+  if(rawYear !== ''){
+    if(!/^\d{4}$/.test(rawYear)){
+      setNotice($('plMsg'),'سنة الميلاد يجب أن تكون 4 أرقام صحيحة (مثال: 2015).','err');
+      $('plYear').focus();
+      return;
+    }
+    birthYear = Number(rawYear);
+    if(birthYear < 1990 || birthYear > 2030){
+      setNotice($('plMsg'),'سنة الميلاد يجب أن تكون بين 1990 و 2030.','err');
+      $('plYear').focus();
+      return;
+    }
+  }
+
   let id=$('editId').value,obj={
     full_name:$('plName').value.trim(),
-    birth_year:$('plYear').value?Number($('plYear').value):null,
+    birth_year:birthYear,
     branch_id:$('plBranch').value,
     group_id:$('plGroup').value||null,
     group_note:$('plNote').value.trim()||null
@@ -1279,6 +1296,7 @@ function editPlayer(id){
 function resetPlayerForm(){
   $('playerForm').reset();
   $('editId').value='';
+  if($('plYear')) $('plYear').value='';
 }
 
 async function togglePlayer(id,v){
