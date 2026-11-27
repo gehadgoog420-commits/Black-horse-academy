@@ -903,13 +903,78 @@ header, .nav, .navbar, .topbar, .header{
 
 <script>
 const SUPABASE_URL='https://rjkdgjncxkszleorcave.supabase.co',KEY='sb_publishable_QgNtkC4EwtJAg2rcRdeuVg_yCdHI64y';
+const SEEN_FEEDBACK_STORAGE_KEY='bh_seen_parent_feedback_v1';
 let db=null;
 let qrSeqCounter=0;
+
+let user=null,parentUser=null,admins=[],branches=[],groups=[],players=[],enrollmentRequests=[],matchesCache=[],eventsCache=[],coachEvalsCache=[],activeSession=null,scanner=null,scannerStarting=false,scannedInSession=new Set(),viewHistory=[],parentFeedbackEnabled=false,linkedPlayerIds=new Set(),linkedPlayersList=[];
+let fastStream=null,fastRafId=null,fastVideo=null,fastCanvas=null,fastCtx=null,lastScannedCode='',lastScannedAt=0,scanBusy=false,scanPopupTimer=null,playerSavePopupTimer=null;
+let localViewedCoachEvalIds = new Set();
+let localSeenParentFeedbackIds = new Set();
+let localSectionViews = [];
+let localMatchRegistrations = [];
+let localMatchViews = [];
+let localEventBookings = [];
+let localParentProfiles = [];
+let parentBookingsCache = [];
+let activeParentTabId = 'pTabEvaluations';
+
+function loadPersistedSeenFeedback(){
+  try{
+    const raw = localStorage.getItem(SEEN_FEEDBACK_STORAGE_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    if(Array.isArray(arr)){
+      arr.forEach(id => localSeenParentFeedbackIds.add(String(id)));
+    }
+  }catch(_){}
+}
+
+function persistSeenFeedback(feedbackId){
+  if(!feedbackId) return;
+  localSeenParentFeedbackIds.add(String(feedbackId));
+  try{
+    localStorage.setItem(SEEN_FEEDBACK_STORAGE_KEY, JSON.stringify(Array.from(localSeenParentFeedbackIds)));
+  }catch(_){}
+}
 
 function getSupabaseClient(){
   if(db) return db;
   if(window.supabase && typeof window.supabase.createClient === 'function'){
-    db = window.supabase.createClient(SUPABASE_URL, KEY);
+    db = window.supabase.createClient(SUPABASE_URL, KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: window.localStorage
+      }
+    });
+
+    if(!db.__bhAuthListenerAttached){
+      db.__bhAuthListenerAttached = true;
+      db.auth.onAuthStateChange(async (event, session) => {
+        if(event === 'SIGNED_OUT'){
+          if(!user && !parentUser) return;
+          user = null;
+          parentUser = null;
+          return;
+        }
+        if(session?.user){
+          const {data:ad} = await db
+            .from('academy_admins')
+            .select('admin_name')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          if(ad){
+            user = session.user;
+            parentUser = null;
+            if($('adminName')) $('adminName').textContent = ad.admin_name || 'BLACK HORSE ADMIN';
+          }else{
+            user = null;
+            parentUser = session.user;
+          }
+        }
+      });
+    }
     return db;
   }
   return null;
@@ -944,18 +1009,6 @@ function generateUniqueQrToken(){
   } while (existing.has(candidate.toLowerCase()));
   return candidate;
 }
-
-let user=null,parentUser=null,admins=[],branches=[],groups=[],players=[],enrollmentRequests=[],matchesCache=[],eventsCache=[],coachEvalsCache=[],activeSession=null,scanner=null,scannerStarting=false,scannedInSession=new Set(),viewHistory=[],parentFeedbackEnabled=false,linkedPlayerIds=new Set(),linkedPlayersList=[];
-let fastStream=null,fastRafId=null,fastVideo=null,fastCanvas=null,fastCtx=null,lastScannedCode='',lastScannedAt=0,scanBusy=false,scanPopupTimer=null,playerSavePopupTimer=null;
-let localViewedCoachEvalIds = new Set();
-let localSeenParentFeedbackIds = new Set();
-let localSectionViews = [];
-let localMatchRegistrations = [];
-let localMatchViews = [];
-let localEventBookings = [];
-let localParentProfiles = [];
-let parentBookingsCache = [];
-let activeParentTabId = 'pTabEvaluations';
 
 const $=id=>document.getElementById(id),
 today=()=>{
@@ -1334,6 +1387,7 @@ function populateEvalPlayers(){
 }
 
 async function init(){
+  loadPersistedSeenFeedback();
   const status = await window.__assetsReady;
   const client = getSupabaseClient();
   if(!status?.supabase || !client){
@@ -2670,7 +2724,7 @@ async function markParentFeedbackSeen(feedbackId){
   if(!user || !feedbackId) return;
   const client = getSupabaseClient();
   const key = String(feedbackId);
-  localSeenParentFeedbackIds.add(key);
+  persistSeenFeedback(key);
 
   if(client){
     try{
@@ -2688,8 +2742,8 @@ async function markParentFeedbackSeen(feedbackId){
     }
   }
 
-  setNotice($('parentFeedbackMsg'), 'تم رؤية التقييم بنجاح — سيظهر لولي الأمر: تم رؤية تقييمك بنجاح.', 'ok');
-  showPlayerSavePopup('تم رؤية التقييم بنجاح', 'تم إرسال حالة الرؤية لولي الأمر');
+  setNotice($('parentFeedbackMsg'), 'تم مشاهدة تقييمك بنجاح — تم إرسال الحالة لولي الأمر.', 'ok');
+  showPlayerSavePopup('تم مشاهدة تقييمك', 'تم إرسال حالة المشاهدة لولي الأمر');
   await loadParentFeedbackAdmin();
   if(parentUser) await loadParentSubmittedFeedbackSection();
 }
@@ -2719,7 +2773,7 @@ async function loadParentFeedbackAdmin(){
       <td>${row.parent_player_level??'—'} / 5</td>
       <td>${row.academy_rating??'—'} / 5</td>
       <td>${esc(row.comments||'—')}</td>
-      <td>${isSeen ? '<span class="badge">تم رؤية تقييمك بنجاح</span>' : '<span class="muted">جديد</span>'}</td>
+      <td>${isSeen ? '<span class="badge">تم مشاهدة تقييمك</span>' : '<span class="muted">جديد</span>'}</td>
       <td><button type="button" class="secondary" onclick="markParentFeedbackSeen('${esc(row.id)}')">تم رؤية التقييم</button></td>
     </tr>`;
   }).join('')}</tbody></table>`;
@@ -3550,21 +3604,21 @@ async function loadMatchViewsAdmin(){
 function renderEnrollmentRequests(){
   const rows = (enrollmentRequests||[]).map(x=>{
     const st = String(x.status||'pending').trim().toLowerCase();
-    const isResolved = st === 'approved' || st === 'accepted' || st === 'rejected';
-    let actionsHtml = `<button type="button" onclick="acknowledgeEnrollment('${x.id}')">تم استقبال طلبك</button><button type="button" class="secondary" onclick="decideEnrollment('${x.id}','approve')">قبول</button><button type="button" class="danger" onclick="decideEnrollment('${x.id}','reject')">رفض</button>`;
-    if(st === 'accepted' || st === 'approved'){
-      actionsHtml = `<span class="badge">تم استقبال طلبك</span>`;
-    }else if(st === 'rejected'){
+    const isApproved = st === 'approved' || st === 'accepted';
+    const isRejected = st === 'rejected';
+    let actionsHtml = `<button type="button" onclick="acknowledgeEnrollment('${esc(x.id)}')">تم قبول طلب التقديم تواصل معانا</button><button type="button" class="secondary" onclick="decideEnrollment('${esc(x.id)}','approve')">قبول</button><button type="button" class="danger" onclick="decideEnrollment('${esc(x.id)}','reject')">رفض</button>`;
+    if(isApproved){
+      actionsHtml = `<span class="badge">تم قبول طلبك تواصل معانا</span>`;
+    }else if(isRejected){
       actionsHtml = `<span class="badge">مرفوض</span>`;
-    }else if(isResolved){
-      actionsHtml = `<span class="badge">${esc(x.status)}</span>`;
     }
-    actionsHtml += `<button type="button" class="danger" onclick="deleteEnrollmentRequest('${x.id}')">حذف</button>`;
+    actionsHtml += `<button type="button" class="danger" onclick="deleteEnrollmentRequest('${esc(x.id)}')">حذف</button>`;
+    const statusLabel = isApproved ? 'تم قبول طلبك تواصل معانا' : (isRejected ? 'مرفوض' : 'قيد المراجعة');
     return [
       esc(x.player_name),
       esc(x.parent_phone),
       esc(branches.find(b=>b.id===x.branch_id)?.name||'—'),
-      esc(x.status||'—'),
+      esc(statusLabel),
       x.submitted_at?new Date(x.submitted_at).toLocaleDateString('ar-EG'):'—',
       actionsHtml
     ];
@@ -3592,17 +3646,29 @@ async function acknowledgeEnrollment(reqId){
   const client=getSupabaseClient();
   if(!client)return;
   try{
+    let approvedMsg = 'تم قبول طلبك تواصل معانا';
     const {data,error} = await client.rpc('acknowledge_enrollment_request', { p_request_id: reqId });
-    if(error) throw error;
-    if(!data || data.success !== true){
-      throw new Error(data?.message || 'تعذر تحديث حالة الاستمارة.');
+    if(error || !data || data.success !== true){
+      const upd = await client
+        .from('enrollment_requests')
+        .update({ status: 'approved' })
+        .eq('id', reqId)
+        .select('id,status')
+        .maybeSingle();
+      if(upd.error || !upd.data){
+        throw new Error(error?.message || data?.message || upd.error?.message || 'تعذر تحديث حالة الطلب.');
+      }
+    }else if(data.message){
+      approvedMsg = data.message;
     }
-    setNotice($('reqActionMsg'), data.message || 'تم قبول استمارة التقديم من قبل الإدارة، يرجى التواصل معانا.', 'ok');
+
+    setNotice($('reqActionMsg'), approvedMsg, 'ok');
+    showPlayerSavePopup('تم قبول طلب التقديم', approvedMsg);
     await refreshAll();
     await loadRequests();
   }catch(err){
     console.error('Acknowledge enrollment error:', err);
-    setNotice($('reqActionMsg'), 'تعذر تأكيد الاستمارة: ' + (err.message||err), 'err');
+    setNotice($('reqActionMsg'), 'تعذر تأكيد الطلب: ' + (err.message||err), 'err');
   }
 }
 
@@ -3646,7 +3712,10 @@ async function decideEnrollment(reqId, action){
       throw new Error((data && data.message) || 'لم تؤكد دالة قاعدة البيانات إتمام العملية.');
     }
 
-    setNotice($('reqActionMsg'), (data && data.message) || (action === 'approve' ? 'تم قبول استمارة التقديم من قبل الإدارة، يرجى التواصل معانا.' : 'تم رفض طلب الالتحاق بنجاح.'), 'ok');
+    const msgOut = action === 'approve'
+      ? 'تم قبول طلبك تواصل معانا'
+      : ((data && data.message) || 'تم رفض طلب الالتحاق بنجاح.');
+    setNotice($('reqActionMsg'), msgOut, 'ok');
     await refreshAll();
     await loadRequests();
   }catch(err){
@@ -3697,7 +3766,11 @@ async function checkPublicStatus(inputId, targetId){
     if(data && data.success === true){
       const lines = [];
       if(data.enrollment){
-        lines.push(`استمارة التقديم (${data.enrollment.player_name}): ${data.enrollment.message}`);
+        const eStatus = String(data.enrollment.status || '').trim().toLowerCase();
+        const eMsg = (eStatus === 'approved' || eStatus === 'accepted')
+          ? 'تم قبول طلبك تواصل معانا'
+          : (data.enrollment.message || data.enrollment.status);
+        lines.push(`استمارة التقديم (${data.enrollment.player_name}): ${eMsg}`);
       }
       if(data.booking){
         const bMsg = String(data.booking.status || '').toLowerCase() === 'approved' || String(data.booking.status || '').toLowerCase() === 'accepted'
@@ -4009,6 +4082,7 @@ async function syncParentFeedbackAvailability(){
 }
 
 async function loadParentSubmittedFeedbackSection(){
+  loadPersistedSeenFeedback();
   const box = $('parentSubmittedFeedbackBox');
   if(!box || !parentUser) return;
   const client = getSupabaseClient();
@@ -4016,12 +4090,16 @@ async function loadParentSubmittedFeedbackSection(){
   let rows = [];
   if(client){
     try{
-      let q = client.from('parent_feedback').select('*').order('created_at',{ascending:false}).limit(20);
-      if(linkedPlayerIds.size > 0){
-        q = q.in('player_id', Array.from(linkedPlayerIds));
+      const {data, error} = await client
+        .from('parent_feedback')
+        .select('*')
+        .order('created_at',{ascending:false})
+        .limit(30);
+      if(!error && Array.isArray(data)){
+        rows = linkedPlayerIds.size > 0
+          ? data.filter(r => !r.player_id || linkedPlayerIds.has(String(r.player_id)) || String(r.submitted_by) === String(parentUser.id))
+          : data;
       }
-      const {data, error} = await q;
-      if(!error && Array.isArray(data)) rows = data;
     }catch(_){}
   }
 
@@ -4030,7 +4108,7 @@ async function loadParentSubmittedFeedbackSection(){
     return;
   }
 
-  let anySeen = false;
+  let anySeen = localSeenParentFeedbackIds.size > 0;
   const htmlRows = rows.map(r => {
     const pName = linkedPlayersList.find(p => String(p.player_id) === String(r.player_id))?.full_name || 'اللاعب';
     const isSeen = Boolean(r.seen_at || r.status === 'seen' || localSeenParentFeedbackIds.has(String(r.id)));
@@ -4040,14 +4118,14 @@ async function loadParentSubmittedFeedbackSection(){
       <span>
         <b>${esc(pName)}</b> · مستوى اللاعب: ${r.parent_player_level ?? '—'}/5 · الأكاديمية: ${r.academy_rating ?? '—'}/5
         ${r.comments ? `<br><small class="muted">${esc(r.comments)}</small>` : ''}
-        ${isSeen ? `<div class="notice ok" style="margin-top:6px">تم رؤية تقييمك بنجاح</div>` : ''}
+        ${isSeen ? `<div class="notice ok" style="margin-top:6px">تم مشاهدة تقييمك</div>` : ''}
       </span>
-      <span class="badge">${isSeen ? 'تم رؤية تقييمك بنجاح' : 'قيد المراجعة'}</span>
+      <span class="badge">${isSeen ? 'تم مشاهدة تقييمك' : 'قيد المراجعة'}</span>
     </div>`;
   }).join('');
 
   const bannerHtml = anySeen
-    ? `<div class="notice ok" style="margin-bottom:10px">تم رؤية تقييمك بنجاح</div>`
+    ? `<div class="notice ok" style="margin-bottom:10px">تم مشاهدة تقييمك</div>`
     : '';
 
   box.innerHTML = `${bannerHtml}<h4>تقييماتك المرسلة</h4>` + htmlRows;
@@ -4236,6 +4314,30 @@ async function sendLinkRequest(){
   $('linkName').value='';
   await showParentDash();
 }
+
+document.addEventListener('visibilitychange', async () => {
+  if(document.visibilityState !== 'visible') return;
+  await window.__assetsReady;
+  const client = getSupabaseClient();
+  if(!client) return;
+  const {data} = await client.auth.getSession();
+  if(data?.session?.user){
+    const {data:ad} = await client
+      .from('academy_admins')
+      .select('admin_name')
+      .eq('user_id', data.session.user.id)
+      .maybeSingle();
+    if(ad){
+      user = data.session.user;
+      parentUser = null;
+      if($('adminName')) $('adminName').textContent = ad.admin_name || 'BLACK HORSE ADMIN';
+    }else{
+      user = null;
+      parentUser = data.session.user;
+      await loadParentSubmittedFeedbackSection();
+    }
+  }
+});
 
 init();
 </script>
