@@ -573,7 +573,7 @@ header, .nav, .navbar, .topbar, .header{
 <label>رقم الموبايل (مطلوب عند إنشاء حساب)<input id="pPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="مثال: 01115099181"></label>
 </div>
 <div class="actions">
-<button type="button" onclick="parentLogin()">تسجيل الدخول</button>
+<button id="parentLogin" type="button" onclick="parentLogin()">تسجيل الدخول</button>
 <button type="button" class="secondary" onclick="parentSignup()">إنشاء حساب</button>
 <button type="button" class="secondary" onclick="parentReset()">نسيت كلمة المرور؟</button>
 </div>
@@ -918,6 +918,20 @@ let localEventBookings = [];
 let localParentProfiles = [];
 let parentBookingsCache = [];
 let activeParentTabId = 'pTabEvaluations';
+
+async function withTimeout(promise, ms, label){
+  let timerId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timerId = setTimeout(() => {
+      reject(new Error(`انتهت مهلة ${label} (${Math.round(ms / 1000)} ثانية). تأكد من الاتصال أو إعدادات Supabase.`));
+    }, ms);
+  });
+  try{
+    return await Promise.race([promise, timeoutPromise]);
+  }finally{
+    clearTimeout(timerId);
+  }
+}
 
 function loadPersistedSeenFeedback(){
   try{
@@ -1460,6 +1474,8 @@ $('loginForm').addEventListener('submit',async e=>{
 
   const msg=$('loginMsg');
   const btn=$('loginForm').querySelector('button[type="submit"]');
+  const originalBtnText = btn ? btn.textContent : 'دخول';
+
   await window.__assetsReady;
   const client=getSupabaseClient();
 
@@ -1468,26 +1484,40 @@ $('loginForm').addEventListener('submit',async e=>{
     return;
   }
 
-  btn.disabled=true;
-  btn.textContent='جاري التحقق…';
+  const email = String($('adminEmail')?.value || '').trim();
+  const password = String($('adminPass')?.value || '');
+  if(!email || !password){
+    setNotice(msg,'يرجى إدخال البريد الإلكتروني وكلمة المرور.','err');
+    return;
+  }
+
+  if(btn){
+    btn.disabled=true;
+    btn.textContent='جاري التحقق…';
+  }
   setNotice(msg,'جاري التحقق من بيانات الدخول…');
 
   try{
-    const {data,error}=await client.auth.signInWithPassword({
-      email:$('adminEmail').value.trim(),
-      password:$('adminPass').value
-    });
+    const {data,error}=await withTimeout(
+      client.auth.signInWithPassword({ email, password }),
+      12000,
+      'تسجيل دخول الإدارة'
+    );
 
     if(error)throw error;
     if(!data?.user)throw new Error('لم يتم استلام بيانات الحساب.');
 
     setNotice(msg,'تم التحقق من الحساب، جاري تحديد نوع الحساب…');
 
-    const {data:ad,error:ae}=await client
-      .from('academy_admins')
-      .select('admin_name')
-      .eq('user_id',data.user.id)
-      .maybeSingle();
+    const {data:ad,error:ae}=await withTimeout(
+      client
+        .from('academy_admins')
+        .select('admin_name')
+        .eq('user_id',data.user.id)
+        .maybeSingle(),
+      12000,
+      'التحقق من صلاحيات الإدارة'
+    );
 
     if(ae)throw ae;
 
@@ -1502,15 +1532,17 @@ $('loginForm').addEventListener('submit',async e=>{
     parentUser=data.user;
     viewHistory=[];
     renderView({page:'parent',tab:null});
-    await showParentDash();
+    await withTimeout(showParentDash(), 12000, 'تحميل بوابة ولي الأمر');
     setNotice($('pMsg'),'هذا الحساب مسجل كحساب ولي أمر وليس حساب إدارة؛ تم توجيهك إلى بوابة ولي الأمر.','ok');
 
   }catch(err){
     console.error('Login error:',err);
-    setNotice(msg,err.message||'حصل خطأ أثناء تسجيل الدخول. حاولي مرة أخرى.','err');
+    setNotice(msg,err?.message||'حصل خطأ أثناء تسجيل الدخول. حاولي مرة أخرى.','err');
   }finally{
-    btn.disabled=false;
-    btn.textContent='دخول';
+    if(btn){
+      btn.disabled=false;
+      btn.textContent=originalBtnText || 'دخول';
+    }
   }
 });
 
@@ -3920,39 +3952,68 @@ async function saveParentPhoneRecord(client, authUser, phone){
 }
 
 async function parentLogin(){
+  const btn = $('parentLogin');
+  const originalBtnText = btn ? btn.textContent : 'تسجيل الدخول';
+
   await window.__assetsReady;
   const client=getSupabaseClient();
   if(!client){setNotice($('pMsg'),'تعذر الاتصال بقاعدة البيانات.','err');return;}
-  const email=$('pEmail').value.trim();
-  const password=$('pPass').value;
+
+  const email=String($('pEmail')?.value || '').trim();
+  const password=String($('pPass')?.value || '');
   const phoneInput = normalizeMobileInput($('pPhone')?.value || '');
+
   if(!email || !password){
     setNotice($('pMsg'),'يرجى إدخال البريد الإلكتروني وكلمة المرور.','err');
     return;
   }
-  let {data,error}=await client.auth.signInWithPassword({email,password});
-  if(error || !data?.user){
-    parentUser=null;
-    $('parentDash').classList.add('hidden');
-    $('parentAuth').classList.remove('hidden');
-    const rawMsg = String(error?.message||'').toLowerCase();
-    if(rawMsg.includes('email not confirmed')){
-      setNotice($('pMsg'),'يرجى تأكيد البريد الإلكتروني أولًا عبر الرابط المرسل إلى بريدك (بحسب إعدادات تأكيد البريد في Supabase) ثم تسجيل الدخول.','err');
-    }else{
-      setNotice($('pMsg'),error?.message||'تعذر تسجيل الدخول.','err');
+
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = 'جاري الدخول…';
+  }
+  setNotice($('pMsg'),'جاري التحقق من بيانات الحساب…');
+
+  try{
+    const {data,error}=await withTimeout(
+      client.auth.signInWithPassword({email,password}),
+      12000,
+      'تسجيل دخول ولي الأمر'
+    );
+
+    if(error || !data?.user){
+      parentUser=null;
+      $('parentDash').classList.add('hidden');
+      $('parentAuth').classList.remove('hidden');
+      const rawMsg = String(error?.message||'').toLowerCase();
+      if(rawMsg.includes('email not confirmed')){
+        setNotice($('pMsg'),'يرجى تأكيد البريد الإلكتروني أولًا عبر الرابط المرسل إلى بريدك (بحسب إعدادات تأكيد البريد في Supabase) ثم تسجيل الدخول.','err');
+      }else{
+        setNotice($('pMsg'),error?.message||'تعذر تسجيل الدخول.','err');
+      }
+      return;
     }
-    return;
+
+    user=null;
+    parentUser=data.user;
+    const effectivePhone = phoneInput || normalizeMobileInput(data.user.user_metadata?.phone || '');
+    if(effectivePhone){
+      await saveParentPhoneRecord(client, data.user, effectivePhone);
+    }
+
+    setNotice($('pMsg'),'تم تسجيل الدخول، جاري تحميل بوابة ولي الأمر…','ok');
+    viewHistory=[];
+    renderView({page:'parent',tab:null});
+    await withTimeout(showParentDash(), 12000, 'تحميل بيانات ولي الأمر');
+  }catch(err){
+    console.error('Parent login error:', err);
+    setNotice($('pMsg'),err?.message||'تعذر تسجيل الدخول. تأكد من البيانات وحاول مرة أخرى.','err');
+  }finally{
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = originalBtnText || 'تسجيل الدخول';
+    }
   }
-  user=null;
-  parentUser=data.user;
-  const effectivePhone = phoneInput || normalizeMobileInput(data.user.user_metadata?.phone || '');
-  if(effectivePhone){
-    await saveParentPhoneRecord(client, data.user, effectivePhone);
-  }
-  setNotice($('pMsg'),'تم تسجيل الدخول.','ok');
-  viewHistory=[];
-  renderView({page:'parent',tab:null});
-  await showParentDash();
 }
 
 async function parentSignup(){
