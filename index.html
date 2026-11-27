@@ -21,7 +21,7 @@
           s.onload = null;
           s.onerror = null;
           next();
-        }, 6000);
+        }, 5000);
         s.onload = function(){
           clearTimeout(timer);
           resolve(checkFn ? Boolean(checkFn()) : true);
@@ -257,7 +257,6 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
   color:#b9e5cc
 }
 
-/* مربع التحديث المنبثق عند الضغط على زر تحديث */
 .admin-refresh-toast{
   position:fixed;
   bottom:25px;
@@ -606,9 +605,9 @@ header, .nav, .navbar, .topbar, .header{
 <label>رقم الموبايل (مطلوب عند إنشاء حساب)<input id="pPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="مثال: 01115099181"></label>
 </div>
 <div class="actions">
-<button type="button" onclick="parentLogin()">تسجيل الدخول</button>
-<button type="button" class="secondary" onclick="parentSignup()">إنشاء حساب</button>
-<button type="button" class="secondary" onclick="parentReset()">نسيت كلمة المرور؟</button>
+<button id="btnParentLogin" type="button" onclick="parentLogin()">تسجيل الدخول</button>
+<button id="btnParentSignup" type="button" class="secondary" onclick="parentSignup()">إنشاء حساب</button>
+<button id="btnParentReset" type="button" class="secondary" onclick="parentReset()">نسيت كلمة المرور؟</button>
 </div>
 <p class="muted small">ملاحظة: يعتمد تأكيد البريد الإلكتروني وإرسال رسائل التفعيل أو الاستعادة على إعدادات مشروع Supabase الحالية.</p>
 <div id="pMsg" class="notice">سجّل الدخول أو أنشئ حسابًا لمتابعة لاعبك.</div>
@@ -704,7 +703,7 @@ header, .nav, .navbar, .topbar, .header{
 <form id="loginForm">
 <label>البريد الإلكتروني<input id="adminEmail" type="email" required></label>
 <label>كلمة المرور<input id="adminPass" type="password" required></label>
-<button type="submit">دخول</button>
+<button id="btnAdminLogin" type="submit">دخول</button>
 <div id="loginMsg" class="notice">الدخول لحسابات الإدارة المعتمدة فقط.</div>
 </form>
 </div>
@@ -940,6 +939,8 @@ const AUTH_STORAGE_KEY='bh-auth-session-v1';
 let db=null;
 let authListenerBound=false;
 let manualLoginInProgress=false;
+let sessionApplyingUserId=null;
+let verifiedAdminCache=new Map();
 let qrSeqCounter=0;
 
 function getPersistentStorage(){
@@ -973,14 +974,50 @@ function getSupabaseClient(){
   return null;
 }
 
-async function verifyAdminWithRetry(client, userId, timeoutPerAttempt = 35000, onProgress){
+function clearStoredAuthTokens(){
+  try{
+    if(window.localStorage){
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      Object.keys(localStorage).forEach(k => {
+        if(k && (k.startsWith('sb-') || k.includes('supabase'))) {
+          localStorage.removeItem(k);
+        }
+      });
+    }
+  }catch(_){}
+  try{
+    if(window.sessionStorage){
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      Object.keys(sessionStorage).forEach(k => {
+        if(k && (k.startsWith('sb-') || k.includes('supabase'))) {
+          sessionStorage.removeItem(k);
+        }
+      });
+    }
+  }catch(_){}
+}
+
+async function signOutFast(client, timeoutMs = 3500){
+  clearStoredAuthTokens();
+  if(!client || !client.auth || typeof client.auth.signOut !== 'function') return;
+  try{
+    await withTimeout(client.auth.signOut({ scope: 'local' }), timeoutMs, 'signOut local timeout');
+  }catch(_){
+    try{
+      await withTimeout(client.auth.signOut(), timeoutMs, 'signOut timeout');
+    }catch(__){}
+  }
+}
+
+async function verifyAdminWithRetry(client, userId, timeoutPerAttempt = 8500, onProgress){
+  if(verifiedAdminCache.has(userId)){
+    return { data: verifiedAdminCache.get(userId), error: null, definitive: true };
+  }
   let lastError = null;
   for(let attempt = 1; attempt <= 2; attempt++){
     try{
-      if(typeof onProgress === 'function'){
-        onProgress(attempt === 1
-          ? 'تم تسجيل الدخول، جاري التحقق من صلاحيات الإدارة…'
-          : 'الاستجابة أبطأ من المعتاد، جاري إعادة التحقق من الصلاحيات…');
+      if(typeof onProgress === 'function' && attempt === 2){
+        onProgress('جاري إتمام التحقق السريع من صلاحيات الإدارة…');
       }
       const res = await withTimeout(
         client.from('academy_admins').select('admin_name').eq('user_id', userId).maybeSingle(),
@@ -999,11 +1036,14 @@ async function verifyAdminWithRetry(client, userId, timeoutPerAttempt = 35000, o
         }
         throw res.error;
       }
+      if(res?.data){
+        verifiedAdminCache.set(userId, res.data);
+      }
       return { data: res?.data || null, error: null, definitive: true };
     }catch(err){
       lastError = err;
       if(attempt < 2){
-        await new Promise(r => setTimeout(r, 1200));
+        await new Promise(r => setTimeout(r, 350));
       }
     }
   }
@@ -1013,32 +1053,38 @@ async function verifyAdminWithRetry(client, userId, timeoutPerAttempt = 35000, o
 }
 
 async function applyAuthenticatedSession(client, sessionUser){
-  if(!sessionUser){
-    return;
-  }
+  if(!sessionUser || !sessionUser.id) return;
+  if(sessionApplyingUserId === sessionUser.id) return;
+  sessionApplyingUserId = sessionUser.id;
   try{
-    const {data:ad} = await verifyAdminWithRetry(client, sessionUser.id, 35000);
-    if(ad){
-      user=sessionUser;
-      parentUser=null;
-      showAdmin(ad.admin_name);
-      return;
+    try{
+      const {data:ad} = await verifyAdminWithRetry(client, sessionUser.id, 8500);
+      if(ad){
+        user=sessionUser;
+        parentUser=null;
+        showAdmin(ad.admin_name);
+        return;
+      }
+    }catch(err){
+      console.warn('Admin check warning during session restore:', err?.message || err);
+      if(user && user.id === sessionUser.id){
+        return;
+      }
     }
-  }catch(err){
-    console.warn('Admin check warning during session restore:', err?.message || err);
-    if(user && user.id === sessionUser.id){
-      return;
-    }
-  }
 
-  user=null;
-  parentUser=sessionUser;
-  $('parentAuth').classList.add('hidden');
-  $('parentDash').classList.remove('hidden');
-  if(currentView().page === 'parent'){
-    renderView({page:'parent',tab:null});
+    user=null;
+    parentUser=sessionUser;
+    $('parentAuth').classList.add('hidden');
+    $('parentDash').classList.remove('hidden');
+    if(currentView().page === 'parent'){
+      renderView({page:'parent',tab:null});
+    }
+    await showParentDash();
+  }finally{
+    if(sessionApplyingUserId === sessionUser.id){
+      sessionApplyingUserId = null;
+    }
   }
-  await showParentDash();
 }
 
 function bindAuthStateListener(client){
@@ -1049,6 +1095,7 @@ function bindAuthStateListener(client){
       if(!user && !parentUser) return;
       user = null;
       parentUser = null;
+      sessionApplyingUserId = null;
       linkedPlayerIds.clear();
       linkedPlayersList = [];
       $('parentDash')?.classList.add('hidden');
@@ -1059,8 +1106,8 @@ function bindAuthStateListener(client){
       }
       return;
     }
-    if(manualLoginInProgress) return;
-    if((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session?.user){
+    if(manualLoginInProgress || sessionApplyingUserId) return;
+    if((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user){
       const currentActiveId = user?.id || parentUser?.id || null;
       if(currentActiveId !== session.user.id){
         await applyAuthenticatedSession(client, session.user);
@@ -1087,7 +1134,7 @@ async function signInWithRecovery(client, email, password, timeoutLabel){
   try{
     return await withTimeout(
       client.auth.signInWithPassword({ email: email, password: password }),
-      25000,
+      10000,
       timeoutLabel
     );
   }catch(firstErr){
@@ -1095,7 +1142,7 @@ async function signInWithRecovery(client, email, password, timeoutLabel){
     if(!isTimeout) throw firstErr;
     return await withTimeout(
       client.auth.signInWithPassword({ email: email, password: password }),
-      25000,
+      8000,
       timeoutLabel
     );
   }
@@ -1431,20 +1478,26 @@ async function syncAdminTabData(tabId){
   if(tabId==='evaluations'){
     populateEvalPlayers();
     if($('evalDate') && !$('evalDate').value) $('evalDate').value = today();
-    await loadParentFeedbackSetting();
-    await loadCoachEvaluationsAdmin();
-    await loadParentFeedbackAdmin();
+    await Promise.allSettled([
+      loadParentFeedbackSetting(),
+      loadCoachEvaluationsAdmin(),
+      loadParentFeedbackAdmin()
+    ]);
   }
   if(tabId==='eventsAdmin'){
-    await loadAdminEventsList();
-    await loadBookings();
-    await loadSectionViewsAdmin(['events','bookings']);
+    await Promise.allSettled([
+      loadAdminEventsList(),
+      loadBookings(),
+      loadSectionViewsAdmin(['events','bookings'])
+    ]);
   }
   if(tabId==='matches'){
-    await loadMatches();
-    await loadMatchRegistrationsAdmin();
-    await loadMatchViewsAdmin();
-    await loadSectionViewsAdmin(['matches']);
+    await Promise.allSettled([
+      loadMatches(),
+      loadMatchRegistrationsAdmin(),
+      loadMatchViewsAdmin(),
+      loadSectionViewsAdmin(['matches'])
+    ]);
   }
   if(tabId==='requests') await loadRequests();
   if(tabId==='parents') await loadParentRequests();
@@ -1573,8 +1626,8 @@ async function init(){
   }
   try{
     const [b,g]=await Promise.all([
-      withTimeout(client.from('branches').select('*').order('name'), 12000, 'انتهت مهلة تحميل الفروع'),
-      withTimeout(client.from('academy_groups').select('*').order('name'), 12000, 'انتهت مهلة تحميل المجموعات')
+      withTimeout(client.from('branches').select('*').order('name'), 8000, 'انتهت مهلة تحميل الفروع'),
+      withTimeout(client.from('academy_groups').select('*').order('name'), 8000, 'انتهت مهلة تحميل المجموعات')
     ]);
     if(b.error || g.error){
       const errTxt = (b.error?.message || '') + ' ' + (g.error?.message || '');
@@ -1590,18 +1643,11 @@ async function init(){
     fill('plGroup',groups,'كل المجموعات / غير محدد');
     if($('attDate') && !$('attDate').value) $('attDate').value = today();
     if($('evalDate') && !$('evalDate').value) $('evalDate').value = today();
-    await loadPublicEvents();
+    loadPublicEvents();
 
     try{
-      let sessionData = null;
-      try{
-        const res = await withTimeout(client.auth.getSession(), 15000, 'انتهت مهلة قراءة الجلسة');
-        if(res?.error) console.error('Session restore error:', res.error);
-        sessionData = res?.data || null;
-      }catch(_){
-        const fallbackRes = await client.auth.getSession();
-        sessionData = fallbackRes?.data || null;
-      }
+      const res = await withTimeout(client.auth.getSession(), 7000, 'انتهت مهلة قراءة الجلسة');
+      const sessionData = res?.data || null;
 
       if(sessionData?.session?.user){
         await applyAuthenticatedSession(client, sessionData.session.user);
@@ -1610,8 +1656,10 @@ async function init(){
         $('parentDash').classList.add('hidden');
         $('parentAuth').classList.remove('hidden');
       }
-    }catch(sessErr){
-      console.warn('Session check skipped due to network:', sessErr);
+    }catch(_){
+      parentUser=null;
+      $('parentDash').classList.add('hidden');
+      $('parentAuth').classList.remove('hidden');
     }
   }catch(e){
     console.error('App init error:',e);
@@ -1630,7 +1678,7 @@ $('loginForm').addEventListener('submit',async e=>{
   e.preventDefault();
 
   const msg=$('loginMsg');
-  const btn=$('loginForm').querySelector('button[type="submit"]');
+  const btn=$('btnAdminLogin') || $('loginForm').querySelector('button[type="submit"]');
   await window.__assetsReady;
   const client=getSupabaseClient();
 
@@ -1639,28 +1687,38 @@ $('loginForm').addEventListener('submit',async e=>{
     return;
   }
 
+  const emailVal = $('adminEmail').value.trim();
+  const passVal = $('adminPass').value;
+  if(!emailVal || !passVal){
+    setNotice(msg,'يرجى إدخال البريد الإلكتروني وكلمة المرور.','err');
+    return;
+  }
+
   manualLoginInProgress = true;
-  btn.disabled=true;
-  btn.textContent='جاري التحقق…';
-  setNotice(msg,'جاري التحقق من بيانات الدخول…');
+  if(btn){
+    btn.disabled=true;
+    btn.textContent='جاري الدخول…';
+  }
+  setNotice(msg,'جاري تسجيل الدخول…');
 
   try{
     const {data,error}=await signInWithRecovery(
       client,
-      $('adminEmail').value.trim(),
-      $('adminPass').value,
+      emailVal,
+      passVal,
       'تأخر تسجيل دخول الإدارة. تحقق من اتصال الإنترنت وأعد المحاولة الآن.'
     );
 
     if(error)throw error;
     if(!data?.user)throw new Error('لم يتم استلام بيانات الحساب.');
 
-    setNotice(msg,'تم تسجيل الدخول، جاري التحقق من صلاحيات الإدارة…');
+    sessionApplyingUserId = data.user.id;
+    setNotice(msg,'تم تسجيل الدخول، جاري التحقق من الصلاحيات…');
 
     const {data:ad, error:adminErr}=await verifyAdminWithRetry(
       client,
       data.user.id,
-      35000,
+      8500,
       statusText => setNotice(msg, statusText)
     );
 
@@ -1689,30 +1747,33 @@ $('loginForm').addEventListener('submit',async e=>{
       : (err?.message || 'حصل خطأ أثناء تسجيل الدخول. حاولي مرة أخرى.');
     setNotice(msg, fallbackMsg, 'err');
   }finally{
+    sessionApplyingUserId = null;
     manualLoginInProgress = false;
-    btn.disabled=false;
-    btn.textContent='دخول';
+    if(btn){
+      btn.disabled=false;
+      btn.textContent='دخول';
+    }
   }
 });
 
 async function adminLogout(){
-  await stopScanner();
+  const client=getSupabaseClient();
+  stopScanner();
   hideScanPopup();
   hidePlayerSavePopup();
   hideAdminRefreshToast();
-  const client=getSupabaseClient();
-  if(client){
-    try{
-      const {error}=await withTimeout(client.auth.signOut(), 6000, 'انتهت مهلة تسجيل الخروج');
-      if(error)console.error('Admin signOut error:',error);
-    }catch(_){}
-  }
+
   user=null;
+  parentUser=null;
+  sessionApplyingUserId=null;
   activeSession=null;
   scannedInSession.clear();
   viewHistory=[];
+  if($('adminPass')) $('adminPass').value='';
   page('home',false);
   syncBackButton();
+
+  await signOutFast(client, 3500);
 }
 
 async function refreshAll(notifyUser = false){
@@ -1754,7 +1815,7 @@ async function refreshAll(notifyUser = false){
   populateEvalPlayers();
   renderAdminEventsList();
 
-  await Promise.all([
+  Promise.allSettled([
     loadParentFeedbackSetting(),
     loadCoachEvaluationsAdmin(),
     loadBookings(),
@@ -2580,7 +2641,7 @@ async function startScanner(){
     scanner = instance;
     setNotice($('scanMsg'),'الكاميرا شغالة وجاهزة للمسح السريع المتواصل.','ok');
   }catch(e){
-    await stopScanner();
+    stopScanner();
     const detail = e?.message || String(e||'خطأ غير معروف');
     setNotice($('scanMsg'),'تعذر تشغيل الكاميرا: ' + detail + ' — يمكنك اختيار صورة QR أو إدخال الرمز يدويًا.','err');
   }finally{
@@ -2588,7 +2649,7 @@ async function startScanner(){
   }
 }
 
-async function stopScanner(){
+function stopScanner(){
   if(fastRafId){
     cancelAnimationFrame(fastRafId);
     fastRafId = null;
@@ -2605,8 +2666,8 @@ async function stopScanner(){
   scanner=null;
   scannerStarting=false;
   if(current){
-    try{await current.stop();}catch(e){}
-    try{await current.clear();}catch(e){}
+    try{ current.stop().catch(()=>{}); }catch(e){}
+    try{ current.clear(); }catch(e){}
   }
   if($('reader')) $('reader').innerHTML = '';
 }
@@ -3128,7 +3189,7 @@ async function bookEvent(id, eventTitle, prefilledName, prefilledPhone){
   }
 
   if(parentUser){
-    await recordParentSectionView('bookings', `حجز فعالية: ${eventTitle || id} (${name.trim()})`);
+    recordParentSectionView('bookings', `حجز فعالية: ${eventTitle || id} (${name.trim()})`);
   }
 
   let bookingId = makeUUID();
@@ -3714,7 +3775,7 @@ async function registerPlayerForMatch(matchId, matchTitle, playerId, playerName)
     return;
   }
 
-  await recordParentMatchView(matchId, matchTitle);
+  recordParentMatchView(matchId, matchTitle);
 
   const newReg = {
     id: makeUUID(),
@@ -4161,6 +4222,7 @@ async function saveParentPhoneRecord(client, authUser, phone){
 }
 
 async function parentLogin(){
+  const btn = $('btnParentLogin');
   await window.__assetsReady;
   const client=getSupabaseClient();
   if(!client){setNotice($('pMsg'),'تعذر الاتصال بقاعدة البيانات.','err');return;}
@@ -4172,13 +4234,17 @@ async function parentLogin(){
     return;
   }
   manualLoginInProgress = true;
+  if(btn){
+    btn.disabled=true;
+    btn.textContent='جاري الدخول…';
+  }
   setNotice($('pMsg'),'جاري تسجيل الدخول…');
   try{
     let {data,error}=await signInWithRecovery(
       client,
       email,
       password,
-      'انتهت مهلة تسجيل دخول ولي الأمر (25 ثانية). تحقق من اتصال الإنترنت أو إعدادات Supabase.'
+      'انتهت مهلة تسجيل دخول ولي الأمر. تحقق من اتصال الإنترنت أو إعدادات Supabase.'
     );
     if(error || !data?.user){
       parentUser=null;
@@ -4192,11 +4258,12 @@ async function parentLogin(){
       }
       return;
     }
+    sessionApplyingUserId = data.user.id;
     user=null;
     parentUser=data.user;
     const effectivePhone = phoneInput || normalizeMobileInput(data.user.user_metadata?.phone || '');
     if(effectivePhone){
-      await saveParentPhoneRecord(client, data.user, effectivePhone);
+      saveParentPhoneRecord(client, data.user, effectivePhone);
     }
     setNotice($('pMsg'),'تم تسجيل الدخول.','ok');
     viewHistory=[];
@@ -4208,11 +4275,17 @@ async function parentLogin(){
     $('parentAuth').classList.remove('hidden');
     setNotice($('pMsg'),err?.message||'انتهت مهلة تسجيل دخول ولي الأمر. أعد المحاولة.','err');
   }finally{
+    sessionApplyingUserId = null;
     manualLoginInProgress = false;
+    if(btn){
+      btn.disabled=false;
+      btn.textContent='تسجيل الدخول';
+    }
   }
 }
 
 async function parentSignup(){
+  const btn = $('btnParentSignup');
   await window.__assetsReady;
   const client=getSupabaseClient();
   if(!client){setNotice($('pMsg'),'تعذر الاتصال بقاعدة البيانات.','err');return;}
@@ -4229,6 +4302,11 @@ async function parentSignup(){
     return;
   }
   manualLoginInProgress = true;
+  if(btn){
+    btn.disabled=true;
+    btn.textContent='جاري الإنشاء…';
+  }
+  setNotice($('pMsg'),'جاري إنشاء الحساب…');
   try{
     let {data,error}=await withTimeout(
       client.auth.signUp({
@@ -4236,16 +4314,17 @@ async function parentSignup(){
         password,
         options:{ data:{ phone: phoneVal } }
       }),
-      20000,
-      'انتهت مهلة إنشاء الحساب (20 ثانية). تحقق من الاتصال أو إعدادات Supabase.'
+      10000,
+      'انتهت مهلة إنشاء الحساب. تحقق من الاتصال أو إعدادات Supabase.'
     );
     if(error){
       setNotice($('pMsg'),error.message,'err');
       return;
     }
-    await saveParentPhoneRecord(client, data?.user || null, phoneVal);
+    saveParentPhoneRecord(client, data?.user || null, phoneVal);
 
     if(data?.session && data?.user){
+      sessionApplyingUserId = data.user.id;
       user=null;
       parentUser=data.user;
       setNotice($('pMsg'),`تم إنشاء الحساب وحفظ رقم الموبايل (${phoneVal}) بنجاح.`,'ok');
@@ -4264,7 +4343,12 @@ async function parentSignup(){
       setNotice($('pMsg'),'لم يتم تأكيد إنشاء الجلسة؛ تحقق من بيانات البريد وإعدادات التسجيل في Supabase.','err');
     }
   }finally{
+    sessionApplyingUserId = null;
     manualLoginInProgress = false;
+    if(btn){
+      btn.disabled=false;
+      btn.textContent='إنشاء حساب';
+    }
   }
 }
 
@@ -4279,7 +4363,7 @@ async function parentReset(){
   }
   let {error}=await withTimeout(
     client.auth.resetPasswordForEmail(email),
-    15000,
+    8000,
     'انتهت مهلة طلب استعادة كلمة المرور.'
   );
   setNotice($('pMsg'),error?error.message:'تم طلب إرسال رابط استعادة كلمة المرور؛ وصول الرسالة يعتمد على إعدادات البريد في Supabase للبريد المدخل.','ok');
@@ -4287,28 +4371,24 @@ async function parentReset(){
 
 async function parentLogout(){
   const client=getSupabaseClient();
-  if(client){
-    try{
-      const {error}=await withTimeout(client.auth.signOut(), 6000, 'انتهت مهلة تسجيل الخروج');
-      if(error){
-        setNotice($('pMsg'),'حدث خطأ أثناء تسجيل الخروج: ' + error.message,'err');
-        return;
-      }
-    }catch(_){}
-  }
+
   parentUser=null;
+  user=null;
+  sessionApplyingUserId=null;
   linkedPlayerIds.clear();
   linkedPlayersList=[];
-  $('pPass').value='';
+  if($('pPass')) $('pPass').value='';
   if($('pPhone')) $('pPhone').value='';
-  $('linkName').value='';
-  $('linkedPlayers').innerHTML='—';
-  $('linkRequests').innerHTML='—';
-  $('feedbackPlayer').innerHTML='';
-  $('parentFeedbackForm').classList.add('hidden');
-  $('parentDash').classList.add('hidden');
-  $('parentAuth').classList.remove('hidden');
+  if($('linkName')) $('linkName').value='';
+  if($('linkedPlayers')) $('linkedPlayers').innerHTML='—';
+  if($('linkRequests')) $('linkRequests').innerHTML='—';
+  if($('feedbackPlayer')) $('feedbackPlayer').innerHTML='';
+  if($('parentFeedbackForm')) $('parentFeedbackForm').classList.add('hidden');
+  if($('parentDash')) $('parentDash').classList.add('hidden');
+  if($('parentAuth')) $('parentAuth').classList.remove('hidden');
   setNotice($('pMsg'),'تم تسجيل الخروج. سجّل الدخول لمتابعة لاعبك.');
+
+  await signOutFast(client, 3500);
 }
 
 function formatAttendanceLabel(rawStatus){
@@ -4419,6 +4499,36 @@ async function markEvaluationSeen(playerId, evalId){
   if(user) await loadCoachEvaluationsAdmin();
 }
 
+async function loadParentAttendanceForLinked(client, linked){
+  const attBox = $('parentAttendanceBox');
+  if(!attBox) return;
+  if(!linked.length){
+    attBox.innerHTML = '<p class="muted small">لا يوجد لاعب مرتبط حتى الآن لعرض سجل الحضور والغياب.</p>';
+    return;
+  }
+  attBox.innerHTML = linked.map(x => `<div class="card" style="margin:10px 0"><h3>${esc(x.full_name)}</h3><div id="history-${esc(x.player_id)}" class="muted small">جاري تحميل سجل الحضور…</div></div>`).join('');
+
+  await Promise.allSettled(linked.map(async x => {
+    const h = await client
+      .from('attendance_records')
+      .select('attendance_status,attendance_sessions(session_date,session_closed)')
+      .eq('player_id', x.player_id)
+      .order('attended_at', {ascending:false})
+      .limit(20);
+    const el = $('history-' + x.player_id);
+    if(!el) return;
+    if(h.error){
+      el.innerHTML = `<b>سجل الحضور</b><br><span class="small">${esc(h.error.message)}</span>`;
+      return;
+    }
+    const rows = h.data || [];
+    el.innerHTML = '<b>سجل الحضور</b><br>' + (rows.length ? rows.map(z => {
+      const stLabel = formatAttendanceLabel(z.attendance_status);
+      return `${esc(z.attendance_sessions?.session_date||'—')} · ${esc(stLabel)}`;
+    }).join('<br>') : 'لا يوجد سجل حضور بعد');
+  }));
+}
+
 async function showParentDash(){
   if(!parentUser){
     $('parentDash').classList.add('hidden');
@@ -4431,7 +4541,7 @@ async function showParentDash(){
   $('parentDash').classList.remove('hidden');
   parentTab(activeParentTabId);
 
-  let [p,r]=await Promise.all([
+  const [p,r]=await Promise.all([
     client.rpc('get_my_linked_players'),
     client.rpc('get_my_parent_link_requests')
   ]);
@@ -4439,14 +4549,12 @@ async function showParentDash(){
   const linked=p.data||[];
   linkedPlayersList = linked;
   linkedPlayerIds = new Set(linked.map(x=>String(x.player_id)).filter(Boolean));
-  await recordParentSectionView('parent_portal', 'صفحة ولي الأمر');
+  recordParentSectionView('parent_portal', 'صفحة ولي الأمر');
 
   $('linkedPlayers').innerHTML=p.error?`<div class="notice err">${esc(p.error.message)}</div>`:(linked.length ? `<b>اللاعبون المرتبطون بحسابك:</b> ` + linked.map(x=>`<span class="badge">${esc(x.full_name)}</span>`).join(' ') : '<span class="muted small">لا يوجد لاعب مرتبط حتى الآن</span>');
   $('linkRequests').innerHTML=r.error?`<div class="notice err">${esc(r.error.message)}</div>`:((r.data||[]).length ? `<b>طلبات الربط:</b> ` + (r.data||[]).map(x=>`<span class="badge">${esc(x.requested_name)} (${esc(x.status)})</span>`).join(' ') : '');
 
   const evalsBox = $('parentCoachEvaluationsBox');
-  const attBox = $('parentAttendanceBox');
-
   if(evalsBox){
     evalsBox.innerHTML = p.error
       ? `<div class="notice err">${esc(p.error.message)}</div>`
@@ -4457,32 +4565,10 @@ async function showParentDash(){
         }).join('') || '<p class="muted small">لا يوجد لاعب مرتبط حتى الآن لعرض تقييماته.</p>');
   }
 
-  if(attBox){
-    if(!linked.length){
-      attBox.innerHTML = '<p class="muted small">لا يوجد لاعب مرتبط حتى الآن لعرض سجل الحضور والغياب.</p>';
-    }else{
-      attBox.innerHTML = linked.map(x => `<div class="card" style="margin:10px 0"><h3>${esc(x.full_name)}</h3><div id="history-${esc(x.player_id)}" class="muted small">جاري تحميل سجل الحضور…</div></div>`).join('');
-      for(const x of linked){
-        const h=await client.from('attendance_records').select('attendance_status,attendance_sessions(session_date,session_closed)').eq('player_id',x.player_id).order('attended_at',{ascending:false}).limit(20);
-        const el=$('history-'+x.player_id);
-        if(el){
-          if(h.error){
-            el.innerHTML=`<b>سجل الحضور</b><br><span class="small">${esc(h.error.message)}</span>`;
-          }else{
-            const rows = h.data||[];
-            el.innerHTML='<b>سجل الحضور</b><br>'+(rows.length ? rows.map(z=>{
-              const stLabel = formatAttendanceLabel(z.attendance_status);
-              return `${esc(z.attendance_sessions?.session_date||'—')} · ${esc(stLabel)}`;
-            }).join('<br>') : 'لا يوجد سجل حضور بعد');
-          }
-        }
-      }
-    }
-  }
-
   fill('feedbackPlayer',linked.map(x=>({id:x.player_id,name:x.full_name})),'اختاري اللاعب');
 
-  await Promise.all([
+  Promise.allSettled([
+    loadParentAttendanceForLinked(client, linked),
     syncParentFeedbackAvailability(),
     loadParentSubmittedFeedbackSection(),
     loadParentMatchesSection(),
@@ -4580,7 +4666,7 @@ async function sendLinkRequest(){
     showPlayerSavePopup('تم الربط بنجاح', `طلب ربط اللاعب (${name}) مسجل وقيد المراجعة`);
   }else{
     setNotice($('linkMsg'),'تم الربط بنجاح — تم إرسال طلب الربط للإدارة.','ok');
-    showPlayerSavePopup('تم الربط بنجاح', `تم إرسال طلب ربط اللاعب (${name}) بنجاح`);
+    showPlayerSavePopup('تم الربط بنجاح', `تم إرسال طلب الربط اللاعب (${name}) بنجاح`);
   }
   $('linkName').value='';
   await showParentDash();
