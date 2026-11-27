@@ -939,6 +939,7 @@ const SUPABASE_URL='https://rjkdgjncxkszleorcave.supabase.co',KEY='sb_publishabl
 const AUTH_STORAGE_KEY='bh-auth-session-v1';
 let db=null;
 let authListenerBound=false;
+let manualLoginInProgress=false;
 let qrSeqCounter=0;
 
 function getPersistentStorage(){
@@ -972,22 +973,33 @@ function getSupabaseClient(){
   return null;
 }
 
+async function verifyAdminWithRetry(client, userId, timeoutPerAttempt = 20000){
+  let lastError = null;
+  for(let attempt = 1; attempt <= 2; attempt++){
+    try{
+      const res = await withTimeout(
+        client.from('academy_admins').select('admin_name').eq('user_id', userId).maybeSingle(),
+        timeoutPerAttempt,
+        'تأخر التحقق من صلاحيات الإدارة. أعد المحاولة الآن.'
+      );
+      if(res?.error) throw res.error;
+      return res;
+    }catch(err){
+      lastError = err;
+      if(attempt < 2){
+        await new Promise(r => setTimeout(r, 600));
+      }
+    }
+  }
+  throw lastError || new Error('تأخر التحقق من صلاحيات الإدارة. أعد المحاولة الآن.');
+}
+
 async function applyAuthenticatedSession(client, sessionUser){
   if(!sessionUser){
     return;
   }
   try{
-    const {data:ad,error:adErr}=await withTimeout(
-      client.from('academy_admins').select('admin_name').eq('user_id',sessionUser.id).maybeSingle(),
-      10000,
-      'انتهت مهلة التحقق من صلاحيات الإدارة'
-    );
-    if(adErr){
-      console.warn('Admin check warning during session restore:', adErr.message);
-      if(user && user.id === sessionUser.id){
-        return;
-      }
-    }
+    const {data:ad} = await verifyAdminWithRetry(client, sessionUser.id, 18000);
     if(ad){
       user=sessionUser;
       parentUser=null;
@@ -995,7 +1007,7 @@ async function applyAuthenticatedSession(client, sessionUser){
       return;
     }
   }catch(err){
-    console.warn('Admin check timeout during session restore:', err?.message || err);
+    console.warn('Admin check warning during session restore:', err?.message || err);
     if(user && user.id === sessionUser.id){
       return;
     }
@@ -1029,6 +1041,7 @@ function bindAuthStateListener(client){
       }
       return;
     }
+    if(manualLoginInProgress) return;
     if((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session?.user){
       const currentActiveId = user?.id || parentUser?.id || null;
       if(currentActiveId !== session.user.id){
@@ -1056,7 +1069,7 @@ async function signInWithRecovery(client, email, password, timeoutLabel){
   try{
     return await withTimeout(
       client.auth.signInWithPassword({ email: email, password: password }),
-      20000,
+      22000,
       timeoutLabel
     );
   }catch(firstErr){
@@ -1064,7 +1077,7 @@ async function signInWithRecovery(client, email, password, timeoutLabel){
     if(!isTimeout) throw firstErr;
     return await withTimeout(
       client.auth.signInWithPassword({ email: email, password: password }),
-      20000,
+      22000,
       timeoutLabel
     );
   }
@@ -1608,6 +1621,7 @@ $('loginForm').addEventListener('submit',async e=>{
     return;
   }
 
+  manualLoginInProgress = true;
   btn.disabled=true;
   btn.textContent='جاري التحقق…';
   setNotice(msg,'جاري التحقق من بيانات الدخول…');
@@ -1617,7 +1631,7 @@ $('loginForm').addEventListener('submit',async e=>{
       client,
       $('adminEmail').value.trim(),
       $('adminPass').value,
-      'انتهت مهلة تسجيل دخول الإدارة (20 ثانية). تحقق من اتصال الإنترنت أو إعدادات Supabase.'
+      'انتهت مهلة تسجيل دخول الإدارة. تحقق من اتصال الإنترنت أو إعدادات Supabase.'
     );
 
     if(error)throw error;
@@ -1625,13 +1639,7 @@ $('loginForm').addEventListener('submit',async e=>{
 
     setNotice(msg,'تم التحقق من الحساب، جاري تحديد نوع الحساب…');
 
-    const {data:ad,error:ae}=await withTimeout(
-      client.from('academy_admins').select('admin_name').eq('user_id',data.user.id).maybeSingle(),
-      15000,
-      'تأخر التحقق من صلاحيات الإدارة. أعد المحاولة الآن.'
-    );
-
-    if(ae)throw ae;
+    const {data:ad}=await verifyAdminWithRetry(client, data.user.id, 20000);
 
     if(ad){
       user=data.user;
@@ -1651,6 +1659,7 @@ $('loginForm').addEventListener('submit',async e=>{
     console.error('Login error:',err);
     setNotice(msg,err.message||'حصل خطأ أثناء تسجيل الدخول. حاولي مرة أخرى.','err');
   }finally{
+    manualLoginInProgress = false;
     btn.disabled=false;
     btn.textContent='دخول';
   }
@@ -4132,6 +4141,7 @@ async function parentLogin(){
     setNotice($('pMsg'),'يرجى إدخال البريد الإلكتروني وكلمة المرور.','err');
     return;
   }
+  manualLoginInProgress = true;
   setNotice($('pMsg'),'جاري تسجيل الدخول…');
   try{
     let {data,error}=await signInWithRecovery(
@@ -4167,6 +4177,8 @@ async function parentLogin(){
     $('parentDash').classList.add('hidden');
     $('parentAuth').classList.remove('hidden');
     setNotice($('pMsg'),err?.message||'انتهت مهلة تسجيل دخول ولي الأمر. أعد المحاولة.','err');
+  }finally{
+    manualLoginInProgress = false;
   }
 }
 
@@ -4186,38 +4198,43 @@ async function parentSignup(){
     $('pPhone')?.focus();
     return;
   }
-  let {data,error}=await withTimeout(
-    client.auth.signUp({
-      email,
-      password,
-      options:{ data:{ phone: phoneVal } }
-    }),
-    20000,
-    'انتهت مهلة إنشاء الحساب (20 ثانية). تحقق من الاتصال أو إعدادات Supabase.'
-  );
-  if(error){
-    setNotice($('pMsg'),error.message,'err');
-    return;
-  }
-  await saveParentPhoneRecord(client, data?.user || null, phoneVal);
+  manualLoginInProgress = true;
+  try{
+    let {data,error}=await withTimeout(
+      client.auth.signUp({
+        email,
+        password,
+        options:{ data:{ phone: phoneVal } }
+      }),
+      20000,
+      'انتهت مهلة إنشاء الحساب (20 ثانية). تحقق من الاتصال أو إعدادات Supabase.'
+    );
+    if(error){
+      setNotice($('pMsg'),error.message,'err');
+      return;
+    }
+    await saveParentPhoneRecord(client, data?.user || null, phoneVal);
 
-  if(data?.session && data?.user){
-    user=null;
-    parentUser=data.user;
-    setNotice($('pMsg'),`تم إنشاء الحساب وحفظ رقم الموبايل (${phoneVal}) بنجاح.`,'ok');
-    viewHistory=[];
-    renderView({page:'parent',tab:null});
-    await showParentDash();
-  }else if(data?.user){
-    parentUser=null;
-    $('parentDash').classList.add('hidden');
-    $('parentAuth').classList.remove('hidden');
-    setNotice($('pMsg'),`تم إنشاء الحساب وحفظ رقم الموبايل (${phoneVal})؛ إذا كان تأكيد البريد مفعّلًا في إعدادات Supabase فسيصلك رابط التأكيد قبل فتح الجلسة، ويمكنك الاستعلام برقم الموبايل الآن.`,'ok');
-  }else{
-    parentUser=null;
-    $('parentDash').classList.add('hidden');
-    $('parentAuth').classList.remove('hidden');
-    setNotice($('pMsg'),'لم يتم تأكيد إنشاء الجلسة؛ تحقق من بيانات البريد وإعدادات التسجيل في Supabase.','err');
+    if(data?.session && data?.user){
+      user=null;
+      parentUser=data.user;
+      setNotice($('pMsg'),`تم إنشاء الحساب وحفظ رقم الموبايل (${phoneVal}) بنجاح.`,'ok');
+      viewHistory=[];
+      renderView({page:'parent',tab:null});
+      await showParentDash();
+    }else if(data?.user){
+      parentUser=null;
+      $('parentDash').classList.add('hidden');
+      $('parentAuth').classList.remove('hidden');
+      setNotice($('pMsg'),`تم إنشاء الحساب وحفظ رقم الموبايل (${phoneVal})؛ إذا كان تأكيد البريد مفعّلًا في إعدادات Supabase فسيصلك رابط التأكيد قبل فتح الجلسة، ويمكنك الاستعلام برقم الموبايل الآن.`,'ok');
+    }else{
+      parentUser=null;
+      $('parentDash').classList.add('hidden');
+      $('parentAuth').classList.remove('hidden');
+      setNotice($('pMsg'),'لم يتم تأكيد إنشاء الجلسة؛ تحقق من بيانات البريد وإعدادات التسجيل في Supabase.','err');
+    }
+  }finally{
+    manualLoginInProgress = false;
   }
 }
 
