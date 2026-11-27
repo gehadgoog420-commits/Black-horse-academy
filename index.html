@@ -257,6 +257,35 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
   color:#b9e5cc
 }
 
+/* مربع التحديث المنبثق عند الضغط على زر تحديث */
+.admin-refresh-toast{
+  position:fixed;
+  bottom:25px;
+  left:25px;
+  z-index:80;
+  min-width:270px;
+  max-width:90vw;
+  background:#0f172a;
+  color:#ffffff;
+  text-align:right;
+  border-radius:10px;
+  padding:16px 20px;
+  font-size:16px;
+  font-weight:800;
+  border-right:6px solid #22c55e;
+  box-shadow:0 10px 25px rgba(0,0,0,.35);
+  opacity:0;
+  visibility:hidden;
+  transform:translateY(15px);
+  cursor:pointer;
+  transition:opacity .35s ease,transform .35s ease,visibility .35s ease
+}
+.admin-refresh-toast.show{
+  opacity:1;
+  visibility:visible;
+  transform:translateY(0)
+}
+
 @keyframes popBump{
   0%{transform:translateX(-50%) scale(.72)}
   65%{transform:translateX(-50%) scale(1.07)}
@@ -280,6 +309,10 @@ header, .nav, .navbar, .topbar, .header{
 </style>
 </head>
 <body>
+
+<div id="adminRefreshToast" class="admin-refresh-toast" role="alert" aria-live="polite" onclick="hideAdminRefreshToast()">
+  تم التحديث بنجاح
+</div>
 
 <div id="scanPopup" class="scan-popup-toast" role="status" aria-live="polite" onclick="hideScanPopup()">
   <div id="scanPopupBadge" class="scan-popup-badge">تم التسجيل</div>
@@ -681,7 +714,7 @@ header, .nav, .navbar, .topbar, .header{
 <div class="section-title">
 <div><h2>لوحة إدارة BLACK HORSE</h2><p id="adminName" class="muted small"></p></div>
 <div class="actions">
-<button type="button" class="secondary" onclick="refreshAll()">تحديث</button>
+<button type="button" class="secondary" onclick="refreshAll(true)">تحديث</button>
 <button type="button" class="danger" onclick="adminLogout()">خروج</button>
 </div>
 </div>
@@ -692,7 +725,7 @@ header, .nav, .navbar, .topbar, .header{
 </div>
 <div class="tabs">
 <button type="button" class="on" onclick="tab('players',this)">اللاعبون</button>
-<button type="button" class="on" onclick="tab('attendance',this)">الحضور والغياب</button>
+<button type="button" class="secondary" onclick="tab('attendance',this)">الحضور والغياب</button>
 <button type="button" class="secondary" onclick="tab('evaluations',this)">التقييمات</button>
 <button type="button" class="secondary" onclick="tab('eventsAdmin',this)">الفعاليات والحجوزات</button>
 <button type="button" class="secondary" onclick="tab('matches',this)">المباريات</button>
@@ -987,7 +1020,7 @@ function generateUniqueQrToken(){
 }
 
 let user=null,parentUser=null,admins=[],branches=[],groups=[],players=[],enrollmentRequests=[],matchesCache=[],eventsCache=[],coachEvalsCache=[],activeSession=null,scanner=null,scannerStarting=false,scannedInSession=new Set(),viewHistory=[],parentFeedbackEnabled=false,linkedPlayerIds=new Set(),linkedPlayersList=[];
-let fastStream=null,fastRafId=null,fastVideo=null,fastCanvas=null,fastCtx=null,lastScannedCode='',lastScannedAt=0,scanBusy=false,scanPopupTimer=null,playerSavePopupTimer=null;
+let fastStream=null,fastRafId=null,fastVideo=null,fastCanvas=null,fastCtx=null,lastScannedCode='',lastScannedAt=0,scanBusy=false,scanPopupTimer=null,playerSavePopupTimer=null,adminRefreshToastTimer=null;
 let localViewedCoachEvalIds = new Set();
 let localSeenParentFeedbackIds = new Set();
 let localSectionViews = [];
@@ -998,6 +1031,28 @@ let localParentProfiles = [];
 let parentBookingsCache = [];
 let activeParentTabId = 'pTabEvaluations';
 
+const STORAGE_BOOKINGS_KEY = 'bh_local_event_bookings_v1';
+const STORAGE_MATCH_REGS_KEY = 'bh_local_match_regs_v1';
+
+function readStoredList(key){
+  try{
+    const raw = localStorage.getItem(key);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  }catch(_){
+    return [];
+  }
+}
+
+function writeStoredList(key, list){
+  try{
+    localStorage.setItem(key, JSON.stringify(list || []));
+  }catch(_){}
+}
+
+localEventBookings = readStoredList(STORAGE_BOOKINGS_KEY);
+localMatchRegistrations = readStoredList(STORAGE_MATCH_REGS_KEY);
+
 const $=id=>document.getElementById(id),
 today=()=>{
   const d=new Date();
@@ -1007,6 +1062,27 @@ today=()=>{
   return `${y}-${m}-${day}`;
 },
 esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function hideAdminRefreshToast(){
+  const toast = $('adminRefreshToast');
+  if(!toast) return;
+  toast.classList.remove('show');
+  if(adminRefreshToastTimer){
+    clearTimeout(adminRefreshToastTimer);
+    adminRefreshToastTimer = null;
+  }
+}
+
+function showAdminRefreshToast(message = 'تم التحديث بنجاح'){
+  const toast = $('adminRefreshToast');
+  if(!toast) return;
+  toast.textContent = message;
+  toast.classList.remove('show');
+  void toast.offsetWidth;
+  toast.classList.add('show');
+  if(adminRefreshToastTimer) clearTimeout(adminRefreshToastTimer);
+  adminRefreshToastTimer = setTimeout(hideAdminRefreshToast, 3000);
+}
 
 function parentTab(tabId, btn){
   activeParentTabId = tabId;
@@ -1450,7 +1526,7 @@ function showAdmin(n){
   viewHistory=[];
   renderView({page:'admin',tab:'players'});
   $('adminName').textContent=n||'BLACK HORSE ADMIN';
-  refreshAll();
+  refreshAll(false);
 }
 
 $('loginForm').addEventListener('submit',async e=>{
@@ -1518,6 +1594,7 @@ async function adminLogout(){
   await stopScanner();
   hideScanPopup();
   hidePlayerSavePopup();
+  hideAdminRefreshToast();
   const client=getSupabaseClient();
   if(client){
     try{
@@ -1533,7 +1610,7 @@ async function adminLogout(){
   syncBackButton();
 }
 
-async function refreshAll(){
+async function refreshAll(notifyUser = false){
   if(!user) return;
 
   const client=getSupabaseClient();
@@ -1584,6 +1661,10 @@ async function refreshAll(){
     loadParentFeedbackAdmin(),
     loadSectionViewsAdmin(['events','bookings','matches'])
   ]);
+
+  if(notifyUser){
+    showAdminRefreshToast('تم التحديث بنجاح');
+  }
 }
 
 function table(rows,heads=['الاسم','التفاصيل','الحالة','التاريخ']){
@@ -1634,7 +1715,7 @@ async function deletePlayer(id){
 
   if($('editId').value === String(id)) resetPlayerForm();
   setNotice($('plMsg'), `تم حذف اللاعب (${name}) بنجاح.`, 'ok');
-  await refreshAll();
+  await refreshAll(false);
 }
 
 $('playerForm').addEventListener('submit',async e=>{
@@ -1727,7 +1808,7 @@ $('playerForm').addEventListener('submit',async e=>{
       : `تم إضافة اللاعب (${nameVal}) بنجاح`
   );
   resetPlayerForm();
-  await refreshAll();
+  await refreshAll(false);
 });
 
 function editPlayer(id){
@@ -1765,7 +1846,7 @@ async function togglePlayer(id,v){
     return;
   }
   setNotice($('plMsg'),v?'تم تفعيل اللاعب بنجاح.':'تم إيقاف اللاعب بنجاح.','ok');
-  await refreshAll();
+  await refreshAll(false);
 }
 
 function showQR(id){
@@ -2816,7 +2897,7 @@ async function deleteEvent(id){
   setNotice($('evMsg'),'تم حذف الفعالية بنجاح.','ok');
   await loadAdminEventsList();
   await loadPublicEvents();
-  await refreshAll();
+  await refreshAll(false);
 }
 
 function renderAdminEventsList(){
@@ -2883,7 +2964,7 @@ $('eventForm').addEventListener('submit',async e=>{
   setNotice($('evMsg'),editId?'تم تحديث الفعالية بنجاح.':'تم حفظ الفعالية بنجاح.','ok');
   resetEventForm();
   await loadPublicEvents();
-  await refreshAll();
+  await refreshAll(false);
 });
 
 async function loadPublicEvents(){
@@ -2985,8 +3066,9 @@ async function bookEvent(id, eventTitle, prefilledName, prefilledPhone){
 
   localEventBookings = [
     localBooking,
-    ...localEventBookings.filter(x => String(x.id) !== String(bookingId))
+    ...readStoredList(STORAGE_BOOKINGS_KEY).filter(x => String(x.id) !== String(bookingId))
   ];
+  writeStoredList(STORAGE_BOOKINGS_KEY, localEventBookings);
 
   const okText = 'تم الحجز بنجاح';
   if(parentUser){
@@ -3013,9 +3095,14 @@ async function loadParentEventsAndBookings(){
   const bookingsListBox = $('parentBookingsListBox');
   if(!client || !box) return;
 
-  const [evRes, bkRes] = await Promise.all([
+  localEventBookings = readStoredList(STORAGE_BOOKINGS_KEY);
+  localMatchRegistrations = readStoredList(STORAGE_MATCH_REGS_KEY);
+
+  const [evRes, bkRes, mRes, allMatchRegs] = await Promise.all([
     client.from('academy_events').select('id,title,description,event_date,capacity,price,published').eq('published',true).order('event_date'),
-    client.from('event_bookings').select('id,event_id,parent_name,parent_phone,status,created_at,academy_events(title)').order('created_at',{ascending:false})
+    client.from('event_bookings').select('id,event_id,parent_name,parent_phone,status,created_at,academy_events(title)').order('created_at',{ascending:false}),
+    client.from('academy_matches').select('id,title,match_date,location').order('match_date',{ascending:false}),
+    fetchAllMatchRegistrations(client)
   ]);
 
   if(evRes.error){
@@ -3024,10 +3111,18 @@ async function loadParentEventsAndBookings(){
   }
 
   const eventsList = evRes.data || [];
+  const matchesList = mRes.data || [];
   const dbBookings = bkRes.data || [];
+
   const mergedMap = new Map();
   [...dbBookings, ...localEventBookings].forEach(b=>{
-    mergedMap.set(String(b.id), b);
+    const key = String(b.id);
+    const prev = mergedMap.get(key);
+    if(prev && String(prev.status||'').toLowerCase() === 'approved'){
+      mergedMap.set(key, prev);
+    }else{
+      mergedMap.set(key, b);
+    }
   });
   parentBookingsCache = Array.from(mergedMap.values());
 
@@ -3080,20 +3175,59 @@ async function loadParentEventsAndBookings(){
       if(!myPhoneCandidates.length) return true;
       return normalizePhoneCandidates(b.parent_phone).some(c => myPhoneCandidates.includes(c));
     });
-    if(!myBookings.length){
-      bookingsListBox.innerHTML = '<p class="muted small">لا توجد حجوزات مسجلة حتى الآن.</p>';
-    }else{
-      bookingsListBox.innerHTML = myBookings.map(b => {
+
+    const myMatchRegs = (allMatchRegs || []).filter(r =>
+      String(r.parent_user_id || '') === String(parentUser.id) ||
+      String(r.parent_email || '').toLowerCase() === String(parentUser.email || '').toLowerCase() ||
+      linkedPlayerIds.has(String(r.player_id))
+    );
+
+    const htmlParts = [];
+
+    if(myBookings.length){
+      htmlParts.push(`<h4>حجوزات الفعاليات</h4>`);
+      htmlParts.push(myBookings.map(b => {
         const evTitle = b.academy_events?.title || eventsList.find(e => String(e.id) === String(b.event_id))?.title || 'فعالية الأكاديمية';
         const st = String(b.status || 'pending').trim().toLowerCase();
-        const stLabel = (st === 'approved' || st === 'accepted')
+        const isApproved = st === 'approved' || st === 'accepted';
+        const stLabel = isApproved
           ? 'تم قبول حجزك بنجاح تواصل معانا'
           : (st === 'rejected' ? 'تم رفض الحجز' : 'قيد المراجعة / بانتظار قبول الإدارة');
         return `<div class="playerline">
-          <span><b>${esc(evTitle)}</b><br><small class="muted">الاسم: ${esc(b.parent_name || '—')} · الهاتف: ${esc(b.parent_phone || '—')}</small></span>
+          <span>
+            <b>${esc(evTitle)}</b>
+            <br><small class="muted">الاسم: ${esc(b.parent_name || '—')} · الهاتف: ${esc(b.parent_phone || '—')}</small>
+            ${isApproved ? `<div class="notice ok" style="margin-top:6px">تم قبول حجزك بنجاح تواصل معانا</div>` : ''}
+          </span>
           <span class="badge">${esc(stLabel)}</span>
         </div>`;
-      }).join('');
+      }).join(''));
+    }
+
+    if(myMatchRegs.length){
+      htmlParts.push(`<h4 style="margin-top:14px">اشتراكات المباريات</h4>`);
+      htmlParts.push(myMatchRegs.map(r => {
+        const mTitle = matchesList.find(m => String(m.id) === String(r.match_id))?.title || r.match_title || 'مباراة الأكاديمية';
+        const pName = linkedPlayersList.find(p => String(p.player_id) === String(r.player_id))?.full_name || r.player_name || 'اللاعب';
+        const st = String(r.status || 'pending').trim().toLowerCase();
+        const isApproved = st === 'approved' || st === 'accepted';
+        const stLabel = isApproved
+          ? 'تم قبول اشتراك بنجاح تواصل معانا'
+          : (st === 'rejected' ? 'تم رفض الاشتراك' : 'قيد المراجعة / بانتظار قبول الإدارة');
+        return `<div class="playerline">
+          <span>
+            <b>${esc(mTitle)}</b> — اللاعب: ${esc(pName)}
+            ${isApproved ? `<div class="notice ok" style="margin-top:6px">تم قبول اشتراك بنجاح تواصل معانا</div>` : ''}
+          </span>
+          <span class="badge">${esc(stLabel)}</span>
+        </div>`;
+      }).join(''));
+    }
+
+    if(!htmlParts.length){
+      bookingsListBox.innerHTML = '<p class="muted small">لا توجد حجوزات فعاليات أو اشتراكات مباريات مسجلة حتى الآن.</p>';
+    }else{
+      bookingsListBox.innerHTML = htmlParts.join('');
     }
   }
 }
@@ -3141,7 +3275,8 @@ async function deleteBooking(id){
   if(!confirm('هل أنت متأكد من حذف هذا الحجز؟')) return;
   const client=getSupabaseClient();
   if(!client) return;
-  localEventBookings = localEventBookings.filter(x => String(x.id) !== String(id));
+  localEventBookings = readStoredList(STORAGE_BOOKINGS_KEY).filter(x => String(x.id) !== String(id));
+  writeStoredList(STORAGE_BOOKINGS_KEY, localEventBookings);
   const {error}=await client.from('event_bookings').delete().eq('id',id);
   if(error){
     setNotice($('bookingsMsg'),'تعذر حذف الحجز: ' + error.message,'err');
@@ -3159,7 +3294,10 @@ async function approveBooking(id){
   const client=getSupabaseClient();
   if(!client)return;
 
-  localEventBookings = localEventBookings.map(x => String(x.id) === String(id) ? { ...x, status: 'approved' } : x);
+  localEventBookings = readStoredList(STORAGE_BOOKINGS_KEY).map(x =>
+    String(x.id) === String(id) ? { ...x, status: 'approved' } : x
+  );
+  writeStoredList(STORAGE_BOOKINGS_KEY, localEventBookings);
 
   const {data,error}=await client.rpc('approve_event_booking',{p_booking_id:id});
   if(error || (data && data.success === false)){
@@ -3186,7 +3324,10 @@ async function rejectBooking(id){
   }
   const client=getSupabaseClient();
   if(!client)return;
-  localEventBookings = localEventBookings.map(x => String(x.id) === String(id) ? { ...x, status: 'rejected' } : x);
+  localEventBookings = readStoredList(STORAGE_BOOKINGS_KEY).map(x =>
+    String(x.id) === String(id) ? { ...x, status: 'rejected' } : x
+  );
+  writeStoredList(STORAGE_BOOKINGS_KEY, localEventBookings);
   const {data,error}=await client.from('event_bookings').update({status:'rejected'}).eq('id',id).select('id,status').maybeSingle();
   if(error || !data){
     setNotice($('bookingsMsg'),'تعذر رفض الحجز: ' + (error?.message || 'لم يتم تعديل أي سجل.'),'err');
@@ -3327,10 +3468,16 @@ async function fetchAllMatchRegistrations(client){
       if(!error && Array.isArray(data)) dbRegs = data;
     }catch(_){}
   }
+  const storedRegs = readStoredList(STORAGE_MATCH_REGS_KEY);
   const mergedMap = new Map();
-  [...dbRegs, ...localMatchRegistrations].forEach(r=>{
+  [...dbRegs, ...storedRegs, ...localMatchRegistrations].forEach(r=>{
     const key = `${r.match_id}::${r.player_id}`;
-    mergedMap.set(key, r);
+    const prev = mergedMap.get(key);
+    if(prev && String(prev.status||'').toLowerCase() === 'approved'){
+      mergedMap.set(key, prev);
+    }else{
+      mergedMap.set(key, r);
+    }
   });
   return Array.from(mergedMap.values());
 }
@@ -3414,7 +3561,7 @@ async function loadParentMatchesSection(){
 
   const anyApprovedSub = myRegs.some(r => String(r.status || '').toLowerCase() === 'approved');
   const topBanner = anyApprovedSub
-    ? `<div class="notice ok" style="margin-bottom:10px">تم قبول اشتراك تواصل معانا</div>`
+    ? `<div class="notice ok" style="margin-bottom:10px">تم قبول اشتراك بنجاح تواصل معانا</div>`
     : '';
 
   box.innerHTML = topBanner + `<div class="grid">${pubMatches.map(m=>{
@@ -3424,7 +3571,7 @@ async function loadParentMatchesSection(){
         return `<button type="button" onclick="registerPlayerForMatch('${esc(m.id)}','${esc(m.title)}','${esc(pl.player_id)}','${esc(pl.full_name)}')">اشتراك (${esc(pl.full_name)})</button>`;
       }
       if(String(reg.status).toLowerCase() === 'approved'){
-        return `<div class="notice ok" style="margin-top:6px">اللاعب (${esc(pl.full_name)}): تم قبول اشتراك تواصل معانا</div>`;
+        return `<div class="notice ok" style="margin-top:6px">اللاعب (${esc(pl.full_name)}): تم قبول اشتراك بنجاح تواصل معانا</div>`;
       }
       return `<div class="notice" style="margin-top:6px">اللاعب (${esc(pl.full_name)}): تم إرسال طلب الاشتراك — بانتظار قبول الإدارة</div>`;
     }).join('');
@@ -3477,9 +3624,10 @@ async function registerPlayerForMatch(matchId, matchTitle, playerId, playerName)
   };
 
   localMatchRegistrations = [
-    ...localMatchRegistrations.filter(x => !(String(x.match_id) === String(matchId) && String(x.player_id) === String(playerId))),
+    ...readStoredList(STORAGE_MATCH_REGS_KEY).filter(x => !(String(x.match_id) === String(matchId) && String(x.player_id) === String(playerId))),
     newReg
   ];
+  writeStoredList(STORAGE_MATCH_REGS_KEY, localMatchRegistrations);
 
   try{
     await client.from('match_registrations').upsert({
@@ -3495,6 +3643,7 @@ async function registerPlayerForMatch(matchId, matchTitle, playerId, playerName)
   setNotice($('parentMatchesNotice'), `تم إرسال اشتراك اللاعب (${playerName}) في مباراة (${matchTitle}) بنجاح.`, 'ok');
   showPlayerSavePopup('تم إرسال الاشتراك', `اللاعب ${playerName} · ${matchTitle}`);
   await loadParentMatchesSection();
+  await loadParentEventsAndBookings();
   if(user) await loadMatchRegistrationsAdmin();
 }
 
@@ -3514,9 +3663,9 @@ async function loadMatchRegistrationsAdmin(){
     const mTitle = matchesCache.find(m=>String(m.id)===String(r.match_id))?.title || r.match_title || r.match_id || '—';
     const pName = players.find(p=>String(p.id)===String(r.player_id))?.full_name || r.player_name || r.player_id || '—';
     const isApproved = String(r.status||'pending').toLowerCase() === 'approved';
-    const statusText = isApproved ? 'تم قبول اشتراك تواصل معانا' : 'قيد المراجعة';
+    const statusText = isApproved ? 'تم قبول اشتراك بنجاح تواصل معانا' : 'قيد المراجعة';
     const actionBtn = isApproved
-      ? '<span class="badge">تم قبول اشتراك تواصل معانا</span>'
+      ? '<span class="badge">تم قبول اشتراك بنجاح تواصل معانا</span>'
       : `<button type="button" onclick="approveMatchRegistration('${esc(r.match_id)}','${esc(r.player_id)}','${esc(pName)}')">تم قبول اشتراك</button>`;
     return `<tr>
       <td>${esc(mTitle)}</td>
@@ -3532,12 +3681,13 @@ async function approveMatchRegistration(matchId, playerId, playerName){
   if(!user) return;
   const client = getSupabaseClient();
 
-  localMatchRegistrations = localMatchRegistrations.map(r => {
+  localMatchRegistrations = readStoredList(STORAGE_MATCH_REGS_KEY).map(r => {
     if(String(r.match_id) === String(matchId) && String(r.player_id) === String(playerId)){
       return { ...r, status: 'approved', updated_at: new Date().toISOString() };
     }
     return r;
   });
+  writeStoredList(STORAGE_MATCH_REGS_KEY, localMatchRegistrations);
 
   if(client){
     try{
@@ -3549,11 +3699,14 @@ async function approveMatchRegistration(matchId, playerId, playerName){
     }catch(_){}
   }
 
-  const approvedSubMsg = 'تم قبول اشتراك تواصل معانا';
+  const approvedSubMsg = 'تم قبول اشتراك بنجاح تواصل معانا';
   setNotice($('matchRegMsg'), `تم قبول اشتراك اللاعب (${playerName}) — سيظهر لولي الأمر: ${approvedSubMsg}`, 'ok');
   showPlayerSavePopup('تم قبول الاشتراك', approvedSubMsg);
   await loadMatchRegistrationsAdmin();
-  if(parentUser) await loadParentMatchesSection();
+  if(parentUser){
+    await loadParentMatchesSection();
+    await loadParentEventsAndBookings();
+  }
 }
 
 async function loadMatchViewsAdmin(){
@@ -3639,7 +3792,7 @@ async function deleteEnrollmentRequest(reqId){
     return;
   }
   setNotice($('reqActionMsg'),'تم حذف طلب الالتحاق بنجاح.','ok');
-  await refreshAll();
+  await refreshAll(false);
   await loadRequests();
 }
 
@@ -3654,7 +3807,7 @@ async function acknowledgeEnrollment(reqId){
       throw new Error(data?.message || 'تعذر تحديث حالة الاستمارة.');
     }
     setNotice($('reqActionMsg'), data.message || 'تم قبول استمارة التقديم من قبل الإدارة، يرجى التواصل معانا.', 'ok');
-    await refreshAll();
+    await refreshAll(false);
     await loadRequests();
   }catch(err){
     console.error('Acknowledge enrollment error:', err);
@@ -3703,7 +3856,7 @@ async function decideEnrollment(reqId, action){
     }
 
     setNotice($('reqActionMsg'), (data && data.message) || (action === 'approve' ? 'تم قبول استمارة التقديم من قبل الإدارة، يرجى التواصل معانا.' : 'تم رفض طلب الالتحاق بنجاح.'), 'ok');
-    await refreshAll();
+    await refreshAll(false);
     await loadRequests();
   }catch(err){
     console.error('Enrollment RPC error:', err);
@@ -3832,7 +3985,7 @@ async function reviewParent(id, approve){
 
     setNotice($('parentReqMsg'), (data && data.message) || (approveFlag ? 'تمت الموافقة على طلب الربط بنجاح.' : 'تم رفض طلب الربط بنجاح.'), 'ok');
     await loadParentRequests();
-    await refreshAll();
+    await refreshAll(false);
   }catch(err){
     console.error('reviewParent RPC error:', err);
     setNotice($('parentReqMsg'), 'تعذر مراجعة طلب الربط: ' + (err.message||err), 'err');
