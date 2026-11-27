@@ -909,10 +909,51 @@ let qrSeqCounter=0;
 function getSupabaseClient(){
   if(db) return db;
   if(window.supabase && typeof window.supabase.createClient === 'function'){
-    db = window.supabase.createClient(SUPABASE_URL, KEY);
+    db = window.supabase.createClient(SUPABASE_URL, KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: false
+      }
+    });
     return db;
   }
   return null;
+}
+
+function withTimeout(promise, ms, timeoutMessage){
+  let timerId = null;
+  const timeoutPromise = new Promise(function(_, reject){
+    timerId = setTimeout(function(){
+      reject(new Error(timeoutMessage));
+    }, ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(function(){
+    if(timerId !== null){
+      clearTimeout(timerId);
+    }
+  });
+}
+
+async function signInWithRecovery(client, email, password, timeoutLabel){
+  try{
+    return await withTimeout(
+      client.auth.signInWithPassword({ email: email, password: password }),
+      20000,
+      timeoutLabel
+    );
+  }catch(firstErr){
+    const isTimeout = String(firstErr?.message || '').includes('مهلة');
+    if(!isTimeout) throw firstErr;
+    try{
+      await withTimeout(client.auth.signOut({ scope: 'local' }), 4000, 'تعذر إعادة ضبط الجلسة المحلية');
+    }catch(_){}
+    return await withTimeout(
+      client.auth.signInWithPassword({ email: email, password: password }),
+      20000,
+      timeoutLabel
+    );
+  }
 }
 
 function makeUUID(){
@@ -1344,8 +1385,8 @@ async function init(){
   }
   try{
     const [b,g]=await Promise.all([
-      client.from('branches').select('*').order('name'),
-      client.from('academy_groups').select('*').order('name')
+      withTimeout(client.from('branches').select('*').order('name'), 12000, 'انتهت مهلة تحميل الفروع'),
+      withTimeout(client.from('academy_groups').select('*').order('name'), 12000, 'انتهت مهلة تحميل المجموعات')
     ]);
     if(b.error || g.error){
       const errTxt = (b.error?.message || '') + ' ' + (g.error?.message || '');
@@ -1363,27 +1404,38 @@ async function init(){
     if($('evalDate') && !$('evalDate').value) $('evalDate').value = today();
     await loadPublicEvents();
 
-    const {data,error:sessErr}=await client.auth.getSession();
-    if(sessErr){
-      console.error('Session restore error:', sessErr);
-    }
-    if(data?.session?.user){
-      const {data:ad,error:adErr}=await client.from('academy_admins').select('admin_name').eq('user_id',data.session.user.id).maybeSingle();
-      if(adErr){
-        console.error('Admin check on session restore error:', adErr);
+    try{
+      const {data,error:sessErr}=await withTimeout(client.auth.getSession(), 8000, 'انتهت مهلة قراءة الجلسة');
+      if(sessErr){
+        console.error('Session restore error:', sessErr);
       }
-      if(ad){
-        user=data.session.user;
-        parentUser=null;
-        showAdmin(ad.admin_name);
+      if(data?.session?.user){
+        const {data:ad,error:adErr}=await withTimeout(
+          client.from('academy_admins').select('admin_name').eq('user_id',data.session.user.id).maybeSingle(),
+          8000,
+          'انتهت مهلة التحقق من صلاحيات الجلسة'
+        );
+        if(adErr){
+          console.error('Admin check on session restore error:', adErr);
+        }
+        if(ad){
+          user=data.session.user;
+          parentUser=null;
+          showAdmin(ad.admin_name);
+        }else{
+          user=null;
+          parentUser=data.session.user;
+          viewHistory=[];
+          renderView({page:'parent',tab:null});
+          await showParentDash();
+        }
       }else{
-        user=null;
-        parentUser=data.session.user;
-        viewHistory=[];
-        renderView({page:'parent',tab:null});
-        await showParentDash();
+        parentUser=null;
+        $('parentDash').classList.add('hidden');
+        $('parentAuth').classList.remove('hidden');
       }
-    }else{
+    }catch(sessTimeoutErr){
+      console.warn('Session check skipped due to timeout/network:', sessTimeoutErr);
       parentUser=null;
       $('parentDash').classList.add('hidden');
       $('parentAuth').classList.remove('hidden');
@@ -1419,21 +1471,23 @@ $('loginForm').addEventListener('submit',async e=>{
   setNotice(msg,'جاري التحقق من بيانات الدخول…');
 
   try{
-    const {data,error}=await client.auth.signInWithPassword({
-      email:$('adminEmail').value.trim(),
-      password:$('adminPass').value
-    });
+    const {data,error}=await signInWithRecovery(
+      client,
+      $('adminEmail').value.trim(),
+      $('adminPass').value,
+      'انتهت مهلة تسجيل دخول الإدارة (20 ثانية). تحقق من اتصال الإنترنت أو إعدادات Supabase.'
+    );
 
     if(error)throw error;
     if(!data?.user)throw new Error('لم يتم استلام بيانات الحساب.');
 
     setNotice(msg,'تم التحقق من الحساب، جاري تحديد نوع الحساب…');
 
-    const {data:ad,error:ae}=await client
-      .from('academy_admins')
-      .select('admin_name')
-      .eq('user_id',data.user.id)
-      .maybeSingle();
+    const {data:ad,error:ae}=await withTimeout(
+      client.from('academy_admins').select('admin_name').eq('user_id',data.user.id).maybeSingle(),
+      15000,
+      'تأخر التحقق من صلاحيات الإدارة. أعد المحاولة الآن.'
+    );
 
     if(ae)throw ae;
 
@@ -1466,8 +1520,10 @@ async function adminLogout(){
   hidePlayerSavePopup();
   const client=getSupabaseClient();
   if(client){
-    const {error}=await client.auth.signOut();
-    if(error)console.error('Admin signOut error:',error);
+    try{
+      const {error}=await withTimeout(client.auth.signOut(), 6000, 'انتهت مهلة تسجيل الخروج');
+      if(error)console.error('Admin signOut error:',error);
+    }catch(_){}
   }
   user=null;
   activeSession=null;
@@ -3857,29 +3913,42 @@ async function parentLogin(){
     setNotice($('pMsg'),'يرجى إدخال البريد الإلكتروني وكلمة المرور.','err');
     return;
   }
-  let {data,error}=await client.auth.signInWithPassword({email,password});
-  if(error || !data?.user){
+  setNotice($('pMsg'),'جاري تسجيل الدخول…');
+  try{
+    let {data,error}=await signInWithRecovery(
+      client,
+      email,
+      password,
+      'انتهت مهلة تسجيل دخول ولي الأمر (20 ثانية). تحقق من اتصال الإنترنت أو إعدادات Supabase.'
+    );
+    if(error || !data?.user){
+      parentUser=null;
+      $('parentDash').classList.add('hidden');
+      $('parentAuth').classList.remove('hidden');
+      const rawMsg = String(error?.message||'').toLowerCase();
+      if(rawMsg.includes('email not confirmed')){
+        setNotice($('pMsg'),'يرجى تأكيد البريد الإلكتروني أولًا عبر الرابط المرسل إلى بريدك (بحسب إعدادات تأكيد البريد في Supabase) ثم تسجيل الدخول.','err');
+      }else{
+        setNotice($('pMsg'),error?.message||'تعذر تسجيل الدخول.','err');
+      }
+      return;
+    }
+    user=null;
+    parentUser=data.user;
+    const effectivePhone = phoneInput || normalizeMobileInput(data.user.user_metadata?.phone || '');
+    if(effectivePhone){
+      await saveParentPhoneRecord(client, data.user, effectivePhone);
+    }
+    setNotice($('pMsg'),'تم تسجيل الدخول.','ok');
+    viewHistory=[];
+    renderView({page:'parent',tab:null});
+    await showParentDash();
+  }catch(err){
     parentUser=null;
     $('parentDash').classList.add('hidden');
     $('parentAuth').classList.remove('hidden');
-    const rawMsg = String(error?.message||'').toLowerCase();
-    if(rawMsg.includes('email not confirmed')){
-      setNotice($('pMsg'),'يرجى تأكيد البريد الإلكتروني أولًا عبر الرابط المرسل إلى بريدك (بحسب إعدادات تأكيد البريد في Supabase) ثم تسجيل الدخول.','err');
-    }else{
-      setNotice($('pMsg'),error?.message||'تعذر تسجيل الدخول.','err');
-    }
-    return;
+    setNotice($('pMsg'),err?.message||'انتهت مهلة تسجيل دخول ولي الأمر. أعد المحاولة.','err');
   }
-  user=null;
-  parentUser=data.user;
-  const effectivePhone = phoneInput || normalizeMobileInput(data.user.user_metadata?.phone || '');
-  if(effectivePhone){
-    await saveParentPhoneRecord(client, data.user, effectivePhone);
-  }
-  setNotice($('pMsg'),'تم تسجيل الدخول.','ok');
-  viewHistory=[];
-  renderView({page:'parent',tab:null});
-  await showParentDash();
 }
 
 async function parentSignup(){
@@ -3898,11 +3967,15 @@ async function parentSignup(){
     $('pPhone')?.focus();
     return;
   }
-  let {data,error}=await client.auth.signUp({
-    email,
-    password,
-    options:{ data:{ phone: phoneVal } }
-  });
+  let {data,error}=await withTimeout(
+    client.auth.signUp({
+      email,
+      password,
+      options:{ data:{ phone: phoneVal } }
+    }),
+    20000,
+    'انتهت مهلة إنشاء الحساب (20 ثانية). تحقق من الاتصال أو إعدادات Supabase.'
+  );
   if(error){
     setNotice($('pMsg'),error.message,'err');
     return;
@@ -3938,18 +4011,24 @@ async function parentReset(){
     setNotice($('pMsg'),'يرجى إدخال البريد الإلكتروني أولًا لإرسال رابط الاستعادة.','err');
     return;
   }
-  let {error}=await client.auth.resetPasswordForEmail(email);
+  let {error}=await withTimeout(
+    client.auth.resetPasswordForEmail(email),
+    15000,
+    'انتهت مهلة طلب استعادة كلمة المرور.'
+  );
   setNotice($('pMsg'),error?error.message:'تم طلب إرسال رابط استعادة كلمة المرور؛ وصول الرسالة يعتمد على إعدادات البريد في Supabase للبريد المدخل.','ok');
 }
 
 async function parentLogout(){
   const client=getSupabaseClient();
   if(client){
-    const {error}=await client.auth.signOut();
-    if(error){
-      setNotice($('pMsg'),'حدث خطأ أثناء تسجيل الخروج: ' + error.message,'err');
-      return;
-    }
+    try{
+      const {error}=await withTimeout(client.auth.signOut(), 6000, 'انتهت مهلة تسجيل الخروج');
+      if(error){
+        setNotice($('pMsg'),'حدث خطأ أثناء تسجيل الخروج: ' + error.message,'err');
+        return;
+      }
+    }catch(_){}
   }
   parentUser=null;
   linkedPlayerIds.clear();
