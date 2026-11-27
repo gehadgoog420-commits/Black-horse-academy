@@ -936,22 +936,106 @@ header, .nav, .navbar, .topbar, .header{
 
 <script>
 const SUPABASE_URL='https://rjkdgjncxkszleorcave.supabase.co',KEY='sb_publishable_QgNtkC4EwtJAg2rcRdeuVg_yCdHI64y';
+const AUTH_STORAGE_KEY='bh-auth-session-v1';
 let db=null;
+let authListenerBound=false;
 let qrSeqCounter=0;
+
+function getPersistentStorage(){
+  try{
+    if(window.localStorage){
+      const testKey = '__bh_storage_test__';
+      window.localStorage.setItem(testKey, '1');
+      window.localStorage.removeItem(testKey);
+      return window.localStorage;
+    }
+  }catch(_){}
+  return undefined;
+}
 
 function getSupabaseClient(){
   if(db) return db;
   if(window.supabase && typeof window.supabase.createClient === 'function'){
+    const persistentStorage = getPersistentStorage();
     db = window.supabase.createClient(SUPABASE_URL, KEY, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: false
+        detectSessionInUrl: false,
+        storageKey: AUTH_STORAGE_KEY,
+        storage: persistentStorage
       }
     });
+    bindAuthStateListener(db);
     return db;
   }
   return null;
+}
+
+async function applyAuthenticatedSession(client, sessionUser){
+  if(!sessionUser){
+    return;
+  }
+  try{
+    const {data:ad,error:adErr}=await withTimeout(
+      client.from('academy_admins').select('admin_name').eq('user_id',sessionUser.id).maybeSingle(),
+      10000,
+      'انتهت مهلة التحقق من صلاحيات الإدارة'
+    );
+    if(adErr){
+      console.warn('Admin check warning during session restore:', adErr.message);
+      if(user && user.id === sessionUser.id){
+        return;
+      }
+    }
+    if(ad){
+      user=sessionUser;
+      parentUser=null;
+      showAdmin(ad.admin_name);
+      return;
+    }
+  }catch(err){
+    console.warn('Admin check timeout during session restore:', err?.message || err);
+    if(user && user.id === sessionUser.id){
+      return;
+    }
+  }
+
+  user=null;
+  parentUser=sessionUser;
+  $('parentAuth').classList.add('hidden');
+  $('parentDash').classList.remove('hidden');
+  if(currentView().page === 'parent'){
+    renderView({page:'parent',tab:null});
+  }
+  await showParentDash();
+}
+
+function bindAuthStateListener(client){
+  if(!client || authListenerBound || !client.auth || typeof client.auth.onAuthStateChange !== 'function') return;
+  authListenerBound = true;
+  client.auth.onAuthStateChange(async function(event, session){
+    if(event === 'SIGNED_OUT'){
+      if(!user && !parentUser) return;
+      user = null;
+      parentUser = null;
+      linkedPlayerIds.clear();
+      linkedPlayersList = [];
+      $('parentDash')?.classList.add('hidden');
+      $('parentAuth')?.classList.remove('hidden');
+      if(currentView().page === 'admin'){
+        viewHistory = [];
+        renderView({page:'login',tab:null});
+      }
+      return;
+    }
+    if((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session?.user){
+      const currentActiveId = user?.id || parentUser?.id || null;
+      if(currentActiveId !== session.user.id){
+        await applyAuthenticatedSession(client, session.user);
+      }
+    }
+  });
 }
 
 function withTimeout(promise, ms, timeoutMessage){
@@ -978,9 +1062,6 @@ async function signInWithRecovery(client, email, password, timeoutLabel){
   }catch(firstErr){
     const isTimeout = String(firstErr?.message || '').includes('مهلة');
     if(!isTimeout) throw firstErr;
-    try{
-      await withTimeout(client.auth.signOut({ scope: 'local' }), 4000, 'تعذر إعادة ضبط الجلسة المحلية');
-    }catch(_){}
     return await withTimeout(
       client.auth.signInWithPassword({ email: email, password: password }),
       20000,
@@ -1481,40 +1562,25 @@ async function init(){
     await loadPublicEvents();
 
     try{
-      const {data,error:sessErr}=await withTimeout(client.auth.getSession(), 8000, 'انتهت مهلة قراءة الجلسة');
-      if(sessErr){
-        console.error('Session restore error:', sessErr);
+      let sessionData = null;
+      try{
+        const res = await withTimeout(client.auth.getSession(), 15000, 'انتهت مهلة قراءة الجلسة');
+        if(res?.error) console.error('Session restore error:', res.error);
+        sessionData = res?.data || null;
+      }catch(_){
+        const fallbackRes = await client.auth.getSession();
+        sessionData = fallbackRes?.data || null;
       }
-      if(data?.session?.user){
-        const {data:ad,error:adErr}=await withTimeout(
-          client.from('academy_admins').select('admin_name').eq('user_id',data.session.user.id).maybeSingle(),
-          8000,
-          'انتهت مهلة التحقق من صلاحيات الجلسة'
-        );
-        if(adErr){
-          console.error('Admin check on session restore error:', adErr);
-        }
-        if(ad){
-          user=data.session.user;
-          parentUser=null;
-          showAdmin(ad.admin_name);
-        }else{
-          user=null;
-          parentUser=data.session.user;
-          viewHistory=[];
-          renderView({page:'parent',tab:null});
-          await showParentDash();
-        }
+
+      if(sessionData?.session?.user){
+        await applyAuthenticatedSession(client, sessionData.session.user);
       }else{
         parentUser=null;
         $('parentDash').classList.add('hidden');
         $('parentAuth').classList.remove('hidden');
       }
-    }catch(sessTimeoutErr){
-      console.warn('Session check skipped due to timeout/network:', sessTimeoutErr);
-      parentUser=null;
-      $('parentDash').classList.add('hidden');
-      $('parentAuth').classList.remove('hidden');
+    }catch(sessErr){
+      console.warn('Session check skipped due to network:', sessErr);
     }
   }catch(e){
     console.error('App init error:',e);
