@@ -973,25 +973,43 @@ function getSupabaseClient(){
   return null;
 }
 
-async function verifyAdminWithRetry(client, userId, timeoutPerAttempt = 20000){
+async function verifyAdminWithRetry(client, userId, timeoutPerAttempt = 35000, onProgress){
   let lastError = null;
   for(let attempt = 1; attempt <= 2; attempt++){
     try{
+      if(typeof onProgress === 'function'){
+        onProgress(attempt === 1
+          ? 'تم تسجيل الدخول، جاري التحقق من صلاحيات الإدارة…'
+          : 'الاستجابة أبطأ من المعتاد، جاري إعادة التحقق من الصلاحيات…');
+      }
       const res = await withTimeout(
         client.from('academy_admins').select('admin_name').eq('user_id', userId).maybeSingle(),
         timeoutPerAttempt,
         'تأخر التحقق من صلاحيات الإدارة. أعد المحاولة الآن.'
       );
-      if(res?.error) throw res.error;
-      return res;
+      if(res?.error){
+        const errMsg = String(res.error.message || '');
+        const isPermissionOrMissing =
+          errMsg.toLowerCase().includes('permission') ||
+          errMsg.toLowerCase().includes('policy') ||
+          res.error.code === '42501' ||
+          res.error.code === 'PGRST116';
+        if(isPermissionOrMissing){
+          return { data: null, error: res.error, definitive: true };
+        }
+        throw res.error;
+      }
+      return { data: res?.data || null, error: null, definitive: true };
     }catch(err){
       lastError = err;
       if(attempt < 2){
-        await new Promise(r => setTimeout(r, 600));
+        await new Promise(r => setTimeout(r, 1200));
       }
     }
   }
-  throw lastError || new Error('تأخر التحقق من صلاحيات الإدارة. أعد المحاولة الآن.');
+  const err = lastError || new Error('تأخر التحقق من صلاحيات الإدارة. أعد المحاولة الآن.');
+  err.isTimeoutOrDelay = true;
+  throw err;
 }
 
 async function applyAuthenticatedSession(client, sessionUser){
@@ -999,7 +1017,7 @@ async function applyAuthenticatedSession(client, sessionUser){
     return;
   }
   try{
-    const {data:ad} = await verifyAdminWithRetry(client, sessionUser.id, 18000);
+    const {data:ad} = await verifyAdminWithRetry(client, sessionUser.id, 35000);
     if(ad){
       user=sessionUser;
       parentUser=null;
@@ -1069,15 +1087,15 @@ async function signInWithRecovery(client, email, password, timeoutLabel){
   try{
     return await withTimeout(
       client.auth.signInWithPassword({ email: email, password: password }),
-      22000,
+      25000,
       timeoutLabel
     );
   }catch(firstErr){
-    const isTimeout = String(firstErr?.message || '').includes('مهلة');
+    const isTimeout = String(firstErr?.message || '').includes('مهلة') || String(firstErr?.message || '').includes('تأخر');
     if(!isTimeout) throw firstErr;
     return await withTimeout(
       client.auth.signInWithPassword({ email: email, password: password }),
-      22000,
+      25000,
       timeoutLabel
     );
   }
@@ -1631,15 +1649,24 @@ $('loginForm').addEventListener('submit',async e=>{
       client,
       $('adminEmail').value.trim(),
       $('adminPass').value,
-      'انتهت مهلة تسجيل دخول الإدارة. تحقق من اتصال الإنترنت أو إعدادات Supabase.'
+      'تأخر تسجيل دخول الإدارة. تحقق من اتصال الإنترنت وأعد المحاولة الآن.'
     );
 
     if(error)throw error;
     if(!data?.user)throw new Error('لم يتم استلام بيانات الحساب.');
 
-    setNotice(msg,'تم التحقق من الحساب، جاري تحديد نوع الحساب…');
+    setNotice(msg,'تم تسجيل الدخول، جاري التحقق من صلاحيات الإدارة…');
 
-    const {data:ad}=await verifyAdminWithRetry(client, data.user.id, 20000);
+    const {data:ad, error:adminErr}=await verifyAdminWithRetry(
+      client,
+      data.user.id,
+      35000,
+      statusText => setNotice(msg, statusText)
+    );
+
+    if(adminErr){
+      throw adminErr;
+    }
 
     if(ad){
       user=data.user;
@@ -1657,7 +1684,10 @@ $('loginForm').addEventListener('submit',async e=>{
 
   }catch(err){
     console.error('Login error:',err);
-    setNotice(msg,err.message||'حصل خطأ أثناء تسجيل الدخول. حاولي مرة أخرى.','err');
+    const fallbackMsg = err?.isTimeoutOrDelay
+      ? 'تأخر التحقق من صلاحيات الإدارة. أعد المحاولة الآن.'
+      : (err?.message || 'حصل خطأ أثناء تسجيل الدخول. حاولي مرة أخرى.');
+    setNotice(msg, fallbackMsg, 'err');
   }finally{
     manualLoginInProgress = false;
     btn.disabled=false;
@@ -4148,7 +4178,7 @@ async function parentLogin(){
       client,
       email,
       password,
-      'انتهت مهلة تسجيل دخول ولي الأمر (20 ثانية). تحقق من اتصال الإنترنت أو إعدادات Supabase.'
+      'انتهت مهلة تسجيل دخول ولي الأمر (25 ثانية). تحقق من اتصال الإنترنت أو إعدادات Supabase.'
     );
     if(error || !data?.user){
       parentUser=null;
@@ -4542,12 +4572,16 @@ async function sendLinkRequest(){
     setNotice($('linkMsg'),'تعذر إرسال طلب الربط: ' + error.message,'err');
     return;
   }
-  const msgText = data==='already_linked'
-    ? 'اللاعب مرتبط بحسابك بالفعل.'
-    : data==='pending'
-      ? 'طلب الربط لهذا اللاعب قيد المراجعة بالفعل.'
-      : 'تم إرسال طلب الربط للإدارة.';
-  setNotice($('linkMsg'),msgText, data==='already_linked'||data==='pending' ? '' : 'ok');
+  if(data==='already_linked'){
+    setNotice($('linkMsg'),'تم الربط بنجاح — اللاعب مرتبط بحسابك بالفعل.','ok');
+    showPlayerSavePopup('تم الربط بنجاح', `اللاعب (${name}) مرتبط بحسابك بالفعل`);
+  }else if(data==='pending'){
+    setNotice($('linkMsg'),'تم الربط بنجاح — طلب الربط لهذا اللاعب قيد المراجعة بالفعل.','ok');
+    showPlayerSavePopup('تم الربط بنجاح', `طلب ربط اللاعب (${name}) مسجل وقيد المراجعة`);
+  }else{
+    setNotice($('linkMsg'),'تم الربط بنجاح — تم إرسال طلب الربط للإدارة.','ok');
+    showPlayerSavePopup('تم الربط بنجاح', `تم إرسال طلب ربط اللاعب (${name}) بنجاح`);
+  }
   $('linkName').value='';
   await showParentDash();
 }
