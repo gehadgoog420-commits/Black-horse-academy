@@ -577,7 +577,7 @@ header, .nav, .navbar, .topbar, .header{
 <button type="button" class="secondary" onclick="parentSignup()">إنشاء حساب</button>
 <button type="button" class="secondary" onclick="parentReset()">نسيت كلمة المرور؟</button>
 </div>
-<p class="muted small">ملاحظة: يعتمد تأكيد البريد الإلكتروني وإرسال رسائل التفعيل أو الاستعادة على إعدادات مشروع Supabase الحالية.</p>
+<p class="muted small">إذا كان لديك حساب مسجل مسبقًا، استخدم «تسجيل الدخول» مباشرة ولا تضغط «إنشاء حساب».</p>
 <div id="pMsg" class="notice">سجّل الدخول أو أنشئ حسابًا لمتابعة لاعبك.</div>
 </div>
 
@@ -1466,7 +1466,9 @@ function showAdmin(n){
   viewHistory=[];
   renderView({page:'admin',tab:'players'});
   $('adminName').textContent=n||'BLACK HORSE ADMIN';
-  refreshAll();
+  refreshAll().catch(err=>{
+    console.error('refreshAll error:',err);
+  });
 }
 
 $('loginForm').addEventListener('submit',async e=>{
@@ -1500,14 +1502,12 @@ $('loginForm').addEventListener('submit',async e=>{
   try{
     const {data,error}=await withTimeout(
       client.auth.signInWithPassword({ email, password }),
-      12000,
+      10000,
       'تسجيل دخول الإدارة'
     );
 
     if(error)throw error;
     if(!data?.user)throw new Error('لم يتم استلام بيانات الحساب.');
-
-    setNotice(msg,'تم التحقق من الحساب، جاري تحديد نوع الحساب…');
 
     const {data:ad,error:ae}=await withTimeout(
       client
@@ -1515,11 +1515,13 @@ $('loginForm').addEventListener('submit',async e=>{
         .select('admin_name')
         .eq('user_id',data.user.id)
         .maybeSingle(),
-      12000,
+      8000,
       'التحقق من صلاحيات الإدارة'
     );
 
-    if(ae)throw ae;
+    if(ae){
+      throw new Error('تعذر التحقق من صلاحيات الإدارة: ' + ae.message);
+    }
 
     if(ad){
       user=data.user;
@@ -1532,12 +1534,22 @@ $('loginForm').addEventListener('submit',async e=>{
     parentUser=data.user;
     viewHistory=[];
     renderView({page:'parent',tab:null});
-    await withTimeout(showParentDash(), 12000, 'تحميل بوابة ولي الأمر');
-    setNotice($('pMsg'),'هذا الحساب مسجل كحساب ولي أمر وليس حساب إدارة؛ تم توجيهك إلى بوابة ولي الأمر.','ok');
+    setNotice($('pMsg'),'تم تسجيل الدخول كولي أمر، جاري تحميل البيانات…','ok');
+    showParentDash().catch(err=>{
+      console.error('Parent dash background load error:',err);
+      setNotice($('pMsg'),'تم الدخول، لكن تعذر تحميل بعض بيانات المتابعة: ' + (err?.message || err),'err');
+    });
 
   }catch(err){
     console.error('Login error:',err);
-    setNotice(msg,err?.message||'حصل خطأ أثناء تسجيل الدخول. حاولي مرة أخرى.','err');
+    const raw = String(err?.message || err || '');
+    let friendly = raw;
+    if(raw.toLowerCase().includes('invalid login credentials')){
+      friendly = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+    }else if(raw.toLowerCase().includes('email not confirmed')){
+      friendly = 'البريد الإلكتروني غير مؤكد بعد.';
+    }
+    setNotice(msg,friendly || 'حصل خطأ أثناء تسجيل الدخول. حاولي مرة أخرى.','err');
   }finally{
     if(btn){
       btn.disabled=false;
@@ -3977,7 +3989,7 @@ async function parentLogin(){
   try{
     const {data,error}=await withTimeout(
       client.auth.signInWithPassword({email,password}),
-      12000,
+      10000,
       'تسجيل دخول ولي الأمر'
     );
 
@@ -3987,7 +3999,9 @@ async function parentLogin(){
       $('parentAuth').classList.remove('hidden');
       const rawMsg = String(error?.message||'').toLowerCase();
       if(rawMsg.includes('email not confirmed')){
-        setNotice($('pMsg'),'يرجى تأكيد البريد الإلكتروني أولًا عبر الرابط المرسل إلى بريدك (بحسب إعدادات تأكيد البريد في Supabase) ثم تسجيل الدخول.','err');
+        setNotice($('pMsg'),'هذا البريد مسجل مسبقًا لكنه غير مؤكد بعد؛ افتح رسالة التأكيد في بريدك الإلكتروني أو فعّل الحساب من Supabase ثم اضغط «تسجيل الدخول».','err');
+      }else if(rawMsg.includes('invalid login credentials')){
+        setNotice($('pMsg'),'البريد الإلكتروني أو كلمة المرور غير صحيحة لهذا الحساب المسجل. إذا نسيت كلمة المرور اضغط «نسيت كلمة المرور؟».','err');
       }else{
         setNotice($('pMsg'),error?.message||'تعذر تسجيل الدخول.','err');
       }
@@ -4004,7 +4018,7 @@ async function parentLogin(){
     setNotice($('pMsg'),'تم تسجيل الدخول، جاري تحميل بوابة ولي الأمر…','ok');
     viewHistory=[];
     renderView({page:'parent',tab:null});
-    await withTimeout(showParentDash(), 12000, 'تحميل بيانات ولي الأمر');
+    await withTimeout(showParentDash(), 10000, 'تحميل بيانات ولي الأمر');
   }catch(err){
     console.error('Parent login error:', err);
     setNotice($('pMsg'),err?.message||'تعذر تسجيل الدخول. تأكد من البيانات وحاول مرة أخرى.','err');
@@ -4038,6 +4052,15 @@ async function parentSignup(){
     options:{ data:{ phone: phoneVal } }
   });
   if(error){
+    const rawErr = String(error.message || '').toLowerCase();
+    if(rawErr.includes('already registered') || rawErr.includes('already exists') || rawErr.includes('user already')){
+      setNotice(
+        $('pMsg'),
+        'هذا البريد الإلكتروني مسجل بالفعل (User already registered). اضغط على زر «تسجيل الدخول» مباشرة بنفس البريد وكلمة المرور، أو اضغط «نسيت كلمة المرور؟» لإعادة تعيينها.',
+        'err'
+      );
+      return;
+    }
     setNotice($('pMsg'),error.message,'err');
     return;
   }
@@ -4050,6 +4073,12 @@ async function parentSignup(){
     viewHistory=[];
     renderView({page:'parent',tab:null});
     await showParentDash();
+  }else if(data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0){
+    setNotice(
+      $('pMsg'),
+      'هذا البريد الإلكتروني مسجل بالفعل؛ استخدم زر «تسجيل الدخول» بدلًا من «إنشاء حساب».',
+      'err'
+    );
   }else if(data?.user){
     parentUser=null;
     $('parentDash').classList.add('hidden');
