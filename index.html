@@ -288,7 +288,7 @@ header, .nav, .navbar, .topbar, .header{
 </div>
 
 <div id="playerSavePopup" class="player-save-popup" role="status" aria-live="polite" onclick="hidePlayerSavePopup()">
-  <div class="player-save-popup-badge">✓ تم الحفظ</div>
+  <div class="player-save-popup-badge">✓ تم</div>
   <div id="playerSavePopupTitle" class="player-save-popup-title">تم الحفظ بنجاح</div>
   <div id="playerSavePopupSub" class="player-save-popup-sub">تم الحفظ بنجاح</div>
 </div>
@@ -681,7 +681,7 @@ header, .nav, .navbar, .topbar, .header{
 <div class="section-title">
 <div><h2>لوحة إدارة BLACK HORSE</h2><p id="adminName" class="muted small"></p></div>
 <div class="actions">
-<button type="button" class="secondary" onclick="refreshAll()">تحديث</button>
+<button type="button" class="secondary" onclick="refreshAll(true)">تحديث</button>
 <button type="button" class="danger" onclick="adminLogout()">خروج</button>
 </div>
 </div>
@@ -1398,7 +1398,7 @@ function showAdmin(n){
   viewHistory=[];
   renderView({page:'admin',tab:'players'});
   $('adminName').textContent=n||'BLACK HORSE ADMIN';
-  refreshAll();
+  refreshAll(false);
 }
 
 $('loginForm').addEventListener('submit',async e=>{
@@ -1477,7 +1477,7 @@ async function adminLogout(){
   syncBackButton();
 }
 
-async function refreshAll(){
+async function refreshAll(showPopup=false){
   if(!user) return;
 
   const client=getSupabaseClient();
@@ -1528,6 +1528,10 @@ async function refreshAll(){
     loadParentFeedbackAdmin(),
     loadSectionViewsAdmin(['events','bookings','matches'])
   ]);
+
+  if(showPopup){
+    showPlayerSavePopup('تم التحديث بنجاح', 'تم تحديث بيانات لوحة الإدارة بنجاح');
+  }
 }
 
 function table(rows,heads=['الاسم','التفاصيل','الحالة','التاريخ']){
@@ -1578,7 +1582,7 @@ async function deletePlayer(id){
 
   if($('editId').value === String(id)) resetPlayerForm();
   setNotice($('plMsg'), `تم حذف اللاعب (${name}) بنجاح.`, 'ok');
-  await refreshAll();
+  await refreshAll(false);
 }
 
 $('playerForm').addEventListener('submit',async e=>{
@@ -1671,7 +1675,7 @@ $('playerForm').addEventListener('submit',async e=>{
       : `تم إضافة اللاعب (${nameVal}) بنجاح`
   );
   resetPlayerForm();
-  await refreshAll();
+  await refreshAll(false);
 });
 
 function editPlayer(id){
@@ -1709,7 +1713,7 @@ async function togglePlayer(id,v){
     return;
   }
   setNotice($('plMsg'),v?'تم تفعيل اللاعب بنجاح.':'تم إيقاف اللاعب بنجاح.','ok');
-  await refreshAll();
+  await refreshAll(false);
 }
 
 function showQR(id){
@@ -2688,8 +2692,9 @@ async function markParentFeedbackSeen(feedbackId){
     }
   }
 
-  setNotice($('parentFeedbackMsg'), 'تم رؤية التقييم بنجاح — سيظهر لولي الأمر: تم رؤية تقييمك بنجاح.', 'ok');
-  showPlayerSavePopup('تم رؤية التقييم بنجاح', 'تم إرسال حالة الرؤية لولي الأمر');
+  const seenMsg = 'تم مشاهده تقيمك';
+  setNotice($('parentFeedbackMsg'), `${seenMsg} — تم إرسال التأكيد لولي الأمر.`, 'ok');
+  showPlayerSavePopup(seenMsg, 'سيظهر لولي الأمر: تم مشاهده تقيمك');
   await loadParentFeedbackAdmin();
   if(parentUser) await loadParentSubmittedFeedbackSection();
 }
@@ -2719,8 +2724,8 @@ async function loadParentFeedbackAdmin(){
       <td>${row.parent_player_level??'—'} / 5</td>
       <td>${row.academy_rating??'—'} / 5</td>
       <td>${esc(row.comments||'—')}</td>
-      <td>${isSeen ? '<span class="badge">تم رؤية تقييمك بنجاح</span>' : '<span class="muted">جديد</span>'}</td>
-      <td><button type="button" class="secondary" onclick="markParentFeedbackSeen('${esc(row.id)}')">تم رؤية التقييم</button></td>
+      <td>${isSeen ? '<span class="badge">تم مشاهده تقيمك</span>' : '<span class="muted">جديد</span>'}</td>
+      <td><button type="button" class="secondary" onclick="markParentFeedbackSeen('${esc(row.id)}')">تم مشاهده تقيمك</button></td>
     </tr>`;
   }).join('')}</tbody></table>`;
 }
@@ -2760,7 +2765,7 @@ async function deleteEvent(id){
   setNotice($('evMsg'),'تم حذف الفعالية بنجاح.','ok');
   await loadAdminEventsList();
   await loadPublicEvents();
-  await refreshAll();
+  await refreshAll(false);
 }
 
 function renderAdminEventsList(){
@@ -2827,7 +2832,7 @@ $('eventForm').addEventListener('submit',async e=>{
   setNotice($('evMsg'),editId?'تم تحديث الفعالية بنجاح.':'تم حفظ الفعالية بنجاح.','ok');
   resetEventForm();
   await loadPublicEvents();
-  await refreshAll();
+  await refreshAll(false);
 });
 
 async function loadPublicEvents(){
@@ -3550,21 +3555,20 @@ async function loadMatchViewsAdmin(){
 function renderEnrollmentRequests(){
   const rows = (enrollmentRequests||[]).map(x=>{
     const st = String(x.status||'pending').trim().toLowerCase();
-    const isResolved = st === 'approved' || st === 'accepted' || st === 'rejected';
-    let actionsHtml = `<button type="button" onclick="acknowledgeEnrollment('${x.id}')">تم استقبال طلبك</button><button type="button" class="secondary" onclick="decideEnrollment('${x.id}','approve')">قبول</button><button type="button" class="danger" onclick="decideEnrollment('${x.id}','reject')">رفض</button>`;
-    if(st === 'accepted' || st === 'approved'){
-      actionsHtml = `<span class="badge">تم استقبال طلبك</span>`;
-    }else if(st === 'rejected'){
+    const isAccepted = st === 'accepted' || st === 'approved';
+    const isRejected = st === 'rejected';
+    let actionsHtml = `<button type="button" onclick="acknowledgeEnrollment('${x.id}')">تم قبول طلب التقديم تواصل معانا</button><button type="button" class="secondary" onclick="decideEnrollment('${x.id}','approve')">قبول</button><button type="button" class="danger" onclick="decideEnrollment('${x.id}','reject')">رفض</button>`;
+    if(isAccepted){
+      actionsHtml = `<span class="badge">تم قبول طلبك بنجاح تواصل معانا</span>`;
+    }else if(isRejected){
       actionsHtml = `<span class="badge">مرفوض</span>`;
-    }else if(isResolved){
-      actionsHtml = `<span class="badge">${esc(x.status)}</span>`;
     }
     actionsHtml += `<button type="button" class="danger" onclick="deleteEnrollmentRequest('${x.id}')">حذف</button>`;
     return [
       esc(x.player_name),
       esc(x.parent_phone),
       esc(branches.find(b=>b.id===x.branch_id)?.name||'—'),
-      esc(x.status||'—'),
+      esc(isAccepted ? 'تم قبول طلبك بنجاح تواصل معانا' : (x.status||'—')),
       x.submitted_at?new Date(x.submitted_at).toLocaleDateString('ar-EG'):'—',
       actionsHtml
     ];
@@ -3583,7 +3587,7 @@ async function deleteEnrollmentRequest(reqId){
     return;
   }
   setNotice($('reqActionMsg'),'تم حذف طلب الالتحاق بنجاح.','ok');
-  await refreshAll();
+  await refreshAll(false);
   await loadRequests();
 }
 
@@ -3591,14 +3595,29 @@ async function acknowledgeEnrollment(reqId){
   if(!user) return;
   const client=getSupabaseClient();
   if(!client)return;
+  const acceptedText = 'تم قبول طلبك بنجاح تواصل معانا';
   try{
+    let updatedOk = false;
     const {data,error} = await client.rpc('acknowledge_enrollment_request', { p_request_id: reqId });
-    if(error) throw error;
-    if(!data || data.success !== true){
-      throw new Error(data?.message || 'تعذر تحديث حالة الاستمارة.');
+    if(!error && isRpcResultSuccess(data)){
+      updatedOk = true;
     }
-    setNotice($('reqActionMsg'), data.message || 'تم قبول استمارة التقديم من قبل الإدارة، يرجى التواصل معانا.', 'ok');
-    await refreshAll();
+    const updRes = await client
+      .from('enrollment_requests')
+      .update({ status: 'accepted' })
+      .eq('id', reqId)
+      .select('id,status')
+      .maybeSingle();
+    if(!updRes.error && updRes.data){
+      updatedOk = true;
+    }else if(!updatedOk && updRes.error){
+      throw updRes.error;
+    }
+    enrollmentRequests = enrollmentRequests.map(r => String(r.id) === String(reqId) ? { ...r, status: 'accepted' } : r);
+    setNotice($('reqActionMsg'), acceptedText, 'ok');
+    showPlayerSavePopup(acceptedText, 'تم تحديث حالة طلب التقديم بنجاح');
+    renderEnrollmentRequests();
+    await refreshAll(false);
     await loadRequests();
   }catch(err){
     console.error('Acknowledge enrollment error:', err);
@@ -3646,8 +3665,10 @@ async function decideEnrollment(reqId, action){
       throw new Error((data && data.message) || 'لم تؤكد دالة قاعدة البيانات إتمام العملية.');
     }
 
-    setNotice($('reqActionMsg'), (data && data.message) || (action === 'approve' ? 'تم قبول استمارة التقديم من قبل الإدارة، يرجى التواصل معانا.' : 'تم رفض طلب الالتحاق بنجاح.'), 'ok');
-    await refreshAll();
+    const msg = action === 'approve' ? 'تم قبول طلبك بنجاح تواصل معانا' : 'تم رفض طلب الالتحاق بنجاح.';
+    setNotice($('reqActionMsg'), msg, 'ok');
+    if(action === 'approve') showPlayerSavePopup(msg, 'تم اعتماد طلب الالتحاق');
+    await refreshAll(false);
     await loadRequests();
   }catch(err){
     console.error('Enrollment RPC error:', err);
@@ -3697,7 +3718,11 @@ async function checkPublicStatus(inputId, targetId){
     if(data && data.success === true){
       const lines = [];
       if(data.enrollment){
-        lines.push(`استمارة التقديم (${data.enrollment.player_name}): ${data.enrollment.message}`);
+        const stEn = String(data.enrollment.status || '').trim().toLowerCase();
+        const enText = (stEn === 'accepted' || stEn === 'approved')
+          ? 'تم قبول طلبك بنجاح تواصل معانا'
+          : (data.enrollment.message || data.enrollment.status);
+        lines.push(`استمارة التقديم (${data.enrollment.player_name}): ${enText}`);
       }
       if(data.booking){
         const bMsg = String(data.booking.status || '').toLowerCase() === 'approved' || String(data.booking.status || '').toLowerCase() === 'accepted'
@@ -3776,7 +3801,7 @@ async function reviewParent(id, approve){
 
     setNotice($('parentReqMsg'), (data && data.message) || (approveFlag ? 'تمت الموافقة على طلب الربط بنجاح.' : 'تم رفض طلب الربط بنجاح.'), 'ok');
     await loadParentRequests();
-    await refreshAll();
+    await refreshAll(false);
   }catch(err){
     console.error('reviewParent RPC error:', err);
     setNotice($('parentReqMsg'), 'تعذر مراجعة طلب الربط: ' + (err.message||err), 'err');
@@ -4030,6 +4055,7 @@ async function loadParentSubmittedFeedbackSection(){
     return;
   }
 
+  const seenMsg = 'تم مشاهده تقيمك';
   let anySeen = false;
   const htmlRows = rows.map(r => {
     const pName = linkedPlayersList.find(p => String(p.player_id) === String(r.player_id))?.full_name || 'اللاعب';
@@ -4040,14 +4066,14 @@ async function loadParentSubmittedFeedbackSection(){
       <span>
         <b>${esc(pName)}</b> · مستوى اللاعب: ${r.parent_player_level ?? '—'}/5 · الأكاديمية: ${r.academy_rating ?? '—'}/5
         ${r.comments ? `<br><small class="muted">${esc(r.comments)}</small>` : ''}
-        ${isSeen ? `<div class="notice ok" style="margin-top:6px">تم رؤية تقييمك بنجاح</div>` : ''}
+        ${isSeen ? `<div class="notice ok" style="margin-top:6px">${seenMsg}</div>` : ''}
       </span>
-      <span class="badge">${isSeen ? 'تم رؤية تقييمك بنجاح' : 'قيد المراجعة'}</span>
+      <span class="badge">${isSeen ? seenMsg : 'قيد المراجعة'}</span>
     </div>`;
   }).join('');
 
   const bannerHtml = anySeen
-    ? `<div class="notice ok" style="margin-bottom:10px">تم رؤية تقييمك بنجاح</div>`
+    ? `<div class="notice ok" style="margin-bottom:10px">${seenMsg}</div>`
     : '';
 
   box.innerHTML = `${bannerHtml}<h4>تقييماتك المرسلة</h4>` + htmlRows;
