@@ -21,7 +21,7 @@
           s.onload = null;
           s.onerror = null;
           next();
-        }, 5000);
+        }, 6000);
         s.onload = function(){
           clearTimeout(timer);
           resolve(checkFn ? Boolean(checkFn()) : true);
@@ -75,7 +75,6 @@ button:hover:not(:disabled),.btn:hover{transform:translateY(-1px);box-shadow:0 8
 button.secondary,.btn.secondary{background:#171d21;color:var(--gold2);border-color:#66532e}
 button.danger{background:#472321;color:#ffe1dc;border-color:#99544d}
 button:disabled{opacity:.5;cursor:not-allowed}
-a{color:var(--gold2)}
 .wrap{width:min(1160px,94%);margin:auto}
 header{position:static;z-index:10;background:#080a0ceF;border-bottom:1px solid #59482a;-webkit-backdrop-filter:blur(15px);backdrop-filter:blur(15px)}
 .nav{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:12px 0}
@@ -148,6 +147,7 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 .playerline:last-child{border:0}
 .badge{display:inline-block;border:1px solid #66532e;color:var(--gold2);border-radius:30px;padding:3px 9px;font-size:11px}
 .footer{text-align:center;padding:35px 10px;color:#887c61;font:11px Cinzel,serif;letter-spacing:2px}
+.qrbox{display:inline-block;background:white;padding:12px;border-radius:10px;margin:10px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .back-button{position:fixed;bottom:20px;right:18px;z-index:30;min-width:105px;box-shadow:0 5px 22px #0009;border-radius:30px}
 .scanner-box{position:relative;max-width:420px;margin:12px auto;border-radius:14px;overflow:hidden;border:2px solid #59482a;background:#090d0f}
@@ -257,34 +257,6 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
   color:#b9e5cc
 }
 
-.admin-refresh-toast{
-  position:fixed;
-  bottom:25px;
-  left:25px;
-  z-index:80;
-  min-width:270px;
-  max-width:90vw;
-  background:#0f172a;
-  color:#ffffff;
-  text-align:right;
-  border-radius:10px;
-  padding:16px 20px;
-  font-size:16px;
-  font-weight:800;
-  border-right:6px solid #22c55e;
-  box-shadow:0 10px 25px rgba(0,0,0,.35);
-  opacity:0;
-  visibility:hidden;
-  transform:translateY(15px);
-  cursor:pointer;
-  transition:opacity .35s ease,transform .35s ease,visibility .35s ease
-}
-.admin-refresh-toast.show{
-  opacity:1;
-  visibility:visible;
-  transform:translateY(0)
-}
-
 @keyframes popBump{
   0%{transform:translateX(-50%) scale(.72)}
   65%{transform:translateX(-50%) scale(1.07)}
@@ -308,10 +280,6 @@ header, .nav, .navbar, .topbar, .header{
 </style>
 </head>
 <body>
-
-<div id="adminRefreshToast" class="admin-refresh-toast" role="alert" aria-live="polite" onclick="hideAdminRefreshToast()">
-  تم التحديث بنجاح
-</div>
 
 <div id="scanPopup" class="scan-popup-toast" role="status" aria-live="polite" onclick="hideScanPopup()">
   <div id="scanPopupBadge" class="scan-popup-badge">تم التسجيل</div>
@@ -605,9 +573,9 @@ header, .nav, .navbar, .topbar, .header{
 <label>رقم الموبايل (مطلوب عند إنشاء حساب)<input id="pPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="مثال: 01115099181"></label>
 </div>
 <div class="actions">
-<button id="btnParentLogin" type="button" onclick="parentLogin()">تسجيل الدخول</button>
-<button id="btnParentSignup" type="button" class="secondary" onclick="parentSignup()">إنشاء حساب</button>
-<button id="btnParentReset" type="button" class="secondary" onclick="parentReset()">نسيت كلمة المرور؟</button>
+<button type="button" onclick="parentLogin()">تسجيل الدخول</button>
+<button type="button" class="secondary" onclick="parentSignup()">إنشاء حساب</button>
+<button type="button" class="secondary" onclick="parentReset()">نسيت كلمة المرور؟</button>
 </div>
 <p class="muted small">ملاحظة: يعتمد تأكيد البريد الإلكتروني وإرسال رسائل التفعيل أو الاستعادة على إعدادات مشروع Supabase الحالية.</p>
 <div id="pMsg" class="notice">سجّل الدخول أو أنشئ حسابًا لمتابعة لاعبك.</div>
@@ -703,7 +671,7 @@ header, .nav, .navbar, .topbar, .header{
 <form id="loginForm">
 <label>البريد الإلكتروني<input id="adminEmail" type="email" required></label>
 <label>كلمة المرور<input id="adminPass" type="password" required></label>
-<button id="btnAdminLogin" type="submit">دخول</button>
+<button type="submit">دخول</button>
 <div id="loginMsg" class="notice">الدخول لحسابات الإدارة المعتمدة فقط.</div>
 </form>
 </div>
@@ -713,7 +681,7 @@ header, .nav, .navbar, .topbar, .header{
 <div class="section-title">
 <div><h2>لوحة إدارة BLACK HORSE</h2><p id="adminName" class="muted small"></p></div>
 <div class="actions">
-<button type="button" class="secondary" onclick="refreshAll(true)">تحديث</button>
+<button type="button" class="secondary" onclick="refreshAll()">تحديث</button>
 <button type="button" class="danger" onclick="adminLogout()">خروج</button>
 </div>
 </div>
@@ -724,7 +692,7 @@ header, .nav, .navbar, .topbar, .header{
 </div>
 <div class="tabs">
 <button type="button" class="on" onclick="tab('players',this)">اللاعبون</button>
-<button type="button" class="secondary" onclick="tab('attendance',this)">الحضور والغياب</button>
+<button type="button" class="on" onclick="tab('attendance',this)">الحضور والغياب</button>
 <button type="button" class="secondary" onclick="tab('evaluations',this)">التقييمات</button>
 <button type="button" class="secondary" onclick="tab('eventsAdmin',this)">الفعاليات والحجوزات</button>
 <button type="button" class="secondary" onclick="tab('matches',this)">المباريات</button>
@@ -935,223 +903,16 @@ header, .nav, .navbar, .topbar, .header{
 
 <script>
 const SUPABASE_URL='https://rjkdgjncxkszleorcave.supabase.co',KEY='sb_publishable_QgNtkC4EwtJAg2rcRdeuVg_yCdHI64y';
-const AUTH_STORAGE_KEY='bh-auth-session-v1';
 let db=null;
-let authListenerBound=false;
-let manualLoginInProgress=false;
-let sessionApplyingUserId=null;
-let verifiedAdminCache=new Map();
-let adminVerificationInFlight=new Map();
-let authOperationId=0;
 let qrSeqCounter=0;
-
-function getPersistentStorage(){
-  try{
-    if(window.localStorage){
-      const testKey = '__bh_storage_test__';
-      window.localStorage.setItem(testKey, '1');
-      window.localStorage.removeItem(testKey);
-      return window.localStorage;
-    }
-  }catch(_){}
-  return undefined;
-}
 
 function getSupabaseClient(){
   if(db) return db;
   if(window.supabase && typeof window.supabase.createClient === 'function'){
-    const persistentStorage = getPersistentStorage();
-    db = window.supabase.createClient(SUPABASE_URL, KEY, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: false,
-        storageKey: AUTH_STORAGE_KEY,
-        storage: persistentStorage
-      }
-    });
-    bindAuthStateListener(db);
+    db = window.supabase.createClient(SUPABASE_URL, KEY);
     return db;
   }
   return null;
-}
-
-function clearStoredAuthTokens(){
-  try{
-    if(window.localStorage){
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-      Object.keys(localStorage).forEach(k => {
-        if(k && (k.startsWith('sb-') || k.includes('supabase'))) {
-          localStorage.removeItem(k);
-        }
-      });
-    }
-  }catch(_){}
-  try{
-    if(window.sessionStorage){
-      sessionStorage.removeItem(AUTH_STORAGE_KEY);
-      Object.keys(sessionStorage).forEach(k => {
-        if(k && (k.startsWith('sb-') || k.includes('supabase'))) {
-          sessionStorage.removeItem(k);
-        }
-      });
-    }
-  }catch(_){}
-}
-
-async function signOutFast(client, timeoutMs = 3500){
-  clearStoredAuthTokens();
-  if(!client || !client.auth || typeof client.auth.signOut !== 'function') return;
-  try{
-    await withTimeout(client.auth.signOut({ scope: 'local' }), timeoutMs, 'signOut local timeout');
-  }catch(_){
-    try{
-      await withTimeout(client.auth.signOut(), timeoutMs, 'signOut timeout');
-    }catch(__){}
-  }
-}
-
-async function verifyAdminWithRetry(client, userId, timeoutMs = 8500, onStatus = null) {
-  if (!client || !userId) {
-    return { data: null, error: new Error('بيانات التحقق غير مكتملة.') };
-  }
-
-  const cached = verifiedAdminCache.get(userId);
-  if (cached) return { data: cached, error: null };
-
-  let request = adminVerificationInFlight.get(userId);
-
-  if (!request) {
-    if (onStatus) onStatus('جاري التحقق من صلاحيات الإدارة…');
-
-    request = client
-      .from('academy_admins')
-      .select('admin_name')
-      .eq('user_id', userId)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (!error && data) verifiedAdminCache.set(userId, data);
-        return { data: data || null, error: error || null };
-      })
-      .catch(error => ({ data: null, error }));
-
-    adminVerificationInFlight.set(userId, request);
-
-    request.finally(() => {
-      if (adminVerificationInFlight.get(userId) === request) {
-        adminVerificationInFlight.delete(userId);
-      }
-    });
-  }
-
-  let timer;
-  const timeout = new Promise(resolve => {
-    timer = setTimeout(() => {
-      const error = new Error('تأخر التحقق من صلاحيات الإدارة.');
-      error.isTimeoutOrDelay = true;
-      resolve({ data: null, error });
-    }, timeoutMs);
-  });
-
-  const result = await Promise.race([request, timeout]);
-  clearTimeout(timer);
-  return result;
-}
-
-async function applyAuthenticatedSession(client, sessionUser){
-  if(!sessionUser || !sessionUser.id) return;
-  if(sessionApplyingUserId === sessionUser.id) return;
-  sessionApplyingUserId = sessionUser.id;
-  try{
-    try{
-      const {data:ad} = await verifyAdminWithRetry(client, sessionUser.id, 8500);
-      if(ad){
-        user=sessionUser;
-        parentUser=null;
-        showAdmin(ad.admin_name);
-        return;
-      }
-    }catch(err){
-      console.warn('Admin check warning during session restore:', err?.message || err);
-      if(user && user.id === sessionUser.id){
-        return;
-      }
-    }
-
-    user=null;
-    parentUser=sessionUser;
-    $('parentAuth').classList.add('hidden');
-    $('parentDash').classList.remove('hidden');
-    if(currentView().page === 'parent'){
-      renderView({page:'parent',tab:null});
-    }
-    await showParentDash();
-  }finally{
-    if(sessionApplyingUserId === sessionUser.id){
-      sessionApplyingUserId = null;
-    }
-  }
-}
-
-function bindAuthStateListener(client){
-  if(!client || authListenerBound || !client.auth || typeof client.auth.onAuthStateChange !== 'function') return;
-  authListenerBound = true;
-  client.auth.onAuthStateChange(async function(event, session){
-    if(event === 'SIGNED_OUT'){
-      if(!user && !parentUser) return;
-      user = null;
-      parentUser = null;
-      sessionApplyingUserId = null;
-      linkedPlayerIds.clear();
-      linkedPlayersList = [];
-      $('parentDash')?.classList.add('hidden');
-      $('parentAuth')?.classList.remove('hidden');
-      if(currentView().page === 'admin'){
-        viewHistory = [];
-        renderView({page:'login',tab:null});
-      }
-      return;
-    }
-    if(manualLoginInProgress || sessionApplyingUserId) return;
-    if((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user){
-      const currentActiveId = user?.id || parentUser?.id || null;
-      if(currentActiveId !== session.user.id){
-        await applyAuthenticatedSession(client, session.user);
-      }
-    }
-  });
-}
-
-function withTimeout(promise, ms, timeoutMessage){
-  let timerId = null;
-  const timeoutPromise = new Promise(function(_, reject){
-    timerId = setTimeout(function(){
-      reject(new Error(timeoutMessage));
-    }, ms);
-  });
-  return Promise.race([promise, timeoutPromise]).finally(function(){
-    if(timerId !== null){
-      clearTimeout(timerId);
-    }
-  });
-}
-
-async function signInWithRecovery(client, email, password, timeoutLabel){
-  try{
-    return await withTimeout(
-      client.auth.signInWithPassword({ email: email, password: password }),
-      10000,
-      timeoutLabel
-    );
-  }catch(firstErr){
-    const isTimeout = String(firstErr?.message || '').includes('مهلة') || String(firstErr?.message || '').includes('تأخر');
-    if(!isTimeout) throw firstErr;
-    return await withTimeout(
-      client.auth.signInWithPassword({ email: email, password: password }),
-      8000,
-      timeoutLabel
-    );
-  }
 }
 
 function makeUUID(){
@@ -1185,7 +946,7 @@ function generateUniqueQrToken(){
 }
 
 let user=null,parentUser=null,admins=[],branches=[],groups=[],players=[],enrollmentRequests=[],matchesCache=[],eventsCache=[],coachEvalsCache=[],activeSession=null,scanner=null,scannerStarting=false,scannedInSession=new Set(),viewHistory=[],parentFeedbackEnabled=false,linkedPlayerIds=new Set(),linkedPlayersList=[];
-let fastStream=null,fastRafId=null,fastVideo=null,fastCanvas=null,fastCtx=null,lastScannedCode='',lastScannedAt=0,scanBusy=false,scanPopupTimer=null,playerSavePopupTimer=null,adminRefreshToastTimer=null;
+let fastStream=null,fastRafId=null,fastVideo=null,fastCanvas=null,fastCtx=null,lastScannedCode='',lastScannedAt=0,scanBusy=false,scanPopupTimer=null,playerSavePopupTimer=null;
 let localViewedCoachEvalIds = new Set();
 let localSeenParentFeedbackIds = new Set();
 let localSectionViews = [];
@@ -1196,28 +957,6 @@ let localParentProfiles = [];
 let parentBookingsCache = [];
 let activeParentTabId = 'pTabEvaluations';
 
-const STORAGE_BOOKINGS_KEY = 'bh_local_event_bookings_v1';
-const STORAGE_MATCH_REGS_KEY = 'bh_local_match_regs_v1';
-
-function readStoredList(key){
-  try{
-    const raw = localStorage.getItem(key);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  }catch(_){
-    return [];
-  }
-}
-
-function writeStoredList(key, list){
-  try{
-    localStorage.setItem(key, JSON.stringify(list || []));
-  }catch(_){}
-}
-
-localEventBookings = readStoredList(STORAGE_BOOKINGS_KEY);
-localMatchRegistrations = readStoredList(STORAGE_MATCH_REGS_KEY);
-
 const $=id=>document.getElementById(id),
 today=()=>{
   const d=new Date();
@@ -1227,27 +966,6 @@ today=()=>{
   return `${y}-${m}-${day}`;
 },
 esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-function hideAdminRefreshToast(){
-  const toast = $('adminRefreshToast');
-  if(!toast) return;
-  toast.classList.remove('show');
-  if(adminRefreshToastTimer){
-    clearTimeout(adminRefreshToastTimer);
-    adminRefreshToastTimer = null;
-  }
-}
-
-function showAdminRefreshToast(message = 'تم التحديث بنجاح'){
-  const toast = $('adminRefreshToast');
-  if(!toast) return;
-  toast.textContent = message;
-  toast.classList.remove('show');
-  void toast.offsetWidth;
-  toast.classList.add('show');
-  if(adminRefreshToastTimer) clearTimeout(adminRefreshToastTimer);
-  adminRefreshToastTimer = setTimeout(hideAdminRefreshToast, 3000);
-}
 
 function parentTab(tabId, btn){
   activeParentTabId = tabId;
@@ -1396,8 +1114,8 @@ function showPlayerSavePopup(titleText, subText){
 
   pop.classList.remove('show');
   void pop.offsetWidth;
-
   pop.classList.add('show');
+
   if(playerSavePopupTimer) clearTimeout(playerSavePopupTimer);
   playerSavePopupTimer = setTimeout(hidePlayerSavePopup, 2400);
 }
@@ -1484,26 +1202,20 @@ async function syncAdminTabData(tabId){
   if(tabId==='evaluations'){
     populateEvalPlayers();
     if($('evalDate') && !$('evalDate').value) $('evalDate').value = today();
-    await Promise.allSettled([
-      loadParentFeedbackSetting(),
-      loadCoachEvaluationsAdmin(),
-      loadParentFeedbackAdmin()
-    ]);
+    await loadParentFeedbackSetting();
+    await loadCoachEvaluationsAdmin();
+    await loadParentFeedbackAdmin();
   }
   if(tabId==='eventsAdmin'){
-    await Promise.allSettled([
-      loadAdminEventsList(),
-      loadBookings(),
-      loadSectionViewsAdmin(['events','bookings'])
-    ]);
+    await loadAdminEventsList();
+    await loadBookings();
+    await loadSectionViewsAdmin(['events','bookings']);
   }
   if(tabId==='matches'){
-    await Promise.allSettled([
-      loadMatches(),
-      loadMatchRegistrationsAdmin(),
-      loadMatchViewsAdmin(),
-      loadSectionViewsAdmin(['matches'])
-    ]);
+    await loadMatches();
+    await loadMatchRegistrationsAdmin();
+    await loadMatchViewsAdmin();
+    await loadSectionViewsAdmin(['matches']);
   }
   if(tabId==='requests') await loadRequests();
   if(tabId==='parents') await loadParentRequests();
@@ -1632,8 +1344,8 @@ async function init(){
   }
   try{
     const [b,g]=await Promise.all([
-      withTimeout(client.from('branches').select('*').order('name'), 8000, 'انتهت مهلة تحميل الفروع'),
-      withTimeout(client.from('academy_groups').select('*').order('name'), 8000, 'انتهت مهلة تحميل المجموعات')
+      client.from('branches').select('*').order('name'),
+      client.from('academy_groups').select('*').order('name')
     ]);
     if(b.error || g.error){
       const errTxt = (b.error?.message || '') + ' ' + (g.error?.message || '');
@@ -1649,20 +1361,29 @@ async function init(){
     fill('plGroup',groups,'كل المجموعات / غير محدد');
     if($('attDate') && !$('attDate').value) $('attDate').value = today();
     if($('evalDate') && !$('evalDate').value) $('evalDate').value = today();
-    loadPublicEvents();
+    await loadPublicEvents();
 
-    try{
-      const res = await withTimeout(client.auth.getSession(), 7000, 'انتهت مهلة قراءة الجلسة');
-      const sessionData = res?.data || null;
-
-      if(sessionData?.session?.user){
-        await applyAuthenticatedSession(client, sessionData.session.user);
-      }else{
-        parentUser=null;
-        $('parentDash').classList.add('hidden');
-        $('parentAuth').classList.remove('hidden');
+    const {data,error:sessErr}=await client.auth.getSession();
+    if(sessErr){
+      console.error('Session restore error:', sessErr);
+    }
+    if(data?.session?.user){
+      const {data:ad,error:adErr}=await client.from('academy_admins').select('admin_name').eq('user_id',data.session.user.id).maybeSingle();
+      if(adErr){
+        console.error('Admin check on session restore error:', adErr);
       }
-    }catch(_){
+      if(ad){
+        user=data.session.user;
+        parentUser=null;
+        showAdmin(ad.admin_name);
+      }else{
+        user=null;
+        parentUser=data.session.user;
+        viewHistory=[];
+        renderView({page:'parent',tab:null});
+        await showParentDash();
+      }
+    }else{
       parentUser=null;
       $('parentDash').classList.add('hidden');
       $('parentAuth').classList.remove('hidden');
@@ -1677,14 +1398,14 @@ function showAdmin(n){
   viewHistory=[];
   renderView({page:'admin',tab:'players'});
   $('adminName').textContent=n||'BLACK HORSE ADMIN';
-  refreshAll(false);
+  refreshAll();
 }
 
 $('loginForm').addEventListener('submit',async e=>{
   e.preventDefault();
 
   const msg=$('loginMsg');
-  const btn=$('btnAdminLogin') || $('loginForm').querySelector('button[type="submit"]');
+  const btn=$('loginForm').querySelector('button[type="submit"]');
   await window.__assetsReady;
   const client=getSupabaseClient();
 
@@ -1693,44 +1414,28 @@ $('loginForm').addEventListener('submit',async e=>{
     return;
   }
 
-  const emailVal = $('adminEmail').value.trim();
-  const passVal = $('adminPass').value;
-  if(!emailVal || !passVal){
-    setNotice(msg,'يرجى إدخال البريد الإلكتروني وكلمة المرور.','err');
-    return;
-  }
-
-  manualLoginInProgress = true;
-  if(btn){
-    btn.disabled=true;
-    btn.textContent='جاري الدخول…';
-  }
-  setNotice(msg,'جاري تسجيل الدخول…');
+  btn.disabled=true;
+  btn.textContent='جاري التحقق…';
+  setNotice(msg,'جاري التحقق من بيانات الدخول…');
 
   try{
-    const {data,error}=await signInWithRecovery(
-      client,
-      emailVal,
-      passVal,
-      'تأخر تسجيل دخول الإدارة. تحقق من اتصال الإنترنت وأعد المحاولة الآن.'
-    );
+    const {data,error}=await client.auth.signInWithPassword({
+      email:$('adminEmail').value.trim(),
+      password:$('adminPass').value
+    });
 
     if(error)throw error;
     if(!data?.user)throw new Error('لم يتم استلام بيانات الحساب.');
 
-    sessionApplyingUserId = data.user.id;
-    setNotice(msg,'تم تسجيل الدخول، جاري التحقق من الصلاحيات…');
+    setNotice(msg,'تم التحقق من الحساب، جاري تحديد نوع الحساب…');
 
-    const {data:ad, error:adminErr}=await verifyAdminWithRetry(
-      client,
-      data.user.id,
-      8500,
-      statusText => setNotice(msg, statusText)
-    );
+    const {data:ad,error:ae}=await client
+      .from('academy_admins')
+      .select('admin_name')
+      .eq('user_id',data.user.id)
+      .maybeSingle();
 
-    if(adminErr){
-      throw adminErr;
-    }
+    if(ae)throw ae;
 
     if(ad){
       user=data.user;
@@ -1748,41 +1453,31 @@ $('loginForm').addEventListener('submit',async e=>{
 
   }catch(err){
     console.error('Login error:',err);
-    const fallbackMsg = err?.isTimeoutOrDelay
-      ? 'تأخر التحقق من صلاحيات الإدارة. أعد المحاولة الآن.'
-      : (err?.message || 'حصل خطأ أثناء تسجيل الدخول. حاولي مرة أخرى.');
-    setNotice(msg, fallbackMsg, 'err');
+    setNotice(msg,err.message||'حصل خطأ أثناء تسجيل الدخول. حاولي مرة أخرى.','err');
   }finally{
-    sessionApplyingUserId = null;
-    manualLoginInProgress = false;
-    if(btn){
-      btn.disabled=false;
-      btn.textContent='دخول';
-    }
+    btn.disabled=false;
+    btn.textContent='دخول';
   }
 });
 
 async function adminLogout(){
-  const client=getSupabaseClient();
-  stopScanner();
+  await stopScanner();
   hideScanPopup();
   hidePlayerSavePopup();
-  hideAdminRefreshToast();
-
+  const client=getSupabaseClient();
+  if(client){
+    const {error}=await client.auth.signOut();
+    if(error)console.error('Admin signOut error:',error);
+  }
   user=null;
-  parentUser=null;
-  sessionApplyingUserId=null;
   activeSession=null;
   scannedInSession.clear();
   viewHistory=[];
-  if($('adminPass')) $('adminPass').value='';
   page('home',false);
   syncBackButton();
-
-  await signOutFast(client, 3500);
 }
 
-async function refreshAll(notifyUser = false){
+async function refreshAll(){
   if(!user) return;
 
   const client=getSupabaseClient();
@@ -1821,7 +1516,7 @@ async function refreshAll(notifyUser = false){
   populateEvalPlayers();
   renderAdminEventsList();
 
-  Promise.allSettled([
+  await Promise.all([
     loadParentFeedbackSetting(),
     loadCoachEvaluationsAdmin(),
     loadBookings(),
@@ -1833,10 +1528,6 @@ async function refreshAll(notifyUser = false){
     loadParentFeedbackAdmin(),
     loadSectionViewsAdmin(['events','bookings','matches'])
   ]);
-
-  if(notifyUser){
-    showAdminRefreshToast('تم التحديث بنجاح');
-  }
 }
 
 function table(rows,heads=['الاسم','التفاصيل','الحالة','التاريخ']){
@@ -1887,7 +1578,7 @@ async function deletePlayer(id){
 
   if($('editId').value === String(id)) resetPlayerForm();
   setNotice($('plMsg'), `تم حذف اللاعب (${name}) بنجاح.`, 'ok');
-  await refreshAll(false);
+  await refreshAll();
 }
 
 $('playerForm').addEventListener('submit',async e=>{
@@ -1980,7 +1671,7 @@ $('playerForm').addEventListener('submit',async e=>{
       : `تم إضافة اللاعب (${nameVal}) بنجاح`
   );
   resetPlayerForm();
-  await refreshAll(false);
+  await refreshAll();
 });
 
 function editPlayer(id){
@@ -2018,7 +1709,7 @@ async function togglePlayer(id,v){
     return;
   }
   setNotice($('plMsg'),v?'تم تفعيل اللاعب بنجاح.':'تم إيقاف اللاعب بنجاح.','ok');
-  await refreshAll(false);
+  await refreshAll();
 }
 
 function showQR(id){
@@ -2647,7 +2338,7 @@ async function startScanner(){
     scanner = instance;
     setNotice($('scanMsg'),'الكاميرا شغالة وجاهزة للمسح السريع المتواصل.','ok');
   }catch(e){
-    stopScanner();
+    await stopScanner();
     const detail = e?.message || String(e||'خطأ غير معروف');
     setNotice($('scanMsg'),'تعذر تشغيل الكاميرا: ' + detail + ' — يمكنك اختيار صورة QR أو إدخال الرمز يدويًا.','err');
   }finally{
@@ -2655,7 +2346,7 @@ async function startScanner(){
   }
 }
 
-function stopScanner(){
+async function stopScanner(){
   if(fastRafId){
     cancelAnimationFrame(fastRafId);
     fastRafId = null;
@@ -2672,8 +2363,8 @@ function stopScanner(){
   scanner=null;
   scannerStarting=false;
   if(current){
-    try{ current.stop().catch(()=>{}); }catch(e){}
-    try{ current.clear(); }catch(e){}
+    try{await current.stop();}catch(e){}
+    try{await current.clear();}catch(e){}
   }
   if($('reader')) $('reader').innerHTML = '';
 }
@@ -2697,7 +2388,7 @@ function editCoachEvaluation(id){
   $('tech').value = ev.technical_score ?? '';
   $('beh').value = ev.behavior_score ?? '';
   $('fit').value = ev.fitness_score ?? '';
-  $('evalNotes').value = ev.evaluation_notes ?? ev.notes ?? '';
+  $('evalNotes').value = ev.notes || '';
   setNotice($('evalMsg'), 'جاري تعديل التقييم المحدد…');
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -2764,7 +2455,7 @@ $('evalForm').addEventListener('submit',async e=>{
       technical_score:techVal,
       behavior_score:behVal,
       fitness_score:fitVal,
-      evaluation_notes:notesVal
+      notes:notesVal
     }).eq('id',editId).select('id').maybeSingle();
     if(error || !data){
       setNotice($('evalMsg'),error?.message||'تعذر تحديث التقييم.','err');
@@ -2790,7 +2481,7 @@ $('evalForm').addEventListener('submit',async e=>{
       technical_score:techVal,
       behavior_score:behVal,
       fitness_score:fitVal,
-      evaluation_notes:notesVal
+      notes:notesVal
     }));
     const {data,error}=await client.from('player_evaluations').insert(batchRows).select('id');
     if(error || !data || !data.length){
@@ -2811,7 +2502,7 @@ $('evalForm').addEventListener('submit',async e=>{
     technical_score:techVal,
     behavior_score:behVal,
     fitness_score:fitVal,
-    evaluation_notes:notesVal
+    notes:notesVal
   }).select('id').maybeSingle();
   if(error || !data){
     setNotice($('evalMsg'),error?.message||'تعذر حفظ تقييم المدرب.','err');
@@ -2835,12 +2526,11 @@ function renderCoachEvalRows(rows){
     const seenStatus = isSeen
       ? `<span class="badge">تم المشاهدة${r.seen_at ? ` (${new Date(r.seen_at).toLocaleString('ar-EG')})` : ''}</span>`
       : `<span class="muted">لم يُشاهد بعد</span>`;
-    const noteText = r.evaluation_notes ?? r.notes ?? '—';
     return `<tr>
       <td>${esc(pName)}</td>
       <td>${esc(r.evaluation_date||'—')}</td>
       <td>${r.technical_score??'—'} / ${r.behavior_score??'—'} / ${r.fitness_score??'—'}</td>
-      <td>${esc(noteText)}</td>
+      <td>${esc(r.notes||'—')}</td>
       <td>${seenStatus}</td>
       <td>
         <button type="button" class="secondary" onclick="editCoachEvaluation('${esc(r.id)}')">تعديل</button>
@@ -3070,7 +2760,7 @@ async function deleteEvent(id){
   setNotice($('evMsg'),'تم حذف الفعالية بنجاح.','ok');
   await loadAdminEventsList();
   await loadPublicEvents();
-  await refreshAll(false);
+  await refreshAll();
 }
 
 function renderAdminEventsList(){
@@ -3137,7 +2827,7 @@ $('eventForm').addEventListener('submit',async e=>{
   setNotice($('evMsg'),editId?'تم تحديث الفعالية بنجاح.':'تم حفظ الفعالية بنجاح.','ok');
   resetEventForm();
   await loadPublicEvents();
-  await refreshAll(false);
+  await refreshAll();
 });
 
 async function loadPublicEvents(){
@@ -3196,7 +2886,7 @@ async function bookEvent(id, eventTitle, prefilledName, prefilledPhone){
   }
 
   if(parentUser){
-    recordParentSectionView('bookings', `حجز فعالية: ${eventTitle || id} (${name.trim()})`);
+    await recordParentSectionView('bookings', `حجز فعالية: ${eventTitle || id} (${name.trim()})`);
   }
 
   let bookingId = makeUUID();
@@ -3239,9 +2929,8 @@ async function bookEvent(id, eventTitle, prefilledName, prefilledPhone){
 
   localEventBookings = [
     localBooking,
-    ...readStoredList(STORAGE_BOOKINGS_KEY).filter(x => String(x.id) !== String(bookingId))
+    ...localEventBookings.filter(x => String(x.id) !== String(bookingId))
   ];
-  writeStoredList(STORAGE_BOOKINGS_KEY, localEventBookings);
 
   const okText = 'تم الحجز بنجاح';
   if(parentUser){
@@ -3268,14 +2957,9 @@ async function loadParentEventsAndBookings(){
   const bookingsListBox = $('parentBookingsListBox');
   if(!client || !box) return;
 
-  localEventBookings = readStoredList(STORAGE_BOOKINGS_KEY);
-  localMatchRegistrations = readStoredList(STORAGE_MATCH_REGS_KEY);
-
-  const [evRes, bkRes, mRes, allMatchRegs] = await Promise.all([
+  const [evRes, bkRes] = await Promise.all([
     client.from('academy_events').select('id,title,description,event_date,capacity,price,published').eq('published',true).order('event_date'),
-    client.from('event_bookings').select('id,event_id,parent_name,parent_phone,status,created_at,academy_events(title)').order('created_at',{ascending:false}),
-    client.from('academy_matches').select('id,title,match_date,location').order('match_date',{ascending:false}),
-    fetchAllMatchRegistrations(client)
+    client.from('event_bookings').select('id,event_id,parent_name,parent_phone,status,created_at,academy_events(title)').order('created_at',{ascending:false})
   ]);
 
   if(evRes.error){
@@ -3284,18 +2968,10 @@ async function loadParentEventsAndBookings(){
   }
 
   const eventsList = evRes.data || [];
-  const matchesList = mRes.data || [];
   const dbBookings = bkRes.data || [];
-
   const mergedMap = new Map();
   [...dbBookings, ...localEventBookings].forEach(b=>{
-    const key = String(b.id);
-    const prev = mergedMap.get(key);
-    if(prev && String(prev.status||'').toLowerCase() === 'approved'){
-      mergedMap.set(key, prev);
-    }else{
-      mergedMap.set(key, b);
-    }
+    mergedMap.set(String(b.id), b);
   });
   parentBookingsCache = Array.from(mergedMap.values());
 
@@ -3348,59 +3024,20 @@ async function loadParentEventsAndBookings(){
       if(!myPhoneCandidates.length) return true;
       return normalizePhoneCandidates(b.parent_phone).some(c => myPhoneCandidates.includes(c));
     });
-
-    const myMatchRegs = (allMatchRegs || []).filter(r =>
-      String(r.parent_user_id || '') === String(parentUser.id) ||
-      String(r.parent_email || '').toLowerCase() === String(parentUser.email || '').toLowerCase() ||
-      linkedPlayerIds.has(String(r.player_id))
-    );
-
-    const htmlParts = [];
-
-    if(myBookings.length){
-      htmlParts.push(`<h4>حجوزات الفعاليات</h4>`);
-      htmlParts.push(myBookings.map(b => {
+    if(!myBookings.length){
+      bookingsListBox.innerHTML = '<p class="muted small">لا توجد حجوزات مسجلة حتى الآن.</p>';
+    }else{
+      bookingsListBox.innerHTML = myBookings.map(b => {
         const evTitle = b.academy_events?.title || eventsList.find(e => String(e.id) === String(b.event_id))?.title || 'فعالية الأكاديمية';
         const st = String(b.status || 'pending').trim().toLowerCase();
-        const isApproved = st === 'approved' || st === 'accepted';
-        const stLabel = isApproved
+        const stLabel = (st === 'approved' || st === 'accepted')
           ? 'تم قبول حجزك بنجاح تواصل معانا'
           : (st === 'rejected' ? 'تم رفض الحجز' : 'قيد المراجعة / بانتظار قبول الإدارة');
         return `<div class="playerline">
-          <span>
-            <b>${esc(evTitle)}</b>
-            <br><small class="muted">الاسم: ${esc(b.parent_name || '—')} · الهاتف: ${esc(b.parent_phone || '—')}</small>
-            ${isApproved ? `<div class="notice ok" style="margin-top:6px">تم قبول حجزك بنجاح تواصل معانا</div>` : ''}
-          </span>
+          <span><b>${esc(evTitle)}</b><br><small class="muted">الاسم: ${esc(b.parent_name || '—')} · الهاتف: ${esc(b.parent_phone || '—')}</small></span>
           <span class="badge">${esc(stLabel)}</span>
         </div>`;
-      }).join(''));
-    }
-
-    if(myMatchRegs.length){
-      htmlParts.push(`<h4 style="margin-top:14px">اشتراكات المباريات</h4>`);
-      htmlParts.push(myMatchRegs.map(r => {
-        const mTitle = matchesList.find(m => String(m.id) === String(r.match_id))?.title || r.match_title || 'مباراة الأكاديمية';
-        const pName = linkedPlayersList.find(p => String(p.player_id) === String(r.player_id))?.full_name || r.player_name || 'اللاعب';
-        const st = String(r.status || 'pending').trim().toLowerCase();
-        const isApproved = st === 'approved' || st === 'accepted';
-        const stLabel = isApproved
-          ? 'تم قبول اشتراك بنجاح تواصل معانا'
-          : (st === 'rejected' ? 'تم رفض الاشتراك' : 'قيد المراجعة / بانتظار قبول الإدارة');
-        return `<div class="playerline">
-          <span>
-            <b>${esc(mTitle)}</b> — اللاعب: ${esc(pName)}
-            ${isApproved ? `<div class="notice ok" style="margin-top:6px">تم قبول اشتراك بنجاح تواصل معانا</div>` : ''}
-          </span>
-          <span class="badge">${esc(stLabel)}</span>
-        </div>`;
-      }).join(''));
-    }
-
-    if(!htmlParts.length){
-      bookingsListBox.innerHTML = '<p class="muted small">لا توجد حجوزات فعاليات أو اشتراكات مباريات مسجلة حتى الآن.</p>';
-    }else{
-      bookingsListBox.innerHTML = htmlParts.join('');
+      }).join('');
     }
   }
 }
@@ -3448,8 +3085,7 @@ async function deleteBooking(id){
   if(!confirm('هل أنت متأكد من حذف هذا الحجز؟')) return;
   const client=getSupabaseClient();
   if(!client) return;
-  localEventBookings = readStoredList(STORAGE_BOOKINGS_KEY).filter(x => String(x.id) !== String(id));
-  writeStoredList(STORAGE_BOOKINGS_KEY, localEventBookings);
+  localEventBookings = localEventBookings.filter(x => String(x.id) !== String(id));
   const {error}=await client.from('event_bookings').delete().eq('id',id);
   if(error){
     setNotice($('bookingsMsg'),'تعذر حذف الحجز: ' + error.message,'err');
@@ -3467,10 +3103,7 @@ async function approveBooking(id){
   const client=getSupabaseClient();
   if(!client)return;
 
-  localEventBookings = readStoredList(STORAGE_BOOKINGS_KEY).map(x =>
-    String(x.id) === String(id) ? { ...x, status: 'approved' } : x
-  );
-  writeStoredList(STORAGE_BOOKINGS_KEY, localEventBookings);
+  localEventBookings = localEventBookings.map(x => String(x.id) === String(id) ? { ...x, status: 'approved' } : x);
 
   const {data,error}=await client.rpc('approve_event_booking',{p_booking_id:id});
   if(error || (data && data.success === false)){
@@ -3497,10 +3130,7 @@ async function rejectBooking(id){
   }
   const client=getSupabaseClient();
   if(!client)return;
-  localEventBookings = readStoredList(STORAGE_BOOKINGS_KEY).map(x =>
-    String(x.id) === String(id) ? { ...x, status: 'rejected' } : x
-  );
-  writeStoredList(STORAGE_BOOKINGS_KEY, localEventBookings);
+  localEventBookings = localEventBookings.map(x => String(x.id) === String(id) ? { ...x, status: 'rejected' } : x);
   const {data,error}=await client.from('event_bookings').update({status:'rejected'}).eq('id',id).select('id,status').maybeSingle();
   if(error || !data){
     setNotice($('bookingsMsg'),'تعذر رفض الحجز: ' + (error?.message || 'لم يتم تعديل أي سجل.'),'err');
@@ -3547,6 +3177,9 @@ async function loadSectionViewsAdmin(sectionsFilter){
 
   if($('eventBookingViewsTable')){
     $('eventBookingViewsTable').innerHTML = renderViewsTable(list.filter(x=>x.section==='events' || x.section==='bookings'));
+  }
+  if($('matchViewsTable')){
+    $('matchViewsTable').innerHTML = renderViewsTable(list.filter(x=>x.section==='matches'));
   }
 }
 
@@ -3638,16 +3271,10 @@ async function fetchAllMatchRegistrations(client){
       if(!error && Array.isArray(data)) dbRegs = data;
     }catch(_){}
   }
-  const storedRegs = readStoredList(STORAGE_MATCH_REGS_KEY);
   const mergedMap = new Map();
-  [...dbRegs, ...storedRegs, ...localMatchRegistrations].forEach(r=>{
+  [...dbRegs, ...localMatchRegistrations].forEach(r=>{
     const key = `${r.match_id}::${r.player_id}`;
-    const prev = mergedMap.get(key);
-    if(prev && String(prev.status||'').toLowerCase() === 'approved'){
-      mergedMap.set(key, prev);
-    }else{
-      mergedMap.set(key, r);
-    }
+    mergedMap.set(key, r);
   });
   return Array.from(mergedMap.values());
 }
@@ -3731,7 +3358,7 @@ async function loadParentMatchesSection(){
 
   const anyApprovedSub = myRegs.some(r => String(r.status || '').toLowerCase() === 'approved');
   const topBanner = anyApprovedSub
-    ? `<div class="notice ok" style="margin-bottom:10px">تم قبول اشتراك بنجاح تواصل معانا</div>`
+    ? `<div class="notice ok" style="margin-bottom:10px">تم قبول اشتراك تواصل معانا</div>`
     : '';
 
   box.innerHTML = topBanner + `<div class="grid">${pubMatches.map(m=>{
@@ -3741,7 +3368,7 @@ async function loadParentMatchesSection(){
         return `<button type="button" onclick="registerPlayerForMatch('${esc(m.id)}','${esc(m.title)}','${esc(pl.player_id)}','${esc(pl.full_name)}')">اشتراك (${esc(pl.full_name)})</button>`;
       }
       if(String(reg.status).toLowerCase() === 'approved'){
-        return `<div class="notice ok" style="margin-top:6px">اللاعب (${esc(pl.full_name)}): تم قبول اشتراك بنجاح تواصل معانا</div>`;
+        return `<div class="notice ok" style="margin-top:6px">اللاعب (${esc(pl.full_name)}): تم قبول اشتراك تواصل معانا</div>`;
       }
       return `<div class="notice" style="margin-top:6px">اللاعب (${esc(pl.full_name)}): تم إرسال طلب الاشتراك — بانتظار قبول الإدارة</div>`;
     }).join('');
@@ -3779,7 +3406,7 @@ async function registerPlayerForMatch(matchId, matchTitle, playerId, playerName)
     return;
   }
 
-  recordParentMatchView(matchId, matchTitle);
+  await recordParentMatchView(matchId, matchTitle);
 
   const newReg = {
     id: makeUUID(),
@@ -3794,10 +3421,9 @@ async function registerPlayerForMatch(matchId, matchTitle, playerId, playerName)
   };
 
   localMatchRegistrations = [
-    ...readStoredList(STORAGE_MATCH_REGS_KEY).filter(x => !(String(x.match_id) === String(matchId) && String(x.player_id) === String(playerId))),
+    ...localMatchRegistrations.filter(x => !(String(x.match_id) === String(matchId) && String(x.player_id) === String(playerId))),
     newReg
   ];
-  writeStoredList(STORAGE_MATCH_REGS_KEY, localMatchRegistrations);
 
   try{
     await client.from('match_registrations').upsert({
@@ -3813,7 +3439,6 @@ async function registerPlayerForMatch(matchId, matchTitle, playerId, playerName)
   setNotice($('parentMatchesNotice'), `تم إرسال اشتراك اللاعب (${playerName}) في مباراة (${matchTitle}) بنجاح.`, 'ok');
   showPlayerSavePopup('تم إرسال الاشتراك', `اللاعب ${playerName} · ${matchTitle}`);
   await loadParentMatchesSection();
-  await loadParentEventsAndBookings();
   if(user) await loadMatchRegistrationsAdmin();
 }
 
@@ -3833,9 +3458,9 @@ async function loadMatchRegistrationsAdmin(){
     const mTitle = matchesCache.find(m=>String(m.id)===String(r.match_id))?.title || r.match_title || r.match_id || '—';
     const pName = players.find(p=>String(p.id)===String(r.player_id))?.full_name || r.player_name || r.player_id || '—';
     const isApproved = String(r.status||'pending').toLowerCase() === 'approved';
-    const statusText = isApproved ? 'تم قبول اشتراك بنجاح تواصل معانا' : 'قيد المراجعة';
+    const statusText = isApproved ? 'تم قبول اشتراك تواصل معانا' : 'قيد المراجعة';
     const actionBtn = isApproved
-      ? '<span class="badge">تم قبول اشتراك بنجاح تواصل معانا</span>'
+      ? '<span class="badge">تم قبول اشتراك تواصل معانا</span>'
       : `<button type="button" onclick="approveMatchRegistration('${esc(r.match_id)}','${esc(r.player_id)}','${esc(pName)}')">تم قبول اشتراك</button>`;
     return `<tr>
       <td>${esc(mTitle)}</td>
@@ -3851,13 +3476,12 @@ async function approveMatchRegistration(matchId, playerId, playerName){
   if(!user) return;
   const client = getSupabaseClient();
 
-  localMatchRegistrations = readStoredList(STORAGE_MATCH_REGS_KEY).map(r => {
+  localMatchRegistrations = localMatchRegistrations.map(r => {
     if(String(r.match_id) === String(matchId) && String(r.player_id) === String(playerId)){
       return { ...r, status: 'approved', updated_at: new Date().toISOString() };
     }
     return r;
   });
-  writeStoredList(STORAGE_MATCH_REGS_KEY, localMatchRegistrations);
 
   if(client){
     try{
@@ -3869,14 +3493,11 @@ async function approveMatchRegistration(matchId, playerId, playerName){
     }catch(_){}
   }
 
-  const approvedSubMsg = 'تم قبول اشتراك بنجاح تواصل معانا';
+  const approvedSubMsg = 'تم قبول اشتراك تواصل معانا';
   setNotice($('matchRegMsg'), `تم قبول اشتراك اللاعب (${playerName}) — سيظهر لولي الأمر: ${approvedSubMsg}`, 'ok');
   showPlayerSavePopup('تم قبول الاشتراك', approvedSubMsg);
   await loadMatchRegistrationsAdmin();
-  if(parentUser){
-    await loadParentMatchesSection();
-    await loadParentEventsAndBookings();
-  }
+  if(parentUser) await loadParentMatchesSection();
 }
 
 async function loadMatchViewsAdmin(){
@@ -3962,7 +3583,7 @@ async function deleteEnrollmentRequest(reqId){
     return;
   }
   setNotice($('reqActionMsg'),'تم حذف طلب الالتحاق بنجاح.','ok');
-  await refreshAll(false);
+  await refreshAll();
   await loadRequests();
 }
 
@@ -3977,7 +3598,7 @@ async function acknowledgeEnrollment(reqId){
       throw new Error(data?.message || 'تعذر تحديث حالة الاستمارة.');
     }
     setNotice($('reqActionMsg'), data.message || 'تم قبول استمارة التقديم من قبل الإدارة، يرجى التواصل معانا.', 'ok');
-    await refreshAll(false);
+    await refreshAll();
     await loadRequests();
   }catch(err){
     console.error('Acknowledge enrollment error:', err);
@@ -4026,7 +3647,7 @@ async function decideEnrollment(reqId, action){
     }
 
     setNotice($('reqActionMsg'), (data && data.message) || (action === 'approve' ? 'تم قبول استمارة التقديم من قبل الإدارة، يرجى التواصل معانا.' : 'تم رفض طلب الالتحاق بنجاح.'), 'ok');
-    await refreshAll(false);
+    await refreshAll();
     await loadRequests();
   }catch(err){
     console.error('Enrollment RPC error:', err);
@@ -4155,7 +3776,7 @@ async function reviewParent(id, approve){
 
     setNotice($('parentReqMsg'), (data && data.message) || (approveFlag ? 'تمت الموافقة على طلب الربط بنجاح.' : 'تم رفض طلب الربط بنجاح.'), 'ok');
     await loadParentRequests();
-    await refreshAll(false);
+    await refreshAll();
   }catch(err){
     console.error('reviewParent RPC error:', err);
     setNotice($('parentReqMsg'), 'تعذر مراجعة طلب الربط: ' + (err.message||err), 'err');
@@ -4226,7 +3847,6 @@ async function saveParentPhoneRecord(client, authUser, phone){
 }
 
 async function parentLogin(){
-  const btn = $('btnParentLogin');
   await window.__assetsReady;
   const client=getSupabaseClient();
   if(!client){setNotice($('pMsg'),'تعذر الاتصال بقاعدة البيانات.','err');return;}
@@ -4237,59 +3857,32 @@ async function parentLogin(){
     setNotice($('pMsg'),'يرجى إدخال البريد الإلكتروني وكلمة المرور.','err');
     return;
   }
-  manualLoginInProgress = true;
-  if(btn){
-    btn.disabled=true;
-    btn.textContent='جاري الدخول…';
-  }
-  setNotice($('pMsg'),'جاري تسجيل الدخول…');
-  try{
-    let {data,error}=await signInWithRecovery(
-      client,
-      email,
-      password,
-      'انتهت مهلة تسجيل دخول ولي الأمر. تحقق من اتصال الإنترنت أو إعدادات Supabase.'
-    );
-    if(error || !data?.user){
-      parentUser=null;
-      $('parentDash').classList.add('hidden');
-      $('parentAuth').classList.remove('hidden');
-      const rawMsg = String(error?.message||'').toLowerCase();
-      if(rawMsg.includes('email not confirmed')){
-        setNotice($('pMsg'),'يرجى تأكيد البريد الإلكتروني أولًا عبر الرابط المرسل إلى بريدك (بحسب إعدادات تأكيد البريد في Supabase) ثم تسجيل الدخول.','err');
-      }else{
-        setNotice($('pMsg'),error?.message||'تعذر تسجيل الدخول.','err');
-      }
-      return;
-    }
-    sessionApplyingUserId = data.user.id;
-    user=null;
-    parentUser=data.user;
-    const effectivePhone = phoneInput || normalizeMobileInput(data.user.user_metadata?.phone || '');
-    if(effectivePhone){
-      saveParentPhoneRecord(client, data.user, effectivePhone);
-    }
-    setNotice($('pMsg'),'تم تسجيل الدخول.','ok');
-    viewHistory=[];
-    renderView({page:'parent',tab:null});
-    await showParentDash();
-  }catch(err){
+  let {data,error}=await client.auth.signInWithPassword({email,password});
+  if(error || !data?.user){
     parentUser=null;
     $('parentDash').classList.add('hidden');
     $('parentAuth').classList.remove('hidden');
-    setNotice($('pMsg'),err?.message||'انتهت مهلة تسجيل دخول ولي الأمر. أعد المحاولة.','err');
-  }finally{
-    sessionApplyingUserId = null;
-    manualLoginInProgress = false;
-    if(btn){
-      btn.disabled=false;
-      btn.textContent='تسجيل الدخول';
+    const rawMsg = String(error?.message||'').toLowerCase();
+    if(rawMsg.includes('email not confirmed')){
+      setNotice($('pMsg'),'يرجى تأكيد البريد الإلكتروني أولًا عبر الرابط المرسل إلى بريدك (بحسب إعدادات تأكيد البريد في Supabase) ثم تسجيل الدخول.','err');
+    }else{
+      setNotice($('pMsg'),error?.message||'تعذر تسجيل الدخول.','err');
     }
+    return;
   }
+  user=null;
+  parentUser=data.user;
+  const effectivePhone = phoneInput || normalizeMobileInput(data.user.user_metadata?.phone || '');
+  if(effectivePhone){
+    await saveParentPhoneRecord(client, data.user, effectivePhone);
+  }
+  setNotice($('pMsg'),'تم تسجيل الدخول.','ok');
+  viewHistory=[];
+  renderView({page:'parent',tab:null});
+  await showParentDash();
 }
 
 async function parentSignup(){
-  const btn = $('btnParentSignup');
   await window.__assetsReady;
   const client=getSupabaseClient();
   if(!client){setNotice($('pMsg'),'تعذر الاتصال بقاعدة البيانات.','err');return;}
@@ -4305,54 +3898,34 @@ async function parentSignup(){
     $('pPhone')?.focus();
     return;
   }
-  manualLoginInProgress = true;
-  if(btn){
-    btn.disabled=true;
-    btn.textContent='جاري الإنشاء…';
+  let {data,error}=await client.auth.signUp({
+    email,
+    password,
+    options:{ data:{ phone: phoneVal } }
+  });
+  if(error){
+    setNotice($('pMsg'),error.message,'err');
+    return;
   }
-  setNotice($('pMsg'),'جاري إنشاء الحساب…');
-  try{
-    let {data,error}=await withTimeout(
-      client.auth.signUp({
-        email,
-        password,
-        options:{ data:{ phone: phoneVal } }
-      }),
-      10000,
-      'انتهت مهلة إنشاء الحساب. تحقق من الاتصال أو إعدادات Supabase.'
-    );
-    if(error){
-      setNotice($('pMsg'),error.message,'err');
-      return;
-    }
-    saveParentPhoneRecord(client, data?.user || null, phoneVal);
+  await saveParentPhoneRecord(client, data?.user || null, phoneVal);
 
-    if(data?.session && data?.user){
-      sessionApplyingUserId = data.user.id;
-      user=null;
-      parentUser=data.user;
-      setNotice($('pMsg'),`تم إنشاء الحساب وحفظ رقم الموبايل (${phoneVal}) بنجاح.`,'ok');
-      viewHistory=[];
-      renderView({page:'parent',tab:null});
-      await showParentDash();
-    }else if(data?.user){
-      parentUser=null;
-      $('parentDash').classList.add('hidden');
-      $('parentAuth').classList.remove('hidden');
-      setNotice($('pMsg'),`تم إنشاء الحساب وحفظ رقم الموبايل (${phoneVal})؛ إذا كان تأكيد البريد مفعّلًا في إعدادات Supabase فسيصلك رابط التأكيد قبل فتح الجلسة، ويمكنك الاستعلام برقم الموبايل الآن.`,'ok');
-    }else{
-      parentUser=null;
-      $('parentDash').classList.add('hidden');
-      $('parentAuth').classList.remove('hidden');
-      setNotice($('pMsg'),'لم يتم تأكيد إنشاء الجلسة؛ تحقق من بيانات البريد وإعدادات التسجيل في Supabase.','err');
-    }
-  }finally{
-    sessionApplyingUserId = null;
-    manualLoginInProgress = false;
-    if(btn){
-      btn.disabled=false;
-      btn.textContent='إنشاء حساب';
-    }
+  if(data?.session && data?.user){
+    user=null;
+    parentUser=data.user;
+    setNotice($('pMsg'),`تم إنشاء الحساب وحفظ رقم الموبايل (${phoneVal}) بنجاح.`,'ok');
+    viewHistory=[];
+    renderView({page:'parent',tab:null});
+    await showParentDash();
+  }else if(data?.user){
+    parentUser=null;
+    $('parentDash').classList.add('hidden');
+    $('parentAuth').classList.remove('hidden');
+    setNotice($('pMsg'),`تم إنشاء الحساب وحفظ رقم الموبايل (${phoneVal})؛ إذا كان تأكيد البريد مفعّلًا في إعدادات Supabase فسيصلك رابط التأكيد قبل فتح الجلسة، ويمكنك الاستعلام برقم الموبايل الآن.`,'ok');
+  }else{
+    parentUser=null;
+    $('parentDash').classList.add('hidden');
+    $('parentAuth').classList.remove('hidden');
+    setNotice($('pMsg'),'لم يتم تأكيد إنشاء الجلسة؛ تحقق من بيانات البريد وإعدادات التسجيل في Supabase.','err');
   }
 }
 
@@ -4365,34 +3938,32 @@ async function parentReset(){
     setNotice($('pMsg'),'يرجى إدخال البريد الإلكتروني أولًا لإرسال رابط الاستعادة.','err');
     return;
   }
-  let {error}=await withTimeout(
-    client.auth.resetPasswordForEmail(email),
-    8000,
-    'انتهت مهلة طلب استعادة كلمة المرور.'
-  );
+  let {error}=await client.auth.resetPasswordForEmail(email);
   setNotice($('pMsg'),error?error.message:'تم طلب إرسال رابط استعادة كلمة المرور؛ وصول الرسالة يعتمد على إعدادات البريد في Supabase للبريد المدخل.','ok');
 }
 
 async function parentLogout(){
   const client=getSupabaseClient();
-
+  if(client){
+    const {error}=await client.auth.signOut();
+    if(error){
+      setNotice($('pMsg'),'حدث خطأ أثناء تسجيل الخروج: ' + error.message,'err');
+      return;
+    }
+  }
   parentUser=null;
-  user=null;
-  sessionApplyingUserId=null;
   linkedPlayerIds.clear();
   linkedPlayersList=[];
-  if($('pPass')) $('pPass').value='';
+  $('pPass').value='';
   if($('pPhone')) $('pPhone').value='';
-  if($('linkName')) $('linkName').value='';
-  if($('linkedPlayers')) $('linkedPlayers').innerHTML='—';
-  if($('linkRequests')) $('linkRequests').innerHTML='—';
-  if($('feedbackPlayer')) $('feedbackPlayer').innerHTML='';
-  if($('parentFeedbackForm')) $('parentFeedbackForm').classList.add('hidden');
-  if($('parentDash')) $('parentDash').classList.add('hidden');
-  if($('parentAuth')) $('parentAuth').classList.remove('hidden');
+  $('linkName').value='';
+  $('linkedPlayers').innerHTML='—';
+  $('linkRequests').innerHTML='—';
+  $('feedbackPlayer').innerHTML='';
+  $('parentFeedbackForm').classList.add('hidden');
+  $('parentDash').classList.add('hidden');
+  $('parentAuth').classList.remove('hidden');
   setNotice($('pMsg'),'تم تسجيل الخروج. سجّل الدخول لمتابعة لاعبك.');
-
-  await signOutFast(client, 3500);
 }
 
 function formatAttendanceLabel(rawStatus){
@@ -4503,36 +4074,6 @@ async function markEvaluationSeen(playerId, evalId){
   if(user) await loadCoachEvaluationsAdmin();
 }
 
-async function loadParentAttendanceForLinked(client, linked){
-  const attBox = $('parentAttendanceBox');
-  if(!attBox) return;
-  if(!linked.length){
-    attBox.innerHTML = '<p class="muted small">لا يوجد لاعب مرتبط حتى الآن لعرض سجل الحضور والغياب.</p>';
-    return;
-  }
-  attBox.innerHTML = linked.map(x => `<div class="card" style="margin:10px 0"><h3>${esc(x.full_name)}</h3><div id="history-${esc(x.player_id)}" class="muted small">جاري تحميل سجل الحضور…</div></div>`).join('');
-
-  await Promise.allSettled(linked.map(async x => {
-    const h = await client
-      .from('attendance_records')
-      .select('attendance_status,attendance_sessions(session_date,session_closed)')
-      .eq('player_id', x.player_id)
-      .order('attended_at', {ascending:false})
-      .limit(20);
-    const el = $('history-' + x.player_id);
-    if(!el) return;
-    if(h.error){
-      el.innerHTML = `<b>سجل الحضور</b><br><span class="small">${esc(h.error.message)}</span>`;
-      return;
-    }
-    const rows = h.data || [];
-    el.innerHTML = '<b>سجل الحضور</b><br>' + (rows.length ? rows.map(z => {
-      const stLabel = formatAttendanceLabel(z.attendance_status);
-      return `${esc(z.attendance_sessions?.session_date||'—')} · ${esc(stLabel)}`;
-    }).join('<br>') : 'لا يوجد سجل حضور بعد');
-  }));
-}
-
 async function showParentDash(){
   if(!parentUser){
     $('parentDash').classList.add('hidden');
@@ -4545,7 +4086,7 @@ async function showParentDash(){
   $('parentDash').classList.remove('hidden');
   parentTab(activeParentTabId);
 
-  const [p,r]=await Promise.all([
+  let [p,r]=await Promise.all([
     client.rpc('get_my_linked_players'),
     client.rpc('get_my_parent_link_requests')
   ]);
@@ -4553,12 +4094,14 @@ async function showParentDash(){
   const linked=p.data||[];
   linkedPlayersList = linked;
   linkedPlayerIds = new Set(linked.map(x=>String(x.player_id)).filter(Boolean));
-  recordParentSectionView('parent_portal', 'صفحة ولي الأمر');
+  await recordParentSectionView('parent_portal', 'صفحة ولي الأمر');
 
   $('linkedPlayers').innerHTML=p.error?`<div class="notice err">${esc(p.error.message)}</div>`:(linked.length ? `<b>اللاعبون المرتبطون بحسابك:</b> ` + linked.map(x=>`<span class="badge">${esc(x.full_name)}</span>`).join(' ') : '<span class="muted small">لا يوجد لاعب مرتبط حتى الآن</span>');
   $('linkRequests').innerHTML=r.error?`<div class="notice err">${esc(r.error.message)}</div>`:((r.data||[]).length ? `<b>طلبات الربط:</b> ` + (r.data||[]).map(x=>`<span class="badge">${esc(x.requested_name)} (${esc(x.status)})</span>`).join(' ') : '');
 
   const evalsBox = $('parentCoachEvaluationsBox');
+  const attBox = $('parentAttendanceBox');
+
   if(evalsBox){
     evalsBox.innerHTML = p.error
       ? `<div class="notice err">${esc(p.error.message)}</div>`
@@ -4569,10 +4112,32 @@ async function showParentDash(){
         }).join('') || '<p class="muted small">لا يوجد لاعب مرتبط حتى الآن لعرض تقييماته.</p>');
   }
 
+  if(attBox){
+    if(!linked.length){
+      attBox.innerHTML = '<p class="muted small">لا يوجد لاعب مرتبط حتى الآن لعرض سجل الحضور والغياب.</p>';
+    }else{
+      attBox.innerHTML = linked.map(x => `<div class="card" style="margin:10px 0"><h3>${esc(x.full_name)}</h3><div id="history-${esc(x.player_id)}" class="muted small">جاري تحميل سجل الحضور…</div></div>`).join('');
+      for(const x of linked){
+        const h=await client.from('attendance_records').select('attendance_status,attendance_sessions(session_date,session_closed)').eq('player_id',x.player_id).order('attended_at',{ascending:false}).limit(20);
+        const el=$('history-'+x.player_id);
+        if(el){
+          if(h.error){
+            el.innerHTML=`<b>سجل الحضور</b><br><span class="small">${esc(h.error.message)}</span>`;
+          }else{
+            const rows = h.data||[];
+            el.innerHTML='<b>سجل الحضور</b><br>'+(rows.length ? rows.map(z=>{
+              const stLabel = formatAttendanceLabel(z.attendance_status);
+              return `${esc(z.attendance_sessions?.session_date||'—')} · ${esc(stLabel)}`;
+            }).join('<br>') : 'لا يوجد سجل حضور بعد');
+          }
+        }
+      }
+    }
+  }
+
   fill('feedbackPlayer',linked.map(x=>({id:x.player_id,name:x.full_name})),'اختاري اللاعب');
 
-  Promise.allSettled([
-    loadParentAttendanceForLinked(client, linked),
+  await Promise.all([
     syncParentFeedbackAvailability(),
     loadParentSubmittedFeedbackSection(),
     loadParentMatchesSection(),
@@ -4662,16 +4227,12 @@ async function sendLinkRequest(){
     setNotice($('linkMsg'),'تعذر إرسال طلب الربط: ' + error.message,'err');
     return;
   }
-  if(data==='already_linked'){
-    setNotice($('linkMsg'),'تم الربط بنجاح — اللاعب مرتبط بحسابك بالفعل.','ok');
-    showPlayerSavePopup('تم الربط بنجاح', `اللاعب (${name}) مرتبط بحسابك بالفعل`);
-  }else if(data==='pending'){
-    setNotice($('linkMsg'),'تم الربط بنجاح — طلب الربط لهذا اللاعب قيد المراجعة بالفعل.','ok');
-    showPlayerSavePopup('تم الربط بنجاح', `طلب ربط اللاعب (${name}) مسجل وقيد المراجعة`);
-  }else{
-    setNotice($('linkMsg'),'تم الربط بنجاح — تم إرسال طلب الربط للإدارة.','ok');
-    showPlayerSavePopup('تم الربط بنجاح', `تم إرسال طلب الربط للاعب (${name}) بنجاح`);
-  }
+  const msgText = data==='already_linked'
+    ? 'اللاعب مرتبط بحسابك بالفعل.'
+    : data==='pending'
+      ? 'طلب الربط لهذا اللاعب قيد المراجعة بالفعل.'
+      : 'تم إرسال طلب الربط للإدارة.';
+  setNotice($('linkMsg'),msgText, data==='already_linked'||data==='pending' ? '' : 'ok');
   $('linkName').value='';
   await showParentDash();
 }
