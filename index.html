@@ -75,6 +75,7 @@ button:hover:not(:disabled),.btn:hover{transform:translateY(-1px);box-shadow:0 8
 button.secondary,.btn.secondary{background:#171d21;color:var(--gold2);border-color:#66532e}
 button.danger{background:#472321;color:#ffe1dc;border-color:#99544d}
 button:disabled{opacity:.5;cursor:not-allowed}
+a{color:var(--gold2)}
 .wrap{width:min(1160px,94%);margin:auto}
 header{position:static;z-index:10;background:#080a0ceF;border-bottom:1px solid #59482a;-webkit-backdrop-filter:blur(15px);backdrop-filter:blur(15px)}
 .nav{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:12px 0}
@@ -147,7 +148,6 @@ td button{padding:6px 9px;font-size:11px;margin:2px}
 .playerline:last-child{border:0}
 .badge{display:inline-block;border:1px solid #66532e;color:var(--gold2);border-radius:30px;padding:3px 9px;font-size:11px}
 .footer{text-align:center;padding:35px 10px;color:#887c61;font:11px Cinzel,serif;letter-spacing:2px}
-.qrbox{display:inline-block;background:white;padding:12px;border-radius:10px;margin:10px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .back-button{position:fixed;bottom:20px;right:18px;z-index:30;min-width:105px;box-shadow:0 5px 22px #0009;border-radius:30px}
 .scanner-box{position:relative;max-width:420px;margin:12px auto;border-radius:14px;overflow:hidden;border:2px solid #59482a;background:#090d0f}
@@ -2691,7 +2691,7 @@ function editCoachEvaluation(id){
   $('tech').value = ev.technical_score ?? '';
   $('beh').value = ev.behavior_score ?? '';
   $('fit').value = ev.fitness_score ?? '';
-  $('evalNotes').value = ev.notes || '';
+  $('evalNotes').value = ev.evaluation_notes ?? ev.notes ?? '';
   setNotice($('evalMsg'), 'جاري تعديل التقييم المحدد…');
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -2758,7 +2758,7 @@ $('evalForm').addEventListener('submit',async e=>{
       technical_score:techVal,
       behavior_score:behVal,
       fitness_score:fitVal,
-      notes:notesVal
+      evaluation_notes:notesVal
     }).eq('id',editId).select('id').maybeSingle();
     if(error || !data){
       setNotice($('evalMsg'),error?.message||'تعذر تحديث التقييم.','err');
@@ -2784,7 +2784,7 @@ $('evalForm').addEventListener('submit',async e=>{
       technical_score:techVal,
       behavior_score:behVal,
       fitness_score:fitVal,
-      notes:notesVal
+      evaluation_notes:notesVal
     }));
     const {data,error}=await client.from('player_evaluations').insert(batchRows).select('id');
     if(error || !data || !data.length){
@@ -2805,7 +2805,7 @@ $('evalForm').addEventListener('submit',async e=>{
     technical_score:techVal,
     behavior_score:behVal,
     fitness_score:fitVal,
-    notes:notesVal
+    evaluation_notes:notesVal
   }).select('id').maybeSingle();
   if(error || !data){
     setNotice($('evalMsg'),error?.message||'تعذر حفظ تقييم المدرب.','err');
@@ -2829,11 +2829,12 @@ function renderCoachEvalRows(rows){
     const seenStatus = isSeen
       ? `<span class="badge">تم المشاهدة${r.seen_at ? ` (${new Date(r.seen_at).toLocaleString('ar-EG')})` : ''}</span>`
       : `<span class="muted">لم يُشاهد بعد</span>`;
+    const noteText = r.evaluation_notes ?? r.notes ?? '—';
     return `<tr>
       <td>${esc(pName)}</td>
       <td>${esc(r.evaluation_date||'—')}</td>
       <td>${r.technical_score??'—'} / ${r.behavior_score??'—'} / ${r.fitness_score??'—'}</td>
-      <td>${esc(r.notes||'—')}</td>
+      <td>${esc(noteText)}</td>
       <td>${seenStatus}</td>
       <td>
         <button type="button" class="secondary" onclick="editCoachEvaluation('${esc(r.id)}')">تعديل</button>
@@ -3540,9 +3541,6 @@ async function loadSectionViewsAdmin(sectionsFilter){
 
   if($('eventBookingViewsTable')){
     $('eventBookingViewsTable').innerHTML = renderViewsTable(list.filter(x=>x.section==='events' || x.section==='bookings'));
-  }
-  if($('matchViewsTable')){
-    $('matchViewsTable').innerHTML = renderViewsTable(list.filter(x=>x.section==='matches'));
   }
 }
 
@@ -4666,7 +4664,7 @@ async function sendLinkRequest(){
     showPlayerSavePopup('تم الربط بنجاح', `طلب ربط اللاعب (${name}) مسجل وقيد المراجعة`);
   }else{
     setNotice($('linkMsg'),'تم الربط بنجاح — تم إرسال طلب الربط للإدارة.','ok');
-    showPlayerSavePopup('تم الربط بنجاح', `تم إرسال طلب الربط اللاعب (${name}) بنجاح`);
+    showPlayerSavePopup('تم الربط بنجاح', `تم إرسال طلب الربط للاعب (${name}) بنجاح`);
   }
   $('linkName').value='';
   await showParentDash();
