@@ -941,6 +941,8 @@ let authListenerBound=false;
 let manualLoginInProgress=false;
 let sessionApplyingUserId=null;
 let verifiedAdminCache=new Map();
+let adminVerificationInFlight=new Map();
+let authOperationId=0;
 let qrSeqCounter=0;
 
 function getPersistentStorage(){
@@ -1009,47 +1011,51 @@ async function signOutFast(client, timeoutMs = 3500){
   }
 }
 
-async function verifyAdminWithRetry(client, userId, timeoutPerAttempt = 8500, onProgress){
-  if(verifiedAdminCache.has(userId)){
-    return { data: verifiedAdminCache.get(userId), error: null, definitive: true };
+async function verifyAdminWithRetry(client, userId, timeoutMs = 8500, onStatus = null) {
+  if (!client || !userId) {
+    return { data: null, error: new Error('بيانات التحقق غير مكتملة.') };
   }
-  let lastError = null;
-  for(let attempt = 1; attempt <= 2; attempt++){
-    try{
-      if(typeof onProgress === 'function' && attempt === 2){
-        onProgress('جاري إتمام التحقق السريع من صلاحيات الإدارة…');
+
+  const cached = verifiedAdminCache.get(userId);
+  if (cached) return { data: cached, error: null };
+
+  let request = adminVerificationInFlight.get(userId);
+
+  if (!request) {
+    if (onStatus) onStatus('جاري التحقق من صلاحيات الإدارة…');
+
+    request = client
+      .from('academy_admins')
+      .select('admin_name')
+      .eq('user_id', userId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!error && data) verifiedAdminCache.set(userId, data);
+        return { data: data || null, error: error || null };
+      })
+      .catch(error => ({ data: null, error }));
+
+    adminVerificationInFlight.set(userId, request);
+
+    request.finally(() => {
+      if (adminVerificationInFlight.get(userId) === request) {
+        adminVerificationInFlight.delete(userId);
       }
-      const res = await withTimeout(
-        client.from('academy_admins').select('admin_name').eq('user_id', userId).maybeSingle(),
-        timeoutPerAttempt,
-        'تأخر التحقق من صلاحيات الإدارة. أعد المحاولة الآن.'
-      );
-      if(res?.error){
-        const errMsg = String(res.error.message || '');
-        const isPermissionOrMissing =
-          errMsg.toLowerCase().includes('permission') ||
-          errMsg.toLowerCase().includes('policy') ||
-          res.error.code === '42501' ||
-          res.error.code === 'PGRST116';
-        if(isPermissionOrMissing){
-          return { data: null, error: res.error, definitive: true };
-        }
-        throw res.error;
-      }
-      if(res?.data){
-        verifiedAdminCache.set(userId, res.data);
-      }
-      return { data: res?.data || null, error: null, definitive: true };
-    }catch(err){
-      lastError = err;
-      if(attempt < 2){
-        await new Promise(r => setTimeout(r, 350));
-      }
-    }
+    });
   }
-  const err = lastError || new Error('تأخر التحقق من صلاحيات الإدارة. أعد المحاولة الآن.');
-  err.isTimeoutOrDelay = true;
-  throw err;
+
+  let timer;
+  const timeout = new Promise(resolve => {
+    timer = setTimeout(() => {
+      const error = new Error('تأخر التحقق من صلاحيات الإدارة.');
+      error.isTimeoutOrDelay = true;
+      resolve({ data: null, error });
+    }, timeoutMs);
+  });
+
+  const result = await Promise.race([request, timeout]);
+  clearTimeout(timer);
+  return result;
 }
 
 async function applyAuthenticatedSession(client, sessionUser){
@@ -1390,8 +1396,8 @@ function showPlayerSavePopup(titleText, subText){
 
   pop.classList.remove('show');
   void pop.offsetWidth;
-  pop.classList.add('show');
 
+  pop.classList.add('show');
   if(playerSavePopupTimer) clearTimeout(playerSavePopupTimer);
   playerSavePopupTimer = setTimeout(hidePlayerSavePopup, 2400);
 }
